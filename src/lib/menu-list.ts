@@ -134,11 +134,7 @@ export function getMenuList(
           label: "Roles & Permissions",
           icon: Users,
         },
-        {
-          href: "/modules",
-          label: "Modules",
-          icon: Settings,
-        },
+       
       ],
     });
   }

@@ -12,19 +12,14 @@ export const fetchAllPermissions = query(async (ctx) => {
           (permission.assignedRoles || []).map((roleId) => ctx.db.get(roleId))
         );
   
-        // Resolve assigned modules to module names.
-        const modules = await Promise.all(
-          (permission.assignedModules || []).map((moduleId) => ctx.db.get(moduleId))
-        );
+       
   
         return {
           ...permission,
           assignedRoles: roles
             .filter((role) => role !== null) // Filter out nulls (in case a role was deleted)
             .map((role) => role.name), // Extract role names
-          assignedModules: modules
-            .filter((module) => module !== null) // Filter out nulls (in case a module was deleted)
-            .map((module) => module.name), // Extract module names
+         
         };
       })
     );

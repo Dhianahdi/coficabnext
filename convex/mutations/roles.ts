@@ -5,7 +5,6 @@ import { v } from "convex/values";
 
 export const createRole = mutation({
     args: {
-        companyIds: v.optional(v.array(v.string())), // Now an array of company IDs
         name: v.string(),
         description: v.optional(v.string()),
         permissions: v.array(v.id("permissions")), 
@@ -20,7 +19,6 @@ export const createRole = mutation({
         }
 
         const roleId = await ctx.db.insert("roles", {
-            companyId: args.companyIds, // Store as an array
             name: args.name,
             description: args.description,
             permissions: args.permissions,
@@ -69,7 +67,6 @@ export const removeRoleById = mutation({
 export const updateRole = mutation({
     args: {
         id: v.id("roles"),
-        companyIds: v.optional(v.array(v.string())), // Now an array of company IDs
         name: v.optional(v.string()),
         description: v.optional(v.string()),
         permissions: v.optional(v.array(v.id("permissions"))), 
@@ -89,7 +86,6 @@ export const updateRole = mutation({
         }
 
         const updatedFields = {
-            companyId: args.companyIds ?? role.companyId, 
             name: args.name ?? role.name,
             description: args.description ?? role.description,
             permissions: args.permissions ?? role.permissions,

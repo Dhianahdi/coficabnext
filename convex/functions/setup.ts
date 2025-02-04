@@ -19,7 +19,6 @@ export const initializeSuperAdmin = mutation({
             const permissionIds = allPermissions.map(p => p._id);
 
             const roleId = await ctx.db.insert("roles", {
-                companyId: undefined, // No company restriction
                 name: "Super Admin",
                 description: "Full system access",
                 permissions: permissionIds,

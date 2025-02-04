@@ -61,7 +61,6 @@ export const getMe = query({
 
     return {
       id: userId,
-      companyId: user.companyId,
       role: role?.name || "Guest",
       permissions: role?.permissions || [],
     };

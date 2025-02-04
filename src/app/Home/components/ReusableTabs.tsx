@@ -3,7 +3,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Box, ChartLine, House, PanelsTopLeft, Settings, UsersRound } from "lucide-react";
 import React from "react";
-import AppearanceSettings from "./CompanySettings";
 
 export default function ReusableTabs() {
   return (
@@ -72,7 +71,6 @@ export default function ReusableTabs() {
         <p className="pt-1 text-center text-xs text-muted-foreground">Content for Tab 3</p>
       </TabsContent>
       <TabsContent value="tab-4">
-        <AppearanceSettings />
       </TabsContent>
     
     </Tabs>

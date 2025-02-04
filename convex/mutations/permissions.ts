@@ -16,7 +16,6 @@ export const createPermission = mutation({
       name: args.name,
       description: args.description,
       assignedRoles: [],
-      assignedModules: [],
     });
   },
 });

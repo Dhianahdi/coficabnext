@@ -54,9 +54,7 @@ const schema = defineSchema({
     experienceLevel: v.optional(v.string()), // Entry, mid, senior level
     tags: v.optional(v.array(v.string())),   // Keywords for filtering
     applicationDeadline: v.optional(v.float64()), // Deadline for applications
-    interviewProcess: v.optional(v.string()), // Description of the hiring process
-    benefits: v.optional(v.string()),        // Perks like insurance, remote work, bonuses
-    status: v.string(),        
+    interviewProcess: v.optional(v.string()), // Description of the hiring processZ
     updatedAt: v.optional(v.float64()), // Track last modification time    // Open, closed, paused, etc.
     collaborators: v.optional(v.array(v.id("users"))), // List of users collaborating on the job post
   })

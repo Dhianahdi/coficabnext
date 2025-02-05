@@ -23,72 +23,101 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTableColumnHeader } from "./datatable/DataTableColumnHeader";
-import { getCommonPinningStyles } from "@/lib/data-table";
+import { getCommonPinningStyles } from "@/lib/data-table"
 import { Checkbox } from "../ui/checkbox";
 import { StaticTasksTableFloatingBar } from "./components/StaticTasksTableFloatingBar";
 import { TableViewOptions } from "./datatable/DataTableViewOptions";
 import { ExportButton } from "../ui/ExportButton";
+import { Bell, CheckCircle, Circle, CircleCheck, CircleCheckBig, CircleX, Clock, Ellipsis, FileText, Heart, Home, Loader, Settings, Star, Lock, Unlock, User, XCircle, EditIcon, Tags, TrashIcon, Plus } from "lucide-react";
+import { DataTableFacetedFilter } from "./datatable/DataTableFacetedFilter";
 import { format } from "date-fns";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Badge } from "../ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { DataTablePagination } from "./datatable/DataTablePagination";
-import DeletePermissionDialog from "./CRUD/DeletePermissionDialog";
-import { Id } from "../../../convex/_generated/dataModel";
-import { EmptyState } from "./components/ReusableEmptyState";
-import { AddPermission } from "./CRUD/AddPermission";
-import { XCircle } from "lucide-react";
+import Image from "next/image";
+import rogue from "../../../public/img/rogue.png";
+import pilot from "../../../public/img/pilot.png";
+import kiddo from "../../../public/img/kiddo.png";
+import astro from "../../../public/img/astro.png";
 import DateRangePicker from "./components/DateRangePicker";
-import { DataTableFacetedFilter } from "./datatable/DataTableFacetedFilter";
-import { UpdatePermission } from "./CRUD/UpdatePermission";
+import { DataTablePagination } from "./datatable/DataTablePagination";
+import DeleteStoryDialog from "./CRUD/DeleteStoryDialog";
+import { Id } from "../../../convex/_generated/dataModel";
+import BulkDeleteDialog from "./CRUD/BulkDeleteDialog";
+import { EmptyState } from "./components/ReusableEmptyState";
+import DeleteRoleDialog from "./CRUD/DeleteStoryDialog";
+import { UpdateRole } from "./CRUD/UpdateRole";
+import { useRouter } from "next/navigation";
 
-export type Permission = {
+export type Job = {
     _id: string;
-    name: string;
-    description?: string;
-    assignedRoles: string[];
+    title: string;
+    description: string;
+    recruiterName: string;
+    departmentName: string;
+    collaborators: string[];
     createdAt: string;
 };
 
-type PermissionsTableProps = {
-    permissions: Permission[];
+type JobsTableProps = {
+    jobs: Job[];
 };
 
-export function PermissionsTable({ permissions }: PermissionsTableProps) {
+export function JobsTable({ jobs }: JobsTableProps) {
+    const router = useRouter();
+
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set());
+    const [selectedStatus, setSelectedStatus] = React.useState<Set<string>>(new Set()); // New state for selected status
+    const [selectedPrivacy, setSelectedPrivacy] = React.useState<Set<string>>(new Set()); // Change to Set<string>
     const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
         from: undefined,
         to: undefined,
     });
-    const [selectedPermissionNames, setSelectedPermissionNames] = React.useState<Set<string>>(new Set());
-    // Extract unique permission names for filtering
-    const uniquePermissionNames = React.useMemo(() => {
-        const allPermissionNames = permissions.map((permission) => permission.name);
-        const uniquePermissionNames = Array.from(new Set(allPermissionNames)); // Remove duplicates
-        return uniquePermissionNames.map((name) => ({
-            value: name,
-            label: name,
+    const [selectedPermissions, setSelectedPermissions] = React.useState<Set<string>>(new Set());
+
+    // Determine if any filters are applied
+    const isFiltered = selectedPermissions.size > 0;
+    // Extract unique permissions for filtering
+    /* const uniquePermissions = React.useMemo(() => {
+        const allPermissions = roles.flatMap((role) => role.permissions);
+        const uniquePermissions = Array.from(new Set(allPermissions)); // Remove duplicates
+        return uniquePermissions.map((permission) => ({
+            value: permission,
+            label: permission,
         }));
-    }, [permissions]);
-    // Filter permissions based on selected names
-    const filteredPermissions = React.useMemo(() => {
-        return permissions.filter((permission) => {
-            // If no permission names are selected, include all permissions
-            if (selectedPermissionNames.size === 0) return true;
+    }, [roles]); */
+    // Filter stories based on selected status and privacy
+    // Filter roles based on selected permissions
+    /* const filteredRoles = React.useMemo(() => {
+        return roles.filter((role) => {
+            // If no permissions are selected, include all roles
+            if (selectedPermissions.size === 0) return true;
 
-            // Check if the permission name is in the selected names
-            return selectedPermissionNames.has(permission.name);
+            // Check if the role has all selected permissions
+            return Array.from(selectedPermissions).every((permission) =>
+                role.permissions.includes(permission)
+            );
         });
-    }, [permissions, selectedPermissionNames]);
+    }, [roles, selectedPermissions]); */
 
+
+    const resetFilters = () => {
+        setSelectedPermissions(new Set());
+    };
+
+
+
+
+    // Dynamically generate options from story statuses
+    // Function to clear selected rows
     const handleClearSelection = () => {
         setSelectedRows(new Set());
         table.getRowModel().rows.forEach((row) => row.toggleSelected(false));
     };
-
-    const columns: ColumnDef<Permission>[] = [
+    const columns: ColumnDef<Job>[] = [
         {
             id: "select",
             size: 50,
@@ -99,7 +128,7 @@ export function PermissionsTable({ permissions }: PermissionsTableProps) {
                     onCheckedChange={(value) => {
                         const isChecked = value === true;
                         if (isChecked) {
-                            const newSelectedRows = new Set(permissions.map((perm) => perm._id));
+                            const newSelectedRows = new Set(jobs.map((job) => job._id));
                             setSelectedRows(newSelectedRows);
                             table.getRowModel().rows.forEach((row) => row.toggleSelected(true));
                         } else {
@@ -110,108 +139,73 @@ export function PermissionsTable({ permissions }: PermissionsTableProps) {
                 />
             ),
             cell: ({ row }) => {
-                const permissionId = row.original._id;
+                const jobId = row.original._id;
                 return (
                     <Checkbox
-                        checked={selectedRows.has(permissionId)}
+                        checked={selectedRows.has(jobId)}
                         onCheckedChange={(value) => {
                             const isChecked = value === true;
                             const updatedSelectedRows = new Set(selectedRows);
                             if (isChecked) {
-                                updatedSelectedRows.add(permissionId);
+                                updatedSelectedRows.add(jobId);
                             } else {
-                                updatedSelectedRows.delete(permissionId);
+                                updatedSelectedRows.delete(jobId);
                             }
                             setSelectedRows(updatedSelectedRows);
                             row.toggleSelected(isChecked);
                         }}
-                        aria-label={`Select ${row.original.name}`}
+                        aria-label={`Select ${row.original.title}`}
                     />
                 );
             },
         },
+        
         {
-            accessorKey: "name",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-            cell: ({ row }) => <span className="font-bold">{row.original.name}</span>,
+            accessorKey: "title",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Job Title" />,
+            cell: ({ row }) => <span className="font-bold">{row.original.title}</span>,
         },
         {
             accessorKey: "description",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
             cell: ({ getValue }) => {
                 const text = getValue<string>() || "N/A";
-                const maxLength = 30;
-                const truncatedText = text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
-                return <span title={text}>{truncatedText}</span>;
+                return <span title={text}>{text.length > 30 ? `${text.slice(0, 30)}...` : text}</span>;
             },
         },
         {
-            accessorKey: "assignedRoles",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Assigned Roles" />,
+            accessorKey: "recruiterName",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Recruiter" />,
+            cell: ({ row }) => <span>{row.original.recruiterName}</span>,
+        },
+        {
+            accessorKey: "departmentName",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Department" />,
+            cell: ({ row }) => <span>{row.original.departmentName}</span>,
+        },
+        {
+            accessorKey: "collaborators",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Collaborators" />,
             cell: ({ row }) => {
-                const roles = row.original.assignedRoles;
-                const maxVisibleRoles = 2;
-                const visibleRoles = roles.slice(0, maxVisibleRoles);
-                const remainingRoles = roles.slice(maxVisibleRoles);
+                const collaborators = row.original.collaborators || [];
                 return (
-                    <div className="flex items-center gap-1 overflow-hidden whitespace-nowrap">
-                        {visibleRoles.map((role, index) => (
-                            <Badge key={index} className="px-1 py-0.5 text-xs">
-                                {role}
-                            </Badge>
+                    <div className="flex items-center gap-1">
+                        {collaborators.map((name, index) => (
+                            <Badge key={index} className="px-1 py-0.5 text-xs">{name}</Badge>
                         ))}
-                        {remainingRoles.length > 0 && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Badge className="px-1 py-0.5 text-xs ">
-                                            +{remainingRoles.length} more
-                                        </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <span>{remainingRoles.join(", ")}</span>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
                     </div>
                 );
             },
         },
-    
-
         {
             accessorKey: "createdAt",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Posted On" />,
             cell: ({ row }) => format(new Date(row.original.createdAt), "MMM dd, yyyy, h:mm a"),
         },
-        {
-            id: "actions",
-            cell: ({ row }) => {
-                const permission = row.original;
-                return (
-                    <div className="flex justify-end space-x-2">
-                        <UpdatePermission permissionId={permission._id as Id<"permissions">} />
-
-                        <DeletePermissionDialog
-                            triggerText="Delete"
-                            title="Confirm Permission Deletion"
-                            description={`Are you sure you want to delete the permission "${permission.name}"? This action cannot be undone.`}
-                            permissionId={permission._id as Id<"permissions">}
-                            permissionName={permission.name}
-                            cancelText="Cancel"
-                            confirmText="Delete"
-                        />
-                    </div>
-                );
-            },
-            size: 40,
-        },
     ];
-
-
+    
     const table = useReactTable({
-        data: filteredPermissions,
+        data: jobs,
         columns,
         state: { sorting, columnFilters, columnVisibility },
         onSortingChange: setSorting,
@@ -235,33 +229,35 @@ export function PermissionsTable({ permissions }: PermissionsTableProps) {
             <div className="flex items-center justify-between py-4">
                 {/* Search Input, Filters, and Date Range Picker */}
                 <div className="flex items-center space-x-4 flex-grow">
-                    {/* Name Filter */}
-                    <Input
-                        placeholder="Filter by name..."
-                        value={(table.getColumn("name")?.getFilterValue() as string) || ""}
-                        onChange={(e) => table.getColumn("name")?.setFilterValue(e.target.value)}
+
+                    {/* Title Filter */}
+                    {/*   <Input
+                        placeholder="Filter by title..."
+                        value={(table.getColumn("title")?.getFilterValue() as string) || ""}
+                        onChange={(e) => table.getColumn("title")?.setFilterValue(e.target.value)}
                         className="w-full max-w-sm"
-                    />
-                    <DataTableFacetedFilter
+                    /> */}
+
+                    {/* Status Filter Dropdown */}
+                   {/*  <DataTableFacetedFilter
                         title="Permissions"
-                        options={uniquePermissionNames}
-                        selectedValues={selectedPermissionNames}
+                        options={uniquePermissions}
+                        selectedValues={selectedPermissions}
                         renderOption={(option) => (
                             <div className="flex items-center space-x-2">
                                 <span>{option.label}</span>
                             </div>
                         )}
-                        onChange={setSelectedPermissionNames}
+                        onChange={setSelectedPermissions}
                     />
-
-
+ */}
                     {/* Reset Filters Button */}
-                    {selectedPermissionNames.size > 0 && (
+                    {isFiltered && (
                         <Button
                             aria-label="Reset filters"
                             variant="ghost"
                             className="h-8 px-2 lg:px-3"
-                            onClick={() => setSelectedPermissionNames(new Set())}
+                            onClick={resetFilters} // Call resetFilters function
                         >
                             Reset
                             <XCircle className="ml-2 size-4" aria-hidden="true" />
@@ -277,18 +273,18 @@ export function PermissionsTable({ permissions }: PermissionsTableProps) {
                         placeholder="Select Date Range"
                         triggerVariant="outline"
                         triggerSize="sm"
-                        onDateRangeChange={setDateRange}
+                        onDateRangeChange={setDateRange} // Update the date range
                     />
 
                     <ExportButton
                         table={table}
-                        filename="permissions"
+                        filename="stories"
                         excludeColumns={["select", "actions"]}
                     />
                     <TableViewOptions
                         columns={table
                             .getAllColumns()
-                            .filter((column) => column.id !== "select" && column.id !== "actions")
+                            .filter((column) => column.id !== "select" && column.id !== "actions") // Exclude "select" and "actions" columns
                             .map((column) => ({
                                 id: column.id,
                                 isVisible: column.getIsVisible(),
@@ -297,8 +293,11 @@ export function PermissionsTable({ permissions }: PermissionsTableProps) {
                                 canHide: column.getCanHide(),
                             }))}
                     />
+
                 </div>
             </div>
+
+
 
             <div className="overflow-hidden rounded-md border">
                 <Table>
@@ -329,24 +328,37 @@ export function PermissionsTable({ permissions }: PermissionsTableProps) {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length}>
-                                    <div className="flex justify-center items-center text-center">
+                                <TableCell
+                                    colSpan={columns.length}
+                                >
+                                    <div
+                                        className="flex justify-center items-center text-center "
+                                    >
                                         <EmptyState
-                                            title="No Permissions Yet"
-                                            description="Create a new permission to manage access."
-                                            imageSrc="/permissions-empty.png"
-                                            actionComponent={<AddPermission />}
+                                            title="No Stories Yet"
+                                            description="Begin your creative journey by adding a new story today!"
+                                            imageSrc="/stories-empty-2.png"
+                                            actionComponent={ <Button onClick={() => router.push("/jobs/add")}>
+                                            <Plus size={16} strokeWidth={2} aria-hidden="true" />
+                                            <span>Add Job</span>
+                                          </Button>}
                                         />
+
                                     </div>
+
                                 </TableCell>
                             </TableRow>
+
                         )}
                     </TableBody>
+
+
+
                 </Table>
             </div>
-
             <div className="flex justify-between items-center py-4">
                 <DataTablePagination table={table} />
+
             </div>
         </div>
     );

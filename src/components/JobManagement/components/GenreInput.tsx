@@ -17,6 +17,7 @@ interface GenreInputProps {
             closeButton?: string;
         };
     };
+    className?: string; // Add this line
     onTagsChange?: (tags: Tag[]) => void;
 }
 
@@ -25,6 +26,7 @@ export const GenreInput: React.FC<GenreInputProps> = ({
     initialTags = [],
     placeholder = "Add a tag",
     styleClasses,
+    className, // Add this line
     onTagsChange,
 }) => {
     const [tags, setTags] = useState<Tag[]>(initialTags);
@@ -39,7 +41,7 @@ export const GenreInput: React.FC<GenreInputProps> = ({
     };
 
     return (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${className}`}> {/* Apply the className here */}
             <TagInput
                 id={id}
                 tags={tags}

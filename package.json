@@ -10,7 +10,12 @@
   },
   "dependencies": {
     "@auth/core": "^0.37.0",
+    "@blocknote/core": "^0.23.1",
+    "@blocknote/mantine": "^0.23.1",
+    "@blocknote/react": "^0.23.1",
     "@convex-dev/auth": "^0.0.77",
+    "@edgestore/react": "^0.2.2",
+    "@edgestore/server": "^0.2.2",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.4",
@@ -53,6 +58,7 @@
     "immer": "^10.1.1",
     "input-otp": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.468.0",
     "next": "15.1.5",
     "next-themes": "^0.4.4",
@@ -75,6 +81,7 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/lodash": "^4.17.15",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^18",

@@ -19,30 +19,30 @@ import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 
-interface DeleteRoleDialogProps {
+interface DeleteJobDialogProps {
   triggerText: string; // Text for the trigger button
   title: string; // Title of the dialog
   description: React.ReactNode; // Allow JSX elements in description
-  roleId: Id<"roles">; // Correctly typed ID for the role
-  roleName: string; // Name of the role to confirm deletion
+  jobId: Id<"jobs">; // Correctly typed ID for the job
+  jobTitle: string; // Title of the job to confirm deletion
   cancelText?: string; // Custom text for the cancel button (optional)
   confirmText?: string; // Custom text for the confirm button (optional)
 }
 
-export default function DeleteRoleDialog({
+export default function DeleteJobDialog({
   triggerText,
   title,
   description,
-  roleId,
-  roleName,
+  jobId,
+  jobTitle,
   cancelText = "Cancel",
   confirmText = "Delete",
-}: DeleteRoleDialogProps) {
+}: DeleteJobDialogProps) {
   const [inputValue, setInputValue] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const deleteRole = useMutation(api.mutations.roles.removeRoleById); // Hook for Convex mutation
+  const deleteJob = useMutation(api.mutations.jobs.deleteJob); // Hook for Convex mutation
 
-  const isConfirmed = inputValue === roleName;
+  const isConfirmed = inputValue === jobTitle;
 
   const handleConfirm = async () => {
     if (!isConfirmed || isDeleting) return;
@@ -50,11 +50,11 @@ export default function DeleteRoleDialog({
     setIsDeleting(true);
 
     try {
-      await deleteRole({ id: roleId }); // Call mutation with the role ID
-      toast.success(`The role "${roleName}" was deleted successfully.`); // Success message with role name
+      await deleteJob({ jobId }); // Call mutation with the job ID
+      toast.success(`The job "${jobTitle}" was deleted successfully.`); // Success message with job title
     } catch (error) {
-      console.error("Error deleting role:", error);
-      toast.error(`Failed to delete the role "${roleName}". Please try again.`); // Error message with role name
+      console.error("Error deleting job:", error);
+      toast.error(`Failed to delete the job "${jobTitle}". Please try again.`); // Error message with job title
     } finally {
       setIsDeleting(false);
     }
@@ -63,7 +63,7 @@ export default function DeleteRoleDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" aria-label="Delete Role" size="icon">
+        <Button variant="ghost" aria-label="Delete Job" size="icon">
           <Trash2 size={18} aria-hidden="true" />
         </Button>
       </DialogTrigger>
@@ -84,9 +84,9 @@ export default function DeleteRoleDialog({
         <form className="space-y-5">
           <div className="space-y-2">
             <Input
-              id="role-name"
+              id="job-title"
               type="text"
-              placeholder={`Type "${roleName}" to confirm`} // Use the roleName here
+              placeholder={`Type "${jobTitle}" to confirm`} // Use the jobTitle here
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isDeleting}

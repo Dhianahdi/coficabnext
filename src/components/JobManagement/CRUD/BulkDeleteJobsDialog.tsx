@@ -17,44 +17,39 @@ import { Id } from "../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-interface BulkDeleteDialogProps {
+interface BulkDeleteJobsDialogProps {
     triggerText: React.ReactNode; // ReactNode for flexible trigger styling
     title: string; // Title of the dialog
     description: React.ReactNode; // Allow JSX elements in description
-    selectedRoleIds: Id<"roles">[]; // Array of selected role IDs to delete
+    selectedJobIds: Id<"jobs">[]; // Array of selected job IDs to delete
     cancelText?: string; // Custom text for the cancel button (optional)
     confirmText?: string; // Custom text for the confirm button (optional)
     onSuccess?: () => void; // Callback on successful deletion (optional)
 }
 
-export default function BulkDeleteDialog({
+export default function BulkDeleteJobsDialog({
     triggerText,
     title,
     description,
-    selectedRoleIds,
+    selectedJobIds,
     cancelText = "Cancel",
     confirmText = "Delete",
     onSuccess,
-}: BulkDeleteDialogProps) {
+}: BulkDeleteJobsDialogProps) {
     const [isDeleting, setIsDeleting] = useState(false);
-    const bulkRemoveRoles = useMutation(api.mutations.roles.bulkRemoveRoles);
+    const bulkDeleteJobs = useMutation(api.mutations.jobs.bulkDeleteJobs);
 
     const handleConfirm = async () => {
-        console.log("Confirm button clicked"); // Log here
-        if (isDeleting || selectedRoleIds.length === 0) return;
-
-        console.log("Selected Role IDs:", selectedRoleIds); // Log the IDs being passed
+        if (isDeleting || selectedJobIds.length === 0) return;
 
         setIsDeleting(true);
 
         try {
-            const deletedRoleIds = await bulkRemoveRoles({ roleIds: selectedRoleIds });
-            console.log("Response from bulkRemoveRoles:", deletedRoleIds); // Log the response from the API
-
-            toast.success(`${deletedRoleIds.length} roles deleted successfully.`); // Show success notification
-            onSuccess?.();
+            const deletedCount = await bulkDeleteJobs({ jobIds: selectedJobIds });
+            toast.success(`${deletedCount} jobs deleted successfully.`); // Show success notification
+            onSuccess?.(); // Trigger success callback
         } catch (error) {
-            console.error("Error deleting roles:", error); // Log errors
+            console.error("Error deleting jobs:", error);
             toast.error("An unexpected error occurred. Please try again."); // Show error notification
         } finally {
             setIsDeleting(false);

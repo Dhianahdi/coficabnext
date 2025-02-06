@@ -28,7 +28,7 @@ import { Checkbox } from "../ui/checkbox";
 import { StaticTasksTableFloatingBar } from "./components/StaticTasksTableFloatingBar";
 import { TableViewOptions } from "./datatable/DataTableViewOptions";
 import { ExportButton } from "../ui/ExportButton";
-import { Bell, CheckCircle, Circle, CircleCheck, CircleCheckBig, CircleX, Clock, Ellipsis, FileText, Heart, Home, Loader, Settings, Star, Lock, Unlock, User, XCircle, EditIcon, Tags, TrashIcon, Plus } from "lucide-react";
+import { Bell, CheckCircle, Circle, CircleCheck, CircleCheckBig, CircleX, Clock, Ellipsis, FileText, Heart, Home, Loader, Settings, Star, Lock, Unlock, User, XCircle, EditIcon, Tags, TrashIcon, Plus, Edit } from "lucide-react";
 import { DataTableFacetedFilter } from "./datatable/DataTableFacetedFilter";
 import { format } from "date-fns";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "../ui/dropdown-menu";
@@ -41,13 +41,14 @@ import kiddo from "../../../public/img/kiddo.png";
 import astro from "../../../public/img/astro.png";
 import DateRangePicker from "./components/DateRangePicker";
 import { DataTablePagination } from "./datatable/DataTablePagination";
-import DeleteStoryDialog from "./CRUD/DeleteStoryDialog";
+import DeleteStoryDialog from "./CRUD/DeleteJobDialog";
 import { Id } from "../../../convex/_generated/dataModel";
-import BulkDeleteDialog from "./CRUD/BulkDeleteDialog";
+import BulkDeleteDialog from "./CRUD/BulkDeleteJobsDialog";
 import { EmptyState } from "./components/ReusableEmptyState";
-import DeleteRoleDialog from "./CRUD/DeleteStoryDialog";
+import DeleteRoleDialog from "./CRUD/DeleteJobDialog";
 import { UpdateRole } from "./CRUD/UpdateRole";
 import { useRouter } from "next/navigation";
+import DeleteJobDialog from "./CRUD/DeleteJobDialog";
 
 export type Job = {
     _id: string;
@@ -159,7 +160,6 @@ export function JobsTable({ jobs }: JobsTableProps) {
                 );
             },
         },
-        
         {
             accessorKey: "title",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Job Title" />,
@@ -202,8 +202,38 @@ export function JobsTable({ jobs }: JobsTableProps) {
             header: ({ column }) => <DataTableColumnHeader column={column} title="Posted On" />,
             cell: ({ row }) => format(new Date(row.original.createdAt), "MMM dd, yyyy, h:mm a"),
         },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const job = row.original as Job;
+                return (
+                    <div className="flex justify-end">
+                        {/* Add other actions like "Update Job" here if needed */}
+                     
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Edit Role"
+                            onClick={() => router.push(`/jobs/update/${job._id}`)}
+                        >
+                            <Edit size={16} strokeWidth={2} aria-hidden="true" />
+                        </Button>
+                        <DeleteJobDialog
+                            triggerText="Delete"
+                            title="Confirm Job Deletion"
+                            description={`Are you sure you want to delete the job "${job.title}"? This action cannot be undone.`}
+                            jobId={job._id as Id<"jobs">}
+                            jobTitle={job.title}
+                            cancelText="Cancel"
+                            confirmText="Delete"
+                        />
+                    </div>
+                );
+            },
+            size: 40,
+        },
     ];
-    
+
     const table = useReactTable({
         data: jobs,
         columns,
@@ -239,7 +269,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
                     /> */}
 
                     {/* Status Filter Dropdown */}
-                   {/*  <DataTableFacetedFilter
+                    {/*  <DataTableFacetedFilter
                         title="Permissions"
                         options={uniquePermissions}
                         selectedValues={selectedPermissions}
@@ -338,10 +368,10 @@ export function JobsTable({ jobs }: JobsTableProps) {
                                             title="No Stories Yet"
                                             description="Begin your creative journey by adding a new story today!"
                                             imageSrc="/stories-empty-2.png"
-                                            actionComponent={ <Button onClick={() => router.push("/jobs/add")}>
-                                            <Plus size={16} strokeWidth={2} aria-hidden="true" />
-                                            <span>Add Job</span>
-                                          </Button>}
+                                            actionComponent={<Button onClick={() => router.push("/jobs/add")}>
+                                                <Plus size={16} strokeWidth={2} aria-hidden="true" />
+                                                <span>Add Job</span>
+                                            </Button>}
                                         />
 
                                     </div>

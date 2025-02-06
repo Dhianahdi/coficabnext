@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Portal } from "../../ui/portal";
-import BulkDeleteDialog from "../CRUD/BulkDeleteDialog";
+import BulkDeleteJobsDialog from "../CRUD/BulkDeleteJobsDialog"; // Updated import
 import { Id } from "../../../../convex/_generated/dataModel";
 
 type StaticTasksTableFloatingBarProps = {
@@ -23,12 +23,12 @@ export function StaticTasksTableFloatingBar({
     const selectedRows = table.getSelectedRowModel().rows;
     console.log("Selected rows:", selectedRows);
 
-    // Extract IDs
-    const selectedRowIds = selectedRows
+    // Extract job IDs
+    const selectedJobIds = selectedRows
         .map((row: any) => row.original?._id)
-        .filter(Boolean); // Remove invalid IDs
+        .filter(Boolean) as Id<"jobs">[]; // Ensure IDs are valid and typed as job IDs
 
-    console.log("Selected row IDs:", selectedRowIds);
+    console.log("Selected job IDs:", selectedJobIds);
 
     // Clear selected rows
     const handleClearSelection = () => {
@@ -85,23 +85,23 @@ export function StaticTasksTableFloatingBar({
                                         <p>Update status</p>
                                     </TooltipContent>
                                 </Tooltip>
-                                {/* BulkDeleteDialog */}
-                                <BulkDeleteDialog
+                                {/* BulkDeleteJobsDialog */}
+                                <BulkDeleteJobsDialog
                                     triggerText={
                                         <Button
                                             variant="secondary"
                                             size="icon"
                                             className="size-7 border"
-                                            disabled={selectedRows.length === 0} // Ensure this condition works as intended
+                                            disabled={selectedRows.length === 0} // Disable if no rows are selected
                                         >
                                             <Trash2 className="size-3.5" aria-hidden="true" />
                                         </Button>
                                     }
-                                    title="Delete Selected Roles"
-                                    description="Are you sure you want to delete the selected roles? This action cannot be undone."
-                                    selectedRoleIds={selectedRowIds as Id<"roles">[]}
+                                    title="Delete Selected Jobs"
+                                    description="Are you sure you want to delete the selected jobs? This action cannot be undone."
+                                    selectedJobIds={selectedJobIds} // Pass selected job IDs
                                     confirmText="Confirm Delete"
-                                    onSuccess={handleClearSelection}
+                                    onSuccess={handleClearSelection} // Clear selection after deletion
                                 />
                             </div>
                         </div>

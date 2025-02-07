@@ -134,19 +134,7 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                     </span>
                 </div>
             </div>
-            <Button
-                disabled={pending || loadingProvider !== null} // Disable if pending or loadingProvider is set
-                onClick={() => handleProviderSignIn("github")}
-                variant="outline"
-                type="button"
-                className="w-full"
-            >
-                {loadingProvider === "github" ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    "Continue with Github"
-                )}
-            </Button>
+          
             <Button
                 disabled={pending || loadingProvider !== null} // Disable if pending or loadingProvider is set
                 onClick={() => handleProviderSignIn("google")}

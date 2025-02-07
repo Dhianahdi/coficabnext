@@ -130,11 +130,16 @@ export function getMenuList(
           icon: LayoutGrid,
         },
         {
+          href: "/usermanagment",
+          label: "User Managment",
+          icon: Users,
+        },
+        {
           href: "/roles",
           label: "Roles & Permissions",
           icon: Users,
         },
-       
+      
       ],
     });
   }

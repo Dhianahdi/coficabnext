@@ -1,6 +1,11 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation, query } from "../_generated/server";
 
+export const fetchAllUsers = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
+  },
+});
 /**
  * Create a new user
  */

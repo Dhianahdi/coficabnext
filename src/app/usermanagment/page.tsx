@@ -4,16 +4,16 @@ import { useEffect } from "react";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
 import { RolesTable } from "@/components/RoleManagement/RolesTable";
 import { AddRole } from "@/components/RoleManagement/CRUD/AddRole";
 import { AddPermission } from "@/components/PermissionsManagement/CRUD/AddPermission";
 import { PermissionsTable } from "@/components/PermissionsManagement/PermissionsTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import UsersTable from "@/components/Usersmanagment/UsersTable";
+import { api } from "../../../convex/_generated/api";
+import FormBuilder from "@/components/forms/FormBuilder";
 
-export default function Test() {
+export default function UserManagment() {
   // Fetch raw roles and permissions data
   const rawRoles = useQuery(api.queries.roles.getRoles);
   const rawPermissions = useQuery(api.queries.permissions.fetchAllPermissions);
@@ -51,21 +51,11 @@ export default function Test() {
   return (
     <AdminPanelLayout>
       <ContentLayout title="Dashboard">
-    {/* Users Section */}
-<div className="mt-6">
-  <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-    User Management
-  </h1>
-  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-    Manage user accounts, roles, and permissions.
-  </p>
-  <UsersTable />
-</div>
         {/* Roles Section */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-              Role Management
+              Users Management
             </h1>
             <AddRole />
           </div>
@@ -80,31 +70,9 @@ export default function Test() {
           )}
         </div>
 
-        {/* Permissions Section */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-              Permission Management
-            </h1>
-            <AddPermission />
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Define and manage permissions that can be assigned to roles.
-            Permissions control access to specific features and resources.
-          </p>
-          {isLoading ? (
-            <Skeleton className="h-[300px] w-full" />
-          ) : (
-            <PermissionsTable permissions={[]}  />
-          )}
-        </div>
-
-        {/* Loading Spinner */}
-        {isLoading && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <Spinner size="sm" className="bg-black dark:bg-white" />
-          </div>
-        )}
+        <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <FormBuilder />
+    </div>
       </ContentLayout>
     </AdminPanelLayout>
   );

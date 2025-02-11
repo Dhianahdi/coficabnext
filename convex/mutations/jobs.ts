@@ -3,7 +3,6 @@ import { mutation } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "../_generated/dataModel";
 
-
 /**
  * Create a new job posting
  */
@@ -20,7 +19,7 @@ export const createJob = mutation({
     experienceLevel: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     applicationDeadline: v.optional(v.float64()),
-    interviewProcess: v.optional(v.string()),
+    interviewProcess: v.optional(v.string()), // Ensure interviewProcess is included
     collaborators: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
@@ -58,9 +57,10 @@ export const createJob = mutation({
       experienceLevel: args.experienceLevel,
       tags: args.tags,
       applicationDeadline: args.applicationDeadline,
-      interviewProcess: args.interviewProcess,
+      interviewProcess: args.interviewProcess, // Ensure interviewProcess is included
       collaborators: args.collaborators,
       updatedAt: Date.now(),
+      status: "Pending", // Default status
     });
 
     return jobId;
@@ -103,7 +103,7 @@ export const updateJob = mutation({
     experienceLevel: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     applicationDeadline: v.optional(v.float64()),
-    interviewProcess: v.optional(v.string()),
+    interviewProcess: v.optional(v.string()), // Ensure interviewProcess is included
     collaborators: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
@@ -143,7 +143,7 @@ export const updateJob = mutation({
       experienceLevel: args.experienceLevel,
       tags: args.tags,
       applicationDeadline: args.applicationDeadline,
-      interviewProcess: args.interviewProcess,
+      interviewProcess: args.interviewProcess, // Ensure interviewProcess is included
       collaborators: args.collaborators,
       updatedAt: Date.now(),
     };
@@ -160,3 +160,76 @@ export const updateJob = mutation({
   },
 });
 
+// Add a new experience level option
+export const addExperienceLevelOption = mutation({
+  args: { value: v.string(), label: v.string() },
+  handler: async (ctx, { value, label }) => {
+    await ctx.db.insert("experienceLevelOptions", { value, label });
+  },
+});
+
+// Add a new employment type option
+export const addEmploymentTypeOption = mutation({
+  args: { value: v.string(), label: v.string() },
+  handler: async (ctx, { value, label }) => {
+    await ctx.db.insert("employmentTypeOptions", { value, label });
+  },
+});
+
+export const deleteEmploymentTypeOption = mutation({
+  args: { value: v.string() },
+  handler: async (ctx, { value }) => {
+    const option = await ctx.db
+      .query("employmentTypeOptions")
+      .filter((q) => q.eq("value", value))
+      .first();
+    if (option) {
+      await ctx.db.delete(option._id); // Deletes the document
+    }
+  },
+});
+
+
+export const deleteExperienceLevelOption = mutation({
+  args: { value: v.string() },
+  handler: async (ctx, { value }) => {
+    const option = await ctx.db.query("experienceLevelOptions").filter(q => q.eq("value", value)).first();
+    if (option) {
+      await ctx.db.delete(option._id);
+    }
+  },
+});
+export const updateJobStatus = mutation({
+  args: {
+    jobId: v.id("jobs"), // The ID of the job to update
+    status: v.union(v.literal("Pending"), v.literal("Open"), v.literal("Closed")), // New status
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("User not authenticated");
+
+    // Ensure the job exists
+    const job = await ctx.db.get(args.jobId);
+    if (!job) throw new Error("Job not found");
+
+    // Ensure the recruiter is the owner of the job
+    if (job.recruiterId !== userId) throw new Error("Unauthorized to update this job");
+
+    // Update the job status
+    await ctx.db.patch(args.jobId, { status: args.status });
+
+    return args.jobId;
+  },
+});
+export const closeExpiredJobs = mutation({
+  handler: async (ctx) => {
+    const jobs = await ctx.db.query("jobs").collect();
+
+    const now = Date.now();
+    for (const job of jobs) {
+      if (job.applicationDeadline && job.applicationDeadline < now && job.status !== "Closed") {
+        await ctx.db.patch(job._id, { status: "Closed" });
+      }
+    }
+  },
+});

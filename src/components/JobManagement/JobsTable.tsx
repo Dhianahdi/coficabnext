@@ -49,6 +49,8 @@ import DeleteRoleDialog from "./CRUD/DeleteJobDialog";
 import { UpdateRole } from "./CRUD/UpdateRole";
 import { useRouter } from "next/navigation";
 import DeleteJobDialog from "./CRUD/DeleteJobDialog";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export type Job = {
     _id: string;
@@ -58,7 +60,12 @@ export type Job = {
     departmentName: string;
     collaborators: string[];
     createdAt: string;
+    experienceLevel?: string; // Entry, Mid, Senior
+    tags?: string[]; // Keywords for filtering
+    employmentType?: string; // Full-time, Part-time, Contract, Internship
+    status: "Pending" | "Open" | "Closed"; // Job status
 };
+
 
 type JobsTableProps = {
     jobs: Job[];
@@ -66,6 +73,7 @@ type JobsTableProps = {
 
 export function JobsTable({ jobs }: JobsTableProps) {
     const router = useRouter();
+    const updateJobStatus = useMutation(api.mutations.jobs.updateJobStatus);
 
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -78,6 +86,18 @@ export function JobsTable({ jobs }: JobsTableProps) {
         to: undefined,
     });
     const [selectedPermissions, setSelectedPermissions] = React.useState<Set<string>>(new Set());
+
+    const statusIcons = {
+        Pending: <Clock size={12} className="text-yellow-500 -ms-0.5 " strokeWidth={2} aria-hidden="true"  />,
+        Open: <CheckCircle size={12} className="text-green-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
+        Closed: <XCircle size={12} className="text-red-500 -ms-0.5 "strokeWidth={2} aria-hidden="true"  />,
+    };
+
+    const statusColors = {
+        Pending: "yellow",
+        Open: "green",
+        Closed: "red",
+    };
 
     // Determine if any filters are applied
     const isFiltered = selectedPermissions.size > 0;
@@ -165,14 +185,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
             header: ({ column }) => <DataTableColumnHeader column={column} title="Job Title" />,
             cell: ({ row }) => <span className="font-bold">{row.original.title}</span>,
         },
-        {
-            accessorKey: "description",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
-            cell: ({ getValue }) => {
-                const text = getValue<string>() || "N/A";
-                return <span title={text}>{text.length > 30 ? `${text.slice(0, 30)}...` : text}</span>;
-            },
-        },
+
         {
             accessorKey: "recruiterName",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Recruiter" />,
@@ -182,6 +195,53 @@ export function JobsTable({ jobs }: JobsTableProps) {
             accessorKey: "departmentName",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Department" />,
             cell: ({ row }) => <span>{row.original.departmentName}</span>,
+        },
+        {
+            accessorKey: "experienceLevel",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Experience Level" />,
+            cell: ({ row }) => <span>{row.original.experienceLevel || "N/A"}</span>,
+        },
+        {
+            accessorKey: "tags",
+            header: ({ column }) => (
+                <DataTableColumnHeader column={column} title="Tags" />
+            ),
+            cell: ({ row }) => {
+                const tags = row.original.tags || [];
+                const maxVisibleTags = 2;
+                const visibleTags = tags.slice(0, maxVisibleTags);
+                const remainingTags = tags.slice(maxVisibleTags);
+
+                return (
+                    <div className="flex items-center gap-1 overflow-hidden whitespace-nowrap">
+                        {visibleTags.map((tag, index) => (
+                            <Badge key={index} className="px-1 py-0.5 text-xs">
+                                {tag}
+                            </Badge>
+                        ))}
+                        {remainingTags.length > 0 && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Badge className="px-1 py-0.5 text-xs">
+                                            +{remainingTags.length} more
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <span>{remainingTags.join(", ")}</span>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
+                );
+            },
+        },
+
+        {
+            accessorKey: "employmentType",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Employment Type" />,
+            cell: ({ row }) => <span>{row.original.employmentType || "N/A"}</span>,
         },
         {
             accessorKey: "collaborators",
@@ -203,18 +263,33 @@ export function JobsTable({ jobs }: JobsTableProps) {
             cell: ({ row }) => format(new Date(row.original.createdAt), "MMM dd, yyyy, h:mm a"),
         },
         {
+            accessorKey: "status",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+            cell: ({ row }) => {
+                const status = row.original.status;
+                const statusColor = statusColors[status] || "gray";
+                const icon = statusIcons[status];
+
+                return (
+                    <Badge  className="gap-1">
+                        {icon}
+                        {status}
+                    </Badge>
+
+                );
+            },
+        },
+        {
             id: "actions",
             cell: ({ row }) => {
                 const job = row.original as Job;
                 return (
-                    <div className="flex justify-end">
-                        {/* Add other actions like "Update Job" here if needed */}
-                     
+                    <div className="flex justify-end items-center space-x-2">
                         <Button
                             variant="ghost"
                             size="icon"
                             aria-label="Edit Role"
-                            onClick={() => router.push(`/jobs/update/${job._id}`)}
+                            onClick={() => router.push(`/Recruiterjobs/update/${job._id}`)}
                         >
                             <Edit size={16} strokeWidth={2} aria-hidden="true" />
                         </Button>
@@ -227,6 +302,38 @@ export function JobsTable({ jobs }: JobsTableProps) {
                             cancelText="Cancel"
                             confirmText="Delete"
                         />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" aria-label="Update Status">
+                                    <Ellipsis size={16} strokeWidth={2} aria-hidden="true" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuRadioGroup
+                                    value={job.status}
+                                    onValueChange={async (newStatus) => {
+                                        try {
+                                            await updateJobStatus({
+                                                jobId: job._id as Id<"jobs">,
+                                                status: newStatus as "Pending" | "Open" | "Closed",
+                                            });
+                                        } catch (error) {
+                                            console.error("Failed to update job status:", error);
+                                        }
+                                    }}
+                                >
+                                    {Object.entries(statusIcons).map(([status, icon]) => (
+                                        <DropdownMenuRadioItem key={status} value={status}>
+                                            <div className="flex justify-between w-full items-center">
+                                                <span>{status}</span>
+                                                {icon}
+                                            </div>
+                                        </DropdownMenuRadioItem>
+                                    ))}
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+
+                        </DropdownMenu>
                     </div>
                 );
             },
@@ -277,7 +384,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
                             <div className="flex items-center space-x-2">
                                 <span>{option.label}</span>
                             </div>
-                        )}
+                        ))}
                         onChange={setSelectedPermissions}
                     />
  */}
@@ -368,10 +475,11 @@ export function JobsTable({ jobs }: JobsTableProps) {
                                             title="No Stories Yet"
                                             description="Begin your creative journey by adding a new story today!"
                                             imageSrc="/stories-empty-2.png"
-                                            actionComponent={<Button onClick={() => router.push("/jobs/add")}>
+                                            actionComponent={<Button onClick={() => router.push("/Recruiterjobs/add")}>
                                                 <Plus size={16} strokeWidth={2} aria-hidden="true" />
                                                 <span>Add Job</span>
                                             </Button>}
+
                                         />
 
                                     </div>

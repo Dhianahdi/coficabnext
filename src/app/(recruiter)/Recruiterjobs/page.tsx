@@ -41,7 +41,7 @@ export default function JobsPage() {
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
               Job Management
             </h1>
-            <Button onClick={() => router.push("/jobs/add")}>
+            <Button onClick={() => router.push("/Recruiterjobs/add")}>
               <Plus size={16} strokeWidth={2} aria-hidden="true" />
               <span>Add Job</span>
             </Button>

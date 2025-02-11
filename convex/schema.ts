@@ -41,28 +41,32 @@ const schema = defineSchema({
     createdAt: v.float64(),             // Timestamp for department creation
   }).index("name", ["name"]),
 
-  // --- Jobs Table (Posted by Recruiters) ---
-  jobs: defineTable({
-    title: v.string(),                      // Job title
-    description: v.string(),                 // Job description
-    recruiterId: v.id("users"),              // Recruiter who posted the job
-    departmentId: v.optional(v.id("departments")), // Associated department
-    requirements: v.optional(v.string()),    // Job requirements
-    salaryRange: v.optional(v.string()),     // Salary range (e.g., "50k-70k/year")
-    employmentType: v.optional(v.string()),  // Full-time, part-time, contract, internship
-    location: v.optional(v.string()),        // Work location or remote option
-    experienceLevel: v.optional(v.string()), // Entry, mid, senior level
-    tags: v.optional(v.array(v.string())),   // Keywords for filtering
-    applicationDeadline: v.optional(v.float64()), // Deadline for applications
-    interviewProcess: v.optional(v.string()), // Description of the hiring processZ
-    updatedAt: v.optional(v.float64()), // Track last modification time    // Open, closed, paused, etc.
-    collaborators: v.optional(v.array(v.id("users"))), // List of users collaborating on the job post
-  })
+// --- Jobs Table (Posted by Recruiters) ---
+jobs: defineTable({
+  title: v.string(),                      // Job title
+  description: v.string(),                 // Job description
+  recruiterId: v.id("users"),              // Recruiter who posted the job
+  departmentId: v.optional(v.id("departments")), // Associated department
+  requirements: v.optional(v.string()),    // Job requirements
+  salaryRange: v.optional(v.string()),     // Salary range (e.g., "50k-70k/year")
+  employmentType: v.optional(v.string()),  // Full-time, part-time, contract, internship
+  location: v.optional(v.string()),        // Work location or remote option
+  experienceLevel: v.optional(v.string()), // Entry, mid, senior level
+  tags: v.optional(v.array(v.string())),   // Keywords for filtering
+  applicationDeadline: v.optional(v.float64()), // Deadline for applications
+  interviewProcess: v.optional(v.string()), // Ensure interviewProcess is included
+  updatedAt: v.optional(v.float64()), // Track last modification time
+  collaborators: v.optional(v.array(v.id("users"))), // List of users collaborating on the job post
+  status: v.union(
+    v.literal("Pending"),
+    v.literal("Open"),
+    v.literal("Closed")
+  ), // Job status
+})
   .index("title", ["title"])
   .index("departmentId", ["departmentId"]) // Index for filtering jobs by department
   .index("recruiterId", ["recruiterId"]) // Index for filtering jobs by recruiter
   .index("collaborators", ["collaborators"]), // Index for searching jobs by collaborators
-
 
   // --- Offers Table (Applications submitted by candidates) ---
   offers: defineTable({
@@ -77,6 +81,18 @@ const schema = defineSchema({
     // Notes from recruiter about the application
   }).index("jobId", ["jobId"])
     .index("candidateId", ["candidateId"]),
+    
+    experienceLevelOptions: defineTable({
+      value: v.string(),
+      label: v.string(),
+    }).index("value", ["value"]),
+  
+    // --- Employment Type Options Table ---
+    employmentTypeOptions: defineTable({
+      value: v.string(),
+      label: v.string(),
+    }).index("value", ["value"]),
+
 });
 
 export default schema;

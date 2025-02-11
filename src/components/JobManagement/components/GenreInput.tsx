@@ -3,7 +3,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Tag, TagInput } from "emblor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface GenreInputProps {
     id: string;
@@ -31,6 +31,16 @@ export const GenreInput: React.FC<GenreInputProps> = ({
 }) => {
     const [tags, setTags] = useState<Tag[]>(initialTags);
     const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
+
+    // Debugging: Log initialTags prop
+    useEffect(() => {
+        console.log("Initial Tags Prop:", initialTags);
+    }, [initialTags]);
+
+    // Update tags state when initialTags prop changes
+    useEffect(() => {
+        setTags(initialTags);
+    }, [initialTags]);
 
     const handleSetTags = (value: React.SetStateAction<Tag[]>) => {
         const newTags = typeof value === "function" ? value(tags) : value;

@@ -2,13 +2,13 @@
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import React from "react";
-import { formatTimeAgo } from "@/lib/dateUtils";
+import React, { useState } from "react";
+import { formatTimeAgo, formatDate } from "@/lib/dateUtils";
 import { useRouter } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { Button } from "@/components/ui/button";
 import { FaMapMarkerAlt } from "react-icons/fa";
-import { Archive, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Archive, CheckCircle, Clock, XCircle, CalendarDays } from "lucide-react"; // Added CalendarDays icon
 
 interface CardPostProps {
   user: {
@@ -37,17 +37,25 @@ interface CardPostProps {
 
 export default function CardPost({ user, post }: CardPostProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const timeAgo = formatTimeAgo(post.createdAt);
 
   // Handle click to navigate to job details
-  const handleClick = () => {
-    router.push(`/job/${post._id}`);
+  const handleClick = async () => {
+    setLoading(true); // Set loading to true
+    try {
+      await router.push(`/jobDetails/${post._id}`); // Wait for navigation to complete
+    } catch (error) {
+      console.error("Navigation error:", error);
+    } finally {
+      setLoading(false); // Reset loading state
+    }
   };
 
   const statusIcons = {
-    Pending: <Clock size={12} className="text-yellow-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
-    Open: <CheckCircle size={12} className="text-green-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
-    Closed: <XCircle size={12} className="text-red-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
+    Pending: <Clock size={12} className="text-yellow-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
+    Open: <CheckCircle size={12} className="text-green-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
+    Closed: <XCircle size={12} className="text-red-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
   };
 
   const statusColors = {
@@ -60,8 +68,7 @@ export default function CardPost({ user, post }: CardPostProps) {
 
   return (
     <Card
-      className="w-full max-w-lg shadow-none flex flex-col cursor-pointer hover:shadow-md transition-shadow"
-      onClick={handleClick}
+      className="w-full max-w-lg shadow-none flex flex-col hover:shadow-md transition-shadow"
     >
       <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
         <div className="flex items-center gap-4">
@@ -104,9 +111,9 @@ export default function CardPost({ user, post }: CardPostProps) {
             </div>
           )}
           <div className="flex items-center mb-6">
-            <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
+            <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0">
               {post.title}
-            </h4>
+            </h2>
             {post.employmentType && (
               <>
                 <span className="mx-2">|</span>
@@ -118,7 +125,7 @@ export default function CardPost({ user, post }: CardPostProps) {
           </div>
           {post.requirements && (
             <div className="mb-4 flex items-start">
-              <CheckCircle size={20} className="mr-4 self-center" />
+              <CheckCircle size={20} className="mr-4 self-start flex-shrink-0 mt-1" />
               <div>
                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
                   Requirements
@@ -129,7 +136,7 @@ export default function CardPost({ user, post }: CardPostProps) {
           )}
           {post.interviewProcess && (
             <div className="mb-4 flex items-start">
-              <Clock size={20} className="mr-4 self-center" />
+              <Clock size={20} className="mr-4 self-start flex-shrink-0 mt-1" />
               <div>
                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
                   Interview Process
@@ -138,12 +145,39 @@ export default function CardPost({ user, post }: CardPostProps) {
               </div>
             </div>
           )}
+          {post.applicationDeadline && (
+            <div className="flex items-center gap-2 text-sm mt-4 justify-end">
+              <CalendarDays size={16} className="text-red-500" /> {/* Added CalendarDays icon */}
+              <span className="font-bold">Deadline :</span> {formatDate(new Date(post.applicationDeadline).toISOString())}
+            </div>
+          )}
+          <Separator className="my-4" />
+          <div className="flex items-center">
+            {post.salaryRange && (
+              <div className="flex items-baseline">
+                <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+                  {post.salaryRange} DT
+                </h2>
+                <p className="text-sm text-muted-foreground ml-2">
+                  <span className="font-medium">/ Month</span>
+                </p>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex flex-col gap-2 mt-4">
-          <Button variant="outline" onClick={handleClick} className="w-full flex items-center justify-center">
-            View Details
+          <Button
+            variant="outline"
+            onClick={handleClick}
+            className="w-full flex items-center justify-center"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "View Details"}
           </Button>
-          <Button onClick={() => alert("Apply Now clicked!")} className="w-full flex items-center justify-center">
+          <Button
+            onClick={() => alert("Apply Now clicked!")}
+            className="w-full flex items-center justify-center"
+          >
             <CheckCircle className="mr-2 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
             Apply Now
           </Button>

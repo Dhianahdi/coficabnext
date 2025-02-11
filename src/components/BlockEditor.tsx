@@ -83,7 +83,7 @@ const BlockEditor = ({ value, onChange, editable }: EditorProps) => {
 
   return (
     <div
-      className="overflow-y-auto h-[650px] p-4" // Add padding
+      className="overflow-y-auto h-[1122px] p-4" // Add padding
     >
       <BlockNoteView
         editor={editor}

@@ -239,7 +239,7 @@ export default function UpdateJobPage() {
                                 <Label htmlFor="requirements" className="min-w-24 whitespace-nowrap font-bold">Requirements</Label>
                                 <TextareaWithLimit
                                     id="requirements"
-                                    maxLength={500}
+                                    maxLength={150}
                                     value={requirements}
                                     onChange={setRequirements}
                                     placeholder="Enter job requirements"
@@ -331,7 +331,7 @@ export default function UpdateJobPage() {
                                 <Label htmlFor="interviewProcess" className="min-w-24 whitespace-nowrap font-bold">Interview Process</Label>
                                 <TextareaWithLimit
                                     id="interviewProcess"
-                                    maxLength={500}
+                                    maxLength={150}
                                     value={interviewProcess}
                                     onChange={setInterviewProcess}
                                     placeholder="Describe the interview process"

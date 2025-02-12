@@ -46,14 +46,14 @@ export default function JobDetailsPage() {
           <div className="space-y-6">
             {/* Description Section */}
             <Card className="p-6 h-full flex flex-col">
-              <div className="space-y-4 flex-1 flex flex-col">
+              <div className=" flex-1 flex flex-col">
                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Description</h3>
-                <p className="text-sm">
+                <p className="text-sm text-muted-foreground">
                   Detailed description of the job.
                 </p>
                 <div className="flex-1 overflow-y-auto">
-                  <BlockEditor value={job.description} onChange={() => {}} editable={false} />
-                </div>  
+                  <BlockEditor value={job.description} onChange={() => { }} editable={false} />
+                </div>
               </div>
             </Card>
           </div>
@@ -61,11 +61,15 @@ export default function JobDetailsPage() {
           {/* Right Panel */}
           <div className="space-y-6">
             {/* Job Details Section */}
-            <div className="space-y-4">
+            <div className=" flex-1 flex flex-col">
+
               <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Details</h3>
-              <p className="text-sm">
+              <p className="text-sm text-muted-foreground">
                 Essential information about the job.
               </p>
+            </div>
+            <div className="space-y-4">
+
               <div className="flex items-center gap-4">
                 <Label className="min-w-24 whitespace-nowrap font-bold">Title</Label>
                 <p className="text-sm">{job.title}</p>
@@ -83,25 +87,42 @@ export default function JobDetailsPage() {
             <Separator className="my-4" />
 
             {/* Compensation & Location Section */}
-            <div className="space-y-4">
+            <div className=" flex-1 flex flex-col">
+
               <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Compensation & Location</h3>
-              <p className="text-sm">Salary range and location.</p>
+              <p className="text-sm text-muted-foreground">Salary range and location.</p>
+            </div>
+            <div className="space-y-4">
+
               <div className="flex items-center gap-4">
                 <Label className="min-w-24 whitespace-nowrap font-bold">Salary Range</Label>
-                <p className="text-sm">{job.salaryRange}</p>
+                <p className="text-lg  ml-2">
+                  {job.salaryRange} DT
+                </p>
+                <p className="text-sm text-muted-foreground ">
+                  <span className="font-medium">/ Month</span>
+                </p>
+
               </div>
               <div className="flex items-center gap-4">
                 <Label className="min-w-24 whitespace-nowrap font-bold">Location</Label>
-                <p className="text-sm">{job.location}</p>
+                <div className="flex items-center text-sm mb-1">
+                  <FaMapMarkerAlt className="mr-2" />
+                  <span>{job.location}</span>
+                </div>
               </div>
             </div>
 
             <Separator className="my-4" />
 
             {/* Employment Details Section */}
-            <div className="space-y-4">
+            <div className=" flex-1 flex flex-col">
+
               <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Employment Details</h3>
-              <p className="text-sm">Employment type, experience level, and tags.</p>
+              <p className="text-sm text-muted-foreground">Employment type, experience level, and tags.</p>
+            </div>
+            <div className="space-y-4">
+
               <div className="flex items-center gap-4">
                 <Label className="min-w-24 whitespace-nowrap font-bold">Employment Type</Label>
                 <p className="text-sm">{job.employmentType}</p>
@@ -125,15 +146,22 @@ export default function JobDetailsPage() {
             <Separator className="my-4" />
 
             {/* Application & Interview Section */}
-            <div className="space-y-4">
+            <div className=" flex-1 flex flex-col">
+
               <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Application & Interview</h3>
-              <p className="text-sm">Application deadline and interview process.</p>
-              <div className="flex items-center gap-4">
+              <p className="text-sm text-muted-foreground">Application deadline and interview process.</p>
+            </div>
+            <div className="space-y-4">
+
+                <div className="flex items-center gap-4">
                 <Label className="min-w-24 whitespace-nowrap font-bold">Application Deadline</Label>
-                <p className="text-sm">
+                <div className="flex items-center text-sm">
+                  <CalendarDays className="mr-2" size={16} /> {/* Added spacing on the right of the icon */}
+                  <span>
                   {job.applicationDeadline ? format(new Date(job.applicationDeadline), "PPP") : "N/A"}
-                </p>
-              </div>
+                  </span>
+                </div>
+                </div>
               <div className="flex items-center gap-4">
                 <Label className="min-w-24 whitespace-nowrap font-bold">Interview Process</Label>
                 <p className="text-sm">{job.interviewProcess}</p>

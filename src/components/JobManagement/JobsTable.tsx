@@ -28,7 +28,7 @@ import { Checkbox } from "../ui/checkbox";
 import { StaticTasksTableFloatingBar } from "./components/StaticTasksTableFloatingBar";
 import { TableViewOptions } from "./datatable/DataTableViewOptions";
 import { ExportButton } from "../ui/ExportButton";
-import { Bell, CheckCircle, Circle, CircleCheck, CircleCheckBig, CircleX, Clock, Ellipsis, FileText, Heart, Home, Loader, Settings, Star, Lock, Unlock, User, XCircle, EditIcon, Tags, TrashIcon, Plus, Edit } from "lucide-react";
+import { Bell, CheckCircle, Circle, CircleCheck, CircleCheckBig, CircleX, Clock, Ellipsis, FileText, Heart, Home, Loader, Settings, Star, Lock, Unlock, User, XCircle, EditIcon, Tags, TrashIcon, Plus, Edit, Calendar } from "lucide-react";
 import { DataTableFacetedFilter } from "./datatable/DataTableFacetedFilter";
 import { format } from "date-fns";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "../ui/dropdown-menu";
@@ -49,7 +49,7 @@ import DeleteRoleDialog from "./CRUD/DeleteJobDialog";
 import { UpdateRole } from "./CRUD/UpdateRole";
 import { useRouter } from "next/navigation";
 import DeleteJobDialog from "./CRUD/DeleteJobDialog";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
 export type Job = {
@@ -57,13 +57,15 @@ export type Job = {
     title: string;
     description: string;
     recruiterName: string;
+    recruiterImage: string;
+    recruiterEmail: string;
     departmentName: string;
     collaborators: string[];
-    createdAt: string;
-    experienceLevel?: string; // Entry, Mid, Senior
     tags?: string[]; // Keywords for filtering
     employmentType?: string; // Full-time, Part-time, Contract, Internship
+    experienceLevel?: string; // Experience level
     status: "Pending" | "Open" | "Closed"; // Job status
+    createdAt: string; // Date when the job was created
 };
 
 
@@ -74,23 +76,25 @@ type JobsTableProps = {
 export function JobsTable({ jobs }: JobsTableProps) {
     const router = useRouter();
     const updateJobStatus = useMutation(api.mutations.jobs.updateJobStatus);
+    const experienceLevelOptions = useQuery(api.queries.jobs.getExperienceLevelOptions) || [];
+    const employmentTypeOptions = useQuery(api.queries.jobs.getEmploymentTypeOptions) || [];
 
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set());
-    const [selectedStatus, setSelectedStatus] = React.useState<Set<string>>(new Set()); // New state for selected status
-    const [selectedPrivacy, setSelectedPrivacy] = React.useState<Set<string>>(new Set()); // Change to Set<string>
+    const [selectedStatus, setSelectedStatus] = React.useState<Set<string>>(new Set());
+    const [selectedEmploymentType, setSelectedEmploymentType] = React.useState<Set<string>>(new Set());
+    const [selectedExperienceLevel, setSelectedExperienceLevel] = React.useState<Set<string>>(new Set());
     const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
         from: undefined,
         to: undefined,
     });
-    const [selectedPermissions, setSelectedPermissions] = React.useState<Set<string>>(new Set());
 
     const statusIcons = {
-        Pending: <Clock size={12} className="text-yellow-500 -ms-0.5 " strokeWidth={2} aria-hidden="true"  />,
+        Pending: <Clock size={12} className="text-yellow-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
         Open: <CheckCircle size={12} className="text-green-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
-        Closed: <XCircle size={12} className="text-red-500 -ms-0.5 "strokeWidth={2} aria-hidden="true"  />,
+        Closed: <XCircle size={12} className="text-red-500 -ms-0.5 " strokeWidth={2} aria-hidden="true" />,
     };
 
     const statusColors = {
@@ -100,37 +104,29 @@ export function JobsTable({ jobs }: JobsTableProps) {
     };
 
     // Determine if any filters are applied
-    const isFiltered = selectedPermissions.size > 0;
-    // Extract unique permissions for filtering
-    /* const uniquePermissions = React.useMemo(() => {
-        const allPermissions = roles.flatMap((role) => role.permissions);
-        const uniquePermissions = Array.from(new Set(allPermissions)); // Remove duplicates
-        return uniquePermissions.map((permission) => ({
-            value: permission,
-            label: permission,
-        }));
-    }, [roles]); */
-    // Filter stories based on selected status and privacy
-    // Filter roles based on selected permissions
-    /* const filteredRoles = React.useMemo(() => {
-        return roles.filter((role) => {
-            // If no permissions are selected, include all roles
-            if (selectedPermissions.size === 0) return true;
+    const isFiltered = selectedStatus.size > 0 || selectedEmploymentType.size > 0 || selectedExperienceLevel.size > 0;
 
-            // Check if the role has all selected permissions
-            return Array.from(selectedPermissions).every((permission) =>
-                role.permissions.includes(permission)
-            );
+    // Filter jobs based on selected status, employment type, and experience level
+    const filteredJobs = React.useMemo(() => {
+        return jobs.filter((job) => {
+            const statusMatch = selectedStatus.size === 0 || selectedStatus.has(job.status);
+            const employmentTypeMatch = selectedEmploymentType.size === 0 || selectedEmploymentType.has(job.employmentType || "N/A");
+            const experienceLevelMatch = selectedExperienceLevel.size === 0 || selectedExperienceLevel.has(job.experienceLevel || "N/A");
+            return statusMatch && employmentTypeMatch && experienceLevelMatch;
         });
-    }, [roles, selectedPermissions]); */
-
+    }, [jobs, selectedStatus, selectedEmploymentType, selectedExperienceLevel]);
 
     const resetFilters = () => {
-        setSelectedPermissions(new Set());
+        setSelectedStatus(new Set());
+        setSelectedEmploymentType(new Set());
+        setSelectedExperienceLevel(new Set());
     };
 
-
-
+    const defaultRenderOption = (option: { value: string; label: string }) => (
+        <div className="flex items-center space-x-2">
+            <span>{option.label}</span>
+        </div>
+    );
 
     // Dynamically generate options from story statuses
     // Function to clear selected rows
@@ -142,7 +138,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
         {
             id: "select",
             size: 50,
-            minSize: 50,
+            maxSize: 50,
             header: ({ table }) => (
                 <Checkbox
                     checked={table.getIsAllPageRowsSelected()}
@@ -184,28 +180,59 @@ export function JobsTable({ jobs }: JobsTableProps) {
             accessorKey: "title",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Job Title" />,
             cell: ({ row }) => <span className="font-bold">{row.original.title}</span>,
+            minSize: 150,
+            size: 200,
+            maxSize: 300,
         },
-
         {
             accessorKey: "recruiterName",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Recruiter" />,
-            cell: ({ row }) => <span>{row.original.recruiterName}</span>,
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    {row.original.recruiterImage && (
+                        <img
+                            src={row.original.recruiterImage}
+                            alt={`${row.original.recruiterName}'s avatar`}
+                            className="h-8 w-8 rounded-full flex-shrink-0"
+                        />
+                    )}
+                    <div className="flex flex-col min-w-0">
+                        <span className="font-bold truncate">{row.original.recruiterName}</span>
+                        <span className="text-sm text-muted-foreground truncate">{row.original.recruiterEmail}</span>
+                    </div>
+                </div>
+            ),
+            minSize: 200,
+            size: 300,
+            maxSize: 450,
         },
         {
             accessorKey: "departmentName",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Department" />,
-            cell: ({ row }) => <span>{row.original.departmentName}</span>,
+            cell: ({ row }) => (
+                <Badge variant="outline" className="truncate px-2 py-1">
+                    {row.original.departmentName}
+                </Badge>
+            ),
+            minSize: 120,
+            size: 150,
+            maxSize: 200,
         },
         {
             accessorKey: "experienceLevel",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Experience Level" />,
-            cell: ({ row }) => <span>{row.original.experienceLevel || "N/A"}</span>,
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Experience" />,
+            cell: ({ row }) => (
+                <Badge variant="outline" className="truncate px-2 py-1">
+                    {row.original.experienceLevel || "N/A"}
+                </Badge>
+            ),
+            minSize: 100,
+            size: 130,
+            maxSize: 160,
         },
         {
             accessorKey: "tags",
-            header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Tags" />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Tags" />,
             cell: ({ row }) => {
                 const tags = row.original.tags || [];
                 const maxVisibleTags = 2;
@@ -213,9 +240,9 @@ export function JobsTable({ jobs }: JobsTableProps) {
                 const remainingTags = tags.slice(maxVisibleTags);
 
                 return (
-                    <div className="flex items-center gap-1 overflow-hidden whitespace-nowrap">
+                    <div className="flex items-center gap-1 min-w-0">
                         {visibleTags.map((tag, index) => (
-                            <Badge key={index} className="px-1 py-0.5 text-xs">
+                            <Badge key={index} className="px-1 py-0.5 text-xs whitespace-nowrap">
                                 {tag}
                             </Badge>
                         ))}
@@ -223,7 +250,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        <Badge className="px-1 py-0.5 text-xs">
+                                        <Badge className="px-1 py-0.5 text-xs whitespace-nowrap">
                                             +{remainingTags.length} more
                                         </Badge>
                                     </TooltipTrigger>
@@ -236,32 +263,23 @@ export function JobsTable({ jobs }: JobsTableProps) {
                     </div>
                 );
             },
+            minSize: 150,
+            size: 200,
+            maxSize: 300,
         },
-
         {
             accessorKey: "employmentType",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Employment Type" />,
-            cell: ({ row }) => <span>{row.original.employmentType || "N/A"}</span>,
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Employment" />,
+            cell: ({ row }) => (
+                <Badge variant="outline" className="truncate px-2 py-1">
+                    {row.original.employmentType || "N/A"}
+                </Badge>
+            ),
+            minSize: 120,
+            size: 150,
+            maxSize: 200,
         },
-        {
-            accessorKey: "collaborators",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Collaborators" />,
-            cell: ({ row }) => {
-                const collaborators = row.original.collaborators || [];
-                return (
-                    <div className="flex items-center gap-1">
-                        {collaborators.map((name, index) => (
-                            <Badge key={index} className="px-1 py-0.5 text-xs">{name}</Badge>
-                        ))}
-                    </div>
-                );
-            },
-        },
-        {
-            accessorKey: "createdAt",
-            header: ({ column }) => <DataTableColumnHeader column={column} title="Posted On" />,
-            cell: ({ row }) => format(new Date(row.original.createdAt), "MMM dd, yyyy, h:mm a"),
-        },
+       
         {
             accessorKey: "status",
             header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
@@ -271,20 +289,37 @@ export function JobsTable({ jobs }: JobsTableProps) {
                 const icon = statusIcons[status];
 
                 return (
-                    <Badge  className="gap-1">
+                    <Badge className="gap-1 whitespace-nowrap">
                         {icon}
                         {status}
                     </Badge>
-
                 );
             },
+            minSize: 100,
+            size: 120,
+            maxSize: 150,
+        },
+        {
+            accessorKey: "createdAt",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Posted On" />,
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-muted-foreground" />
+                    <span>{format(new Date(row.original.createdAt), "MMM dd, yyyy, h:mm a")}</span>
+                </div>
+            ),
+            minSize: 160,
+            size: 180,
+            maxSize: 200,
         },
         {
             id: "actions",
+
+            accessorKey: "Actions",
             cell: ({ row }) => {
                 const job = row.original as Job;
                 return (
-                    <div className="flex justify-end items-center space-x-2">
+                    <div className="flex justify-end items-center ">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -332,17 +367,18 @@ export function JobsTable({ jobs }: JobsTableProps) {
                                     ))}
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
-
                         </DropdownMenu>
                     </div>
                 );
             },
-            size: 40,
+            size: 120,
+            maxSize: 120,
         },
     ];
 
+
     const table = useReactTable({
-        data: jobs,
+        data: filteredJobs,
         columns,
         state: { sorting, columnFilters, columnVisibility },
         onSortingChange: setSorting,
@@ -366,35 +402,49 @@ export function JobsTable({ jobs }: JobsTableProps) {
             <div className="flex items-center justify-between py-4">
                 {/* Search Input, Filters, and Date Range Picker */}
                 <div className="flex items-center space-x-4 flex-grow">
-
-                    {/* Title Filter */}
-                    {/*   <Input
-                        placeholder="Filter by title..."
-                        value={(table.getColumn("title")?.getFilterValue() as string) || ""}
-                        onChange={(e) => table.getColumn("title")?.setFilterValue(e.target.value)}
-                        className="w-full max-w-sm"
-                    /> */}
-
                     {/* Status Filter Dropdown */}
-                    {/*  <DataTableFacetedFilter
-                        title="Permissions"
-                        options={uniquePermissions}
-                        selectedValues={selectedPermissions}
-                        renderOption={(option) => (
-                            <div className="flex items-center space-x-2">
-                                <span>{option.label}</span>
-                            </div>
-                        ))}
-                        onChange={setSelectedPermissions}
+                    <DataTableFacetedFilter
+                        title="Status"
+                        options={["Pending", "Open", "Closed"].map((status) => ({
+                            value: status,
+                            label: status,
+                        }))}
+                        selectedValues={selectedStatus}
+                        onChange={setSelectedStatus}
+                        renderOption={defaultRenderOption}
                     />
- */}
+
+                    {/* Employment Type Filter Dropdown */}
+                    <DataTableFacetedFilter
+                        title="Employment Type"
+                        options={employmentTypeOptions.map((type) => ({
+                            value: type.value,
+                            label: type.label,
+                        }))}
+                        selectedValues={selectedEmploymentType}
+                        onChange={setSelectedEmploymentType}
+                        renderOption={defaultRenderOption}
+                    />
+
+                    {/* Experience Level Filter Dropdown */}
+                    <DataTableFacetedFilter
+                        title="Experience Level"
+                        options={experienceLevelOptions.map((level) => ({
+                            value: level.value,
+                            label: level.label,
+                        }))}
+                        selectedValues={selectedExperienceLevel}
+                        onChange={setSelectedExperienceLevel}
+                        renderOption={defaultRenderOption}
+                    />
+
                     {/* Reset Filters Button */}
                     {isFiltered && (
                         <Button
                             aria-label="Reset filters"
                             variant="ghost"
                             className="h-8 px-2 lg:px-3"
-                            onClick={resetFilters} // Call resetFilters function
+                            onClick={resetFilters}
                         >
                             Reset
                             <XCircle className="ml-2 size-4" aria-hidden="true" />
@@ -410,18 +460,18 @@ export function JobsTable({ jobs }: JobsTableProps) {
                         placeholder="Select Date Range"
                         triggerVariant="outline"
                         triggerSize="sm"
-                        onDateRangeChange={setDateRange} // Update the date range
+                        onDateRangeChange={setDateRange}
                     />
 
                     <ExportButton
                         table={table}
-                        filename="stories"
+                        filename="jobs"
                         excludeColumns={["select", "actions"]}
                     />
                     <TableViewOptions
                         columns={table
                             .getAllColumns()
-                            .filter((column) => column.id !== "select" && column.id !== "actions") // Exclude "select" and "actions" columns
+                            .filter((column) => column.id !== "select" && column.id !== "actions")
                             .map((column) => ({
                                 id: column.id,
                                 isVisible: column.getIsVisible(),

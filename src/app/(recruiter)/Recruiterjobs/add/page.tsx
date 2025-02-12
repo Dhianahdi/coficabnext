@@ -30,6 +30,7 @@ import BlockEditor from "@/components/BlockEditor";
 import TextareaWithLimit from "@/components/JobManagement/components/TextareaWithLimit";
 import { Separator } from "@/components/ui/separator";
 import ReusableSelect from "@/components/ReusableSelect";
+import { Spinner } from "@/components/spinner";
 
 interface Option {
     value: string;
@@ -207,6 +208,8 @@ export default function AddJobPage() {
 
             toast.success("Job saved successfully!");
             resetForm();
+            router.push("/Recruiterjobs");
+
         } catch (error) {
             toast.error("Failed to save job.");
             console.error(error);
@@ -214,165 +217,189 @@ export default function AddJobPage() {
             setIsSaving(false);
         }
     };
+    const isLoading =
+        !departments || !fetchedExperienceLevelOptions || !fetchedEmploymentTypeOptions;
 
     return (
         <AdminPanelLayout>
             <ContentLayout title="Dashboard">
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-semibold">Create a New Job Posting</h1>
-                    <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving && <Loader2 className="animate-spin mr-2 h-4 w-4" aria-hidden="true" />}
-                        {isSaving ? "Saving Changes..." : "Save Changes"}
+
+                <div className="flex items-center justify-between mb-4">
+                    <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+                        Create a New Job Posting
+                    </h1>
+                    <Button
+                        onClick={handleSave}
+                        className="flex items-center justify-center w-[160px] h-[40px]" // Adjust width and height as needed
+                        disabled={isSaving} // Disable the button while saving
+                    >
+                        {isSaving ? (
+                            <Spinner variant="ring" size={24} />
+                        ) : (
+                            <span>Save Changes</span>
+                        )}
                     </Button>
+
+
+
                 </div>
-                <div className="mt-6 flex justify-end gap-4"></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Left Panel */}
-                    <Card className="p-6 h-full flex flex-col">
-                        <div className="space-y-4 flex-1 flex flex-col">
-                            <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Description</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Provide a detailed description of the job, including responsibilities, qualifications, and any other relevant information.
-                            </p>
-                            <div className="flex-1 overflow-y-auto">
-                                <BlockEditor value={description} onChange={setDescription} editable />
-                            </div>
-                        </div>
-                    </Card>
 
-                    {/* Right Panel */}
-                    <div className="space-y-6">
-                        {/* Job Details Section */}
-                        <div className="space-y-4">
-                            <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Details</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Provide essential information about the job, including its title, description, department, and requirements.
-                            </p>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="title" className="min-w-24 whitespace-nowrap font-bold">Title</Label>
-                                <InputWithCancel inputValue={title} setInputValue={setTitle} inputId="title" placeholder="Enter job title" className="flex-1" />
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="department" className="min-w-24 whitespace-nowrap font-bold">Department</Label>
-                                <Select value={departmentId} onValueChange={(value) => setDepartmentId(value as Id<"departments">)}>
-                                    <SelectTrigger className="flex-1">
-                                        <SelectValue placeholder="Select a department" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {departments.map((dept) => (
-                                            <SelectItem key={dept._id} value={dept._id}>
-                                                {dept.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="requirements" className="min-w-24 whitespace-nowrap font-bold">Requirements</Label>
-                                <TextareaWithLimit
-                                    id="requirements"
-                                    maxLength={150}
-                                    value={requirements}
-                                    onChange={setRequirements}
-                                    placeholder="Enter job requirements"
-                                    className="flex-1"
-                                    height="150px"
-                                />
-                            </div>
-                        </div>
+                <p className="leading-7 [&:not(:first-child)]:mb-6">
+                    Create and manage job postings easily. Fill in the details to add a new job to the system.
 
-                        <Separator className="my-4" />
+                </p>
 
-                        {/* Compensation & Location Section */}
-                        <div className="space-y-4">
-                            <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Compensation & Location</h3>
-                            <p className="text-sm text-muted-foreground">Specify the salary range and location for the job.</p>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="salaryRange" className="min-w-24 whitespace-nowrap font-bold">Salary Range</Label>
-                                <InputWithCancel inputValue={salaryRange} setInputValue={setSalaryRange} inputId="salaryRange" placeholder="Enter salary range" className="flex-1" />
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="location" className="min-w-24 whitespace-nowrap font-bold">Location</Label>
-                                <InputWithCancel inputValue={location} setInputValue={setLocation} inputId="location" placeholder="Enter location" className="flex-1" />
-                            </div>
-                        </div>
-                        <Separator className="my-4" />
-
-                        {/* Employment Details Section */}
-                        <div className="space-y-4">
-                            <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Employment Details</h3>
-                            <p className="text-sm text-muted-foreground">Define the type of employment, required experience level, and relevant tags.</p>
-
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="employmentType" className="min-w-24 whitespace-nowrap font-bold">Employment Type</Label>
-                                <ReusableSelect
-                                    options={employmentTypeOptions}
-                                    value={employmentType}
-                                    onChange={handleEmploymentTypeChange}
-                                    onAddNewOption={handleAddNewEmploymentTypeOption}
-                                    className="flex-1" // Allow the select to grow and take up available space
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="experienceLevel" className="min-w-24 whitespace-nowrap font-bold">Experience Level</Label>
-                                <ReusableSelect
-                                    options={experienceLevelOptions}
-                                    value={experienceLevel}
-                                    onChange={handleExperienceLevelChange}
-                                    onAddNewOption={handleAddNewExperienceLevelOption}
-                                    className="flex-1" // Allow the select to grow and take up available space
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="tags" className="min-w-28 whitespace-nowrap font-bold">Tags</Label>
-                                <GenreInput
-                                    id="tags"
-                                    initialTags={tags}
-                                    onTagsChange={(newTags) => setTags(newTags)}
-                                    placeholder="Add a tag"
-                                    className="flex-1"
-                                />
-                            </div>
-                        </div>
-
-                        <Separator className="my-4" />
-
-                        {/* Application & Interview Section */}
-                        <div className="space-y-4">
-                            <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Application & Interview</h3>
-                            <p className="text-sm text-muted-foreground">Set the application deadline and describe the interview process.</p>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="applicationDeadline" className="min-w-24 whitespace-nowrap font-bold">Application Deadline</Label>
-                                <div className="flex-1">
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                                {applicationDeadline ? format(applicationDeadline, "PPP") : "Select a date"}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0">
-                                            <Calendar mode="single" selected={applicationDeadline} onSelect={setApplicationDeadline} initialFocus />
-                                        </PopoverContent>
-                                    </Popover>
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-[300px] w-full">
+                        <Spinner variant="ring" size={40} className="text-primary" />
+                    </div>
+                ) : (
+                    <><div className="mt-6 flex justify-end gap-4"></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Left Panel */}
+                        <Card className="p-6 h-full flex flex-col">
+                            <div className=" flex-1 flex flex-col">
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Description</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Provide a detailed description of the job, including responsibilities, qualifications, and any other relevant information.
+                                </p>
+                                <div className="flex-1 overflow-y-auto">
+                                    <BlockEditor value={description} onChange={setDescription} editable />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <Label htmlFor="interviewProcess" className="min-w-24 whitespace-nowrap font-bold">Interview Process</Label>
-                                <TextareaWithLimit
-                                    id="interviewProcess"
-                                    maxLength={150}
-                                    value={interviewProcess}
-                                    onChange={setInterviewProcess}
-                                    placeholder="Describe the interview process"
-                                    className="flex-1"
-                                    height="150px"
-                                />
+                            
+                        </Card>
+
+                        {/* Right Panel */}
+                        <div className="space-y-6">
+                            {/* Job Details Section */}
+                            <div className="space-y-4">
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Details</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Provide essential information about the job, including its title, description, department, and requirements.
+                                </p>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="title" className="min-w-24 whitespace-nowrap font-bold">Title</Label>
+                                    <InputWithCancel inputValue={title} setInputValue={setTitle} inputId="title" placeholder="Enter job title" className="flex-1" />
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="department" className="min-w-24 whitespace-nowrap font-bold">Department</Label>
+                                    <Select value={departmentId} onValueChange={(value) => setDepartmentId(value as Id<"departments">)}>
+                                        <SelectTrigger className="flex-1">
+                                            <SelectValue placeholder="Select a department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {departments.map((dept) => (
+                                                <SelectItem key={dept._id} value={dept._id}>
+                                                    {dept.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="requirements" className="min-w-24 whitespace-nowrap font-bold">Requirements</Label>
+                                    <TextareaWithLimit
+                                        id="requirements"
+                                        maxLength={150}
+                                        value={requirements}
+                                        onChange={setRequirements}
+                                        placeholder="Enter job requirements"
+                                        className="flex-1"
+                                        height="150px" />
+                                </div>
+                            </div>
+
+                            <Separator className="my-4" />
+
+                            {/* Compensation & Location Section */}
+                            <div className="space-y-4">
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Compensation & Location</h3>
+                                <p className="text-sm text-muted-foreground">Specify the salary range and location for the job.</p>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="salaryRange" className="min-w-24 whitespace-nowrap font-bold">Salary Range</Label>
+                                    <InputWithCancel inputValue={salaryRange} setInputValue={setSalaryRange} inputId="salaryRange" placeholder="Enter salary range" className="flex-1" />
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="location" className="min-w-24 whitespace-nowrap font-bold">Location</Label>
+                                    <InputWithCancel inputValue={location} setInputValue={setLocation} inputId="location" placeholder="Enter location" className="flex-1" />
+                                </div>
+                            </div>
+                            <Separator className="my-4" />
+
+                            {/* Employment Details Section */}
+                            <div className="space-y-4">
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Employment Details</h3>
+                                <p className="text-sm text-muted-foreground">Define the type of employment, required experience level, and relevant tags.</p>
+
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="employmentType" className="min-w-24 whitespace-nowrap font-bold">Employment Type</Label>
+                                    <ReusableSelect
+                                        options={employmentTypeOptions}
+                                        value={employmentType}
+                                        onChange={handleEmploymentTypeChange}
+                                        onAddNewOption={handleAddNewEmploymentTypeOption}
+                                        className="flex-1" // Allow the select to grow and take up available space
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="experienceLevel" className="min-w-24 whitespace-nowrap font-bold">Experience Level</Label>
+                                    <ReusableSelect
+                                        options={experienceLevelOptions}
+                                        value={experienceLevel}
+                                        onChange={handleExperienceLevelChange}
+                                        onAddNewOption={handleAddNewExperienceLevelOption}
+                                        className="flex-1" // Allow the select to grow and take up available space
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="tags" className="min-w-28 whitespace-nowrap font-bold">Tags</Label>
+                                    <GenreInput
+                                        id="tags"
+                                        initialTags={tags}
+                                        onTagsChange={(newTags) => setTags(newTags)}
+                                        placeholder="Add a tag"
+                                        className="flex-1" />
+                                </div>
+                            </div>
+
+                            <Separator className="my-4" />
+
+                            {/* Application & Interview Section */}
+                            <div className="space-y-4">
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Application & Interview</h3>
+                                <p className="text-sm text-muted-foreground">Set the application deadline and describe the interview process.</p>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="applicationDeadline" className="min-w-24 whitespace-nowrap font-bold">Application Deadline</Label>
+                                    <div className="flex-1">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                    {applicationDeadline ? format(applicationDeadline, "PPP") : "Select a date"}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar mode="single" selected={applicationDeadline} onSelect={setApplicationDeadline} initialFocus />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="interviewProcess" className="min-w-24 whitespace-nowrap font-bold">Interview Process</Label>
+                                    <TextareaWithLimit
+                                        id="interviewProcess"
+                                        maxLength={150}
+                                        value={interviewProcess}
+                                        onChange={setInterviewProcess}
+                                        placeholder="Describe the interview process"
+                                        className="flex-1"
+                                        height="150px" />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div></>
+                )}
             </ContentLayout>
         </AdminPanelLayout>
     );

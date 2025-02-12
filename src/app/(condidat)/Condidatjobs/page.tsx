@@ -57,7 +57,7 @@ export default function Condidatjobs() {
               <CardPost
                 key={job._id}
                 user={{
-                  avatar: job.recruiterAvatar, // Pass the recruiter's avatar
+                  avatar: job.recruiterImage, // Pass the recruiter's image
                   name: job.recruiterName,
                 }}
                 post={{

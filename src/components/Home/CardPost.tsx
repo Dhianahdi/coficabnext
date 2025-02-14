@@ -67,9 +67,7 @@ export default function CardPost({ user, post }: CardPostProps) {
   const icon = statusIcons[post.status];
 
   return (
-    <Card
-      className="w-full max-w-lg shadow-none flex flex-col hover:shadow-md transition-shadow"
-    >
+    <Card className="w-full max-w-lg shadow-none flex flex-col hover:shadow-md transition-shadow h-full">
       <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
@@ -101,23 +99,23 @@ export default function CardPost({ user, post }: CardPostProps) {
           </Badge>
         )}
       </CardHeader>
-      <CardContent className="p-6 flex-1 flex flex-col justify-center">
+      <CardContent className="p-6 flex-1 flex flex-col justify-between">
         {/* Content Section */}
-        <div className="flex-1 flex flex-col justify-center">
+        <div className="flex-1 flex flex-col justify-between">
           {post.location && (
-            <div className="flex items-center text-sm mb-1">
+            <div className="flex items-center text-sm mb-4">
               <FaMapMarkerAlt className="mr-1" />
               <span>{post.location}</span>
             </div>
           )}
           <div className="flex items-center mb-6">
-            <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+            <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0 truncate">
               {post.title}
             </h2>
             {post.employmentType && (
               <>
                 <span className="mx-2">|</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground truncate">
                   {post.employmentType}
                 </span>
               </>
@@ -126,22 +124,26 @@ export default function CardPost({ user, post }: CardPostProps) {
           {post.requirements && (
             <div className="mb-4 flex items-start">
               <CheckCircle size={20} className="mr-4 self-start flex-shrink-0 mt-1" />
-              <div>
+              <div className="flex-1">
                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
                   Requirements
                 </h3>
-                <small className="text-sm text-muted-foreground">{post.requirements}</small>
+                <small className="text-sm text-muted-foreground line-clamp-2">
+                  {post.requirements}
+                </small>
               </div>
             </div>
           )}
           {post.interviewProcess && (
             <div className="mb-4 flex items-start">
               <Clock size={20} className="mr-4 self-start flex-shrink-0 mt-1" />
-              <div>
+              <div className="flex-1">
                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
                   Interview Process
                 </h3>
-                <small className="text-sm text-muted-foreground">{post.interviewProcess}</small>
+                <small className="text-sm text-muted-foreground line-clamp-2">
+                  {post.interviewProcess}
+                </small>
               </div>
             </div>
           )}

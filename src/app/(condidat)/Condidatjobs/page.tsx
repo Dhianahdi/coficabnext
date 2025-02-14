@@ -4,22 +4,32 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import CardPost from "@/components/Home/CardPost";
 import { useQuery } from "convex/react";
-import { Skeleton } from "@/components/ui/skeleton"; // Add a skeleton loader
 import { Card } from "@/components/ui/card";
+import { Spinner } from "@/components/spinner";
 import { api } from "../../../../convex/_generated/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CardPostSkeleton } from "@/components/Home/CardPostSkeleton"; // Import the skeleton component
 
 export default function Condidatjobs() {
   // Fetch jobs from Convex
   const jobs = useQuery(api.queries.jobs.getJobs);
 
   if (jobs === undefined) {
-    // Loading state
+    // Loading state with skeleton placeholders
     return (
       <AdminPanelLayout>
         <ContentLayout title="Recent Jobs">
+         
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            Available Jobs
+          </h1>
+          <small className="text-sm font-medium leading-none">
+            Browse the latest job listings tailored to your interests and skills. Stay ahead with real-time updates!
+          </small>
+
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, index) => (
-              <Skeleton key={index} className="h-48 w-full rounded-lg" />
+            {[...Array(6)].map((_, index) => (
+              <CardPostSkeleton key={index} /> // Use the skeleton component
             ))}
           </div>
         </ContentLayout>
@@ -44,12 +54,15 @@ export default function Condidatjobs() {
     <AdminPanelLayout>
       <ContentLayout title="Recent Jobs">
         <div>
-          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-            Home
-          </h3>
-          <div className="leading-7">
-            Overview of your activities and trends.
-          </div>
+
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            Available Jobs
+          </h1>
+          <small className="text-sm font-medium leading-none">
+            Browse the latest job listings tailored to your interests and skills. Stay ahead with real-time updates!
+          </small>
+
+
 
           {/* Render the CardPost components in a grid */}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -57,7 +70,7 @@ export default function Condidatjobs() {
               <CardPost
                 key={job._id}
                 user={{
-                  avatar: job.recruiterImage, // Pass the recruiter's image
+                  avatar: job.recruiterImage, // Pass the recruiter's avatar
                   name: job.recruiterName,
                 }}
                 post={{

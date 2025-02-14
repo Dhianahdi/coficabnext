@@ -4,9 +4,9 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import CardPost from "@/components/Home/CardPost";
 import { useQuery } from "convex/react";
-import { Skeleton } from "@/components/ui/skeleton"; // Add a skeleton loader
 import { api } from "../../convex/_generated/api";
 import { Card } from "@/components/ui/card";
+import { Spinner } from "@/components/spinner";
 
 export default function Home() {
   // Fetch jobs from Convex
@@ -17,10 +17,8 @@ export default function Home() {
     return (
       <AdminPanelLayout>
         <ContentLayout title="Recent Jobs">
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, index) => (
-              <Skeleton key={index} className="h-48 w-full rounded-lg" />
-            ))}
+          <div className="flex justify-center items-center h-[300px] w-full">
+            <Spinner variant="ring" size={40} className="text-primary" />
           </div>
         </ContentLayout>
       </AdminPanelLayout>
@@ -57,7 +55,7 @@ export default function Home() {
               <CardPost
                 key={job._id}
                 user={{
-                  avatar: job.recruiterAvatar, // Pass the recruiter's avatar
+                  avatar: job.recruiterImage, // Pass the recruiter's avatar
                   name: job.recruiterName,
                 }}
                 post={{

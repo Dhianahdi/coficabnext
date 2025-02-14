@@ -10,11 +10,12 @@ import { useEffect, useCallback, useRef } from "react";
 import { debounce } from "lodash"; // Import debounce from lodash
 
 interface EditorProps {
-  value: string;
   onChange: (value: string) => void;
+  initialContent?: string;
   editable?: boolean;
 }
-const BlockEditor = ({ value, onChange, editable }: EditorProps) => {
+
+const BlockEditor = ({ onChange, initialContent, editable }: EditorProps) => {
   const { resolvedTheme } = useTheme();
   const { edgestore } = useEdgeStore();
 
@@ -22,6 +23,7 @@ const BlockEditor = ({ value, onChange, editable }: EditorProps) => {
     const response = await edgestore.publicFiles.upload({ file });
     return response.url;
   };
+
   const customDarkTheme: Theme = {
     colors: {
       editor: {
@@ -48,6 +50,7 @@ const BlockEditor = ({ value, onChange, editable }: EditorProps) => {
     borderRadius: 4, // Rounded corners
     fontFamily: "Arial, sans-serif", // Custom font
   };
+
   // Initialize the editor
   const editor = useCreateBlockNote({
     uploadFile: handleUpload,
@@ -58,14 +61,19 @@ const BlockEditor = ({ value, onChange, editable }: EditorProps) => {
 
   // Parse initialContent and set it in the editor (only once)
   useEffect(() => {
-    if (!value) return;
+    if (!initialContent || isInitialContentSet.current) return;
+
+    let parsedInitialContent: PartialBlock[];
     try {
-      const parsedContent: PartialBlock[] = JSON.parse(value);
-      editor.replaceBlocks(editor.document, parsedContent);
+      parsedInitialContent = JSON.parse(initialContent);
     } catch (error) {
-      console.error("Failed to parse editor content:", error);
+      console.error("Failed to parse initial content:", error);
+      return;
     }
-  }, [value, editor]);
+
+    editor.replaceBlocks(editor.document, parsedInitialContent);
+    isInitialContentSet.current = true; // Mark initial content as set
+  }, [initialContent, editor]);
 
   // Debounced onChange handler
   const debouncedOnChange = useCallback(
@@ -82,9 +90,7 @@ const BlockEditor = ({ value, onChange, editable }: EditorProps) => {
   }, [debouncedOnChange]);
 
   return (
-    <div
-      className="overflow-y-auto h-[1122px] p-4" // Add padding
-    >
+    <div className="overflow-y-auto h-[1122px] p-4">
       <BlockNoteView
         editor={editor}
         editable={editable}

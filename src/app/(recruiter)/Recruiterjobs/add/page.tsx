@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +31,7 @@ import TextareaWithLimit from "@/components/JobManagement/components/TextareaWit
 import { Separator } from "@/components/ui/separator";
 import ReusableSelect from "@/components/ReusableSelect";
 import { Spinner } from "@/components/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Option {
     value: string;
@@ -225,29 +226,42 @@ export default function AddJobPage() {
             <ContentLayout title="Dashboard">
 
                 <div className="flex items-center justify-between mb-4">
-                    <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-                        Create a New Job Posting
-                    </h1>
-                    <Button
-                        onClick={handleSave}
-                        className="flex items-center justify-center w-[160px] h-[40px]" // Adjust width and height as needed
-                        disabled={isSaving} // Disable the button while saving
-                    >
-                        {isSaving ? (
-                            <Spinner variant="ring" size={24} />
-                        ) : (
-                            <span>Save Changes</span>
-                        )}
-                    </Button>
+                    {isLoading ? (
+                        <Skeleton className="w-[650px] h-[48px] rounded-md" /> // Matches title size
+                    ) : (
+                        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+                            Create a New Job Posting
+                        </h1>
+                    )}
 
-
-
+                    {isLoading ? (
+                        <Skeleton className="w-[120px] h-[40px] rounded-md" /> // Matches button size
+                    ) : (
+                        <Button
+                            onClick={handleSave}
+                            className="flex items-center justify-center w-[120px] h-[40px] gap-2"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (
+                                <Spinner variant="ring" size={24} />
+                            ) : (
+                                <>
+                                    <Save size={18} />
+                                    <span>Save</span>
+                                </>
+                            )}
+                        </Button>
+                    )}
                 </div>
 
-                <p className="leading-7 [&:not(:first-child)]:mb-6">
-                    Create and manage job postings easily. Fill in the details to add a new job to the system.
+                {isLoading ? (
+                    <Skeleton className="w-[600px] h-[20px] rounded-md" />
+                ) : (
+                    <p className="leading-7 [&:not(:first-child)]:mb-6">
+                        Create and manage job postings easily. Fill in the details to add a new job to the system.
+                    </p>
+                )}
 
-                </p>
 
                 {isLoading ? (
                     <div className="flex justify-center items-center h-[300px] w-full">
@@ -263,20 +277,28 @@ export default function AddJobPage() {
                                     Provide a detailed description of the job, including responsibilities, qualifications, and any other relevant information.
                                 </p>
                                 <div className="flex-1 overflow-y-auto">
-                                    <BlockEditor value={description} onChange={setDescription} editable />
+                                    <BlockEditor
+                                        initialContent={description} // Use `initialContent` instead of `value`
+                                        onChange={setDescription}   // `onChange` remains the same
+                                        editable={true}             // `editable` remains the same
+                                    />
                                 </div>
                             </div>
-                            
+
                         </Card>
 
                         {/* Right Panel */}
                         <div className="space-y-6">
                             {/* Job Details Section */}
-                            <div className="space-y-4">
+                            <div className=" flex-1 flex flex-col">
+
                                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Details</h3>
                                 <p className="text-sm text-muted-foreground">
                                     Provide essential information about the job, including its title, description, department, and requirements.
                                 </p>
+                            </div>
+                            <div className="space-y-4">
+
                                 <div className="flex items-center gap-4">
                                     <Label htmlFor="title" className="min-w-24 whitespace-nowrap font-bold">Title</Label>
                                     <InputWithCancel inputValue={title} setInputValue={setTitle} inputId="title" placeholder="Enter job title" className="flex-1" />
@@ -312,24 +334,58 @@ export default function AddJobPage() {
                             <Separator className="my-4" />
 
                             {/* Compensation & Location Section */}
-                            <div className="space-y-4">
+                            <div className=" flex-1 flex flex-col">
+
                                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Compensation & Location</h3>
                                 <p className="text-sm text-muted-foreground">Specify the salary range and location for the job.</p>
-                                <div className="flex items-center gap-4">
-                                    <Label htmlFor="salaryRange" className="min-w-24 whitespace-nowrap font-bold">Salary Range</Label>
-                                    <InputWithCancel inputValue={salaryRange} setInputValue={setSalaryRange} inputId="salaryRange" placeholder="Enter salary range" className="flex-1" />
+                            </div>
+                            <div className="space-y-4">
+                                {/* Salary Range Field */}
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-4">
+                                        <Label htmlFor="salaryRange" className="min-w-24 whitespace-nowrap font-bold">
+                                            Salary Range
+                                        </Label>
+                                        <div className="flex-1">
+                                            <InputWithCancel
+                                                inputValue={salaryRange}
+                                                setInputValue={setSalaryRange}
+                                                inputId="salaryRange"
+                                                placeholder="Enter salary range"
+                                                className="w-full"
+                                            />
+                                            <p className="mt-2 text-xs text-muted-foreground" role="region" aria-live="polite">
+                                                Please enter the expected salary range per month. This helps candidates understand the compensation offered.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Location Field */}
                                 <div className="flex items-center gap-4">
-                                    <Label htmlFor="location" className="min-w-24 whitespace-nowrap font-bold">Location</Label>
-                                    <InputWithCancel inputValue={location} setInputValue={setLocation} inputId="location" placeholder="Enter location" className="flex-1" />
+                                    <Label htmlFor="location" className="min-w-24 whitespace-nowrap font-bold">
+                                        Location
+                                    </Label>
+                                    <InputWithCancel
+                                        inputValue={location}
+                                        setInputValue={setLocation}
+                                        inputId="location"
+                                        placeholder="Enter location"
+                                        className="flex-1"
+                                    />
                                 </div>
                             </div>
+
+
                             <Separator className="my-4" />
 
                             {/* Employment Details Section */}
-                            <div className="space-y-4">
+                            <div className=" flex-1 flex flex-col">
+
                                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Employment Details</h3>
                                 <p className="text-sm text-muted-foreground">Define the type of employment, required experience level, and relevant tags.</p>
+                            </div>
+                            <div className="space-y-4">
 
                                 <div className="flex items-center gap-4">
                                     <Label htmlFor="employmentType" className="min-w-24 whitespace-nowrap font-bold">Employment Type</Label>
@@ -367,9 +423,13 @@ export default function AddJobPage() {
                             <Separator className="my-4" />
 
                             {/* Application & Interview Section */}
-                            <div className="space-y-4">
+                            <div className=" flex-1 flex flex-col">
+
                                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Application & Interview</h3>
                                 <p className="text-sm text-muted-foreground">Set the application deadline and describe the interview process.</p>
+                            </div>
+                            <div className="space-y-4">
+
                                 <div className="flex items-center gap-4">
                                     <Label htmlFor="applicationDeadline" className="min-w-24 whitespace-nowrap font-bold">Application Deadline</Label>
                                     <div className="flex-1">

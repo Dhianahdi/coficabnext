@@ -85,7 +85,14 @@ export function UpdateRole({ roleId }: UpdateRoleProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-       
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Edit Role"
+          onClick={() => setIsOpen(true)}
+        >
+          <Edit size={16} strokeWidth={2} aria-hidden="true" />
+        </Button>
       </DialogTrigger>
       <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[80vh] sm:max-w-5xl [&>button:last-child]:top-3.5">
         <DialogHeader className="contents space-y-0 text-left">

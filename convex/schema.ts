@@ -15,7 +15,7 @@ const schema = defineSchema({
     phoneVerificationTime: v.optional(v.float64()),
     roleId: v.optional(v.string()),
     lastLogin: v.optional(v.float64()),
-
+    isBlocked: v.optional(v.boolean()), // ✅ Ajout du champ pour bloquer/débloquer un utilisateur
     departmentId: v.optional(v.id("departments")),  // Linking user to a department
   }).index("email", ["email"]),
 

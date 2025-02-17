@@ -11,7 +11,7 @@ import { AddPermission } from "@/components/PermissionsManagement/CRUD/AddPermis
 import { PermissionsTable } from "@/components/PermissionsManagement/PermissionsTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import UsersTable from "@/components/Usersmanagment/UsersTable";
+import { UsersTable } from "@/components/Usersmanagment/UsersTable";
 
 export default function Test() {
   // Fetch raw roles and permissions data

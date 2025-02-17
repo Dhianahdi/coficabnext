@@ -75,8 +75,8 @@ export function getMenuList(
           icon: Bookmark,
         },
         {
-          href: "/tags",
-          label: "Tags",
+          href: "/test",
+          label: "test",
           icon: Tag,
         },
         {

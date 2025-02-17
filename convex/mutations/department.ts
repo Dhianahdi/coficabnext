@@ -1,7 +1,17 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation } from "../_generated/server";
+import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 
+
+
+
+
+
+
+
+export const getAllDepartments = query(async ({ db }) => {
+  return await db.query("departments").collect();
+});
 /**
  * Créer un nouveau département (Authentification requise)
  */

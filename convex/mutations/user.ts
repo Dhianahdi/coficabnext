@@ -1,11 +1,30 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { Id } from "../_generated/dataModel";
+
 
 export const fetchAllUsers = query({
   handler: async (ctx) => {
-    return await ctx.db.query("users").collect();
+    const users = await ctx.db.query("users").collect();
+
+    // Charger les rôles et départements pour chaque utilisateur
+    const usersWithDetails = await Promise.all(
+      users.map(async (user) => {
+        const role = user.roleId ? await ctx.db.get(user.roleId as Id<"roles">) : null;
+        const department = user.departmentId ? await ctx.db.get(user.departmentId as Id<"departments">) : null;
+
+        return {
+          ...user,
+          role: role ? { _id: role._id, name: role.name } : { _id: null, name: "N/A" },
+          department: department ? { _id: department._id, name: department.name } : { _id: null, name: "N/A" },
+        };
+      })
+    );
+
+    return usersWithDetails;
   },
 });
+
 /**
  * Create a new user
  */
@@ -106,5 +125,12 @@ export const updateLastLogin = mutation({
   handler: async (ctx, { userId }) => {
     await ctx.db.patch(userId, { lastLogin: Date.now() });
     return { success: true };
+  },
+});
+
+export const blockUser = mutation({
+  args: { userId: v.id("users"), isBlocked: v.boolean() },
+  handler: async ({ db }, { userId, isBlocked }) => {
+    await db.patch(userId, { isBlocked });
   },
 });

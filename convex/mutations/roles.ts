@@ -1,8 +1,13 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation } from "../_generated/server";
+import { mutation, query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { v } from "convex/values";
 
+
+export const getAllRoles = query(async ({ db }) => {
+    return await db.query("roles").collect();
+  });
+  
 export const createRole = mutation({
     args: {
         name: v.string(),

@@ -8,7 +8,10 @@ import { useRouter } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { Button } from "@/components/ui/button";
 import { FaMapMarkerAlt } from "react-icons/fa";
-import { Archive, CheckCircle, Clock, XCircle, CalendarDays } from "lucide-react"; // Added CalendarDays icon
+import { Archive, CheckCircle, Clock, XCircle, CalendarDays } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CardPostProps {
   user: {
@@ -16,14 +19,14 @@ interface CardPostProps {
     name: string;
   };
   post: {
-    _id: string; // Job ID
+    _id: string;
     title: string;
     content: string;
-    tags?: string[]; // Job tags (e.g., skills, technologies)
-    createdAt?: string | number; // Allow both string and number
-    recruiterName: string; // Recruiter name
-    departmentName: string; // Department name
-    collaboratorNames: string[]; // Collaborator names
+    tags?: string[];
+    createdAt?: string | number;
+    recruiterName: string;
+    departmentName: string;
+    collaboratorNames: string[];
     requirements?: string;
     salaryRange?: string;
     employmentType?: string;
@@ -31,43 +34,54 @@ interface CardPostProps {
     experienceLevel?: string;
     applicationDeadline?: number;
     interviewProcess?: string;
-    status: "Pending" | "Open" | "Closed"; // Job status
+    status: "Pending" | "Open" | "Closed";
   };
 }
 
 export default function CardPost({ user, post }: CardPostProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [cv, setCv] = useState<File | null>(null);
+  const [coverLetter, setCoverLetter] = useState("");
+
   const timeAgo = formatTimeAgo(post.createdAt);
 
-  // Handle click to navigate to job details
   const handleClick = async () => {
-    setLoading(true); // Set loading to true
+    setLoading(true);
     try {
-      await router.push(`/jobDetails/${post._id}`); // Wait for navigation to complete
+      await router.push(`/jobDetails/${post._id}`);
     } catch (error) {
       console.error("Navigation error:", error);
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
-  const statusIcons = {
-    Pending: <Clock size={12} className="text-yellow-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
-    Open: <CheckCircle size={12} className="text-green-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
-    Closed: <XCircle size={12} className="text-red-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
+  const handleApply = () => {
+    setIsDialogOpen(true);
   };
 
-  const statusColors = {
-    Pending: "yellow",
-    Open: "green",
-    Closed: "red",
+  const handleSubmit = () => {
+    if (!cv || !coverLetter) {
+      alert("Veuillez ajouter votre CV et lettre de motivation.");
+      return;
+    }
+    alert("Candidature soumise avec succès !");
+    setIsDialogOpen(false);
+  };
+
+  const statusIcons = {
+    Pending: <Clock size={12} className="text-yellow-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />, 
+    Open: <CheckCircle size={12} className="text-green-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />, 
+    Closed: <XCircle size={12} className="text-red-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />, 
   };
 
   const icon = statusIcons[post.status];
 
   return (
-    <Card className="w-full max-w-lg shadow-none flex flex-col hover:shadow-md transition-shadow h-full">
+    <>
+     <Card className="w-full max-w-lg shadow-none flex flex-col hover:shadow-md transition-shadow h-full">
       <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
@@ -176,15 +190,28 @@ export default function CardPost({ user, post }: CardPostProps) {
           >
             {loading ? "Loading..." : "View Details"}
           </Button>
-          <Button
-            onClick={() => alert("Apply Now clicked!")}
-            className="w-full flex items-center justify-center"
-          >
-            <CheckCircle className="mr-2 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
-            Apply Now
-          </Button>
+          <Button onClick={handleApply} className="w-full flex items-center justify-center">
+              <CheckCircle className="mr-2 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
+              Apply Now
+            </Button>
         </div>
       </CardContent>
     </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Apply for {post.title}</DialogTitle>
+            <DialogDescription>Complete your application by submitting your CV and a cover letter.</DialogDescription>
+          </DialogHeader>
+          <Input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setCv(e.target.files?.[0] || null)} />
+          <Textarea placeholder="Write your cover letter here..." value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit}>Submit Application</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

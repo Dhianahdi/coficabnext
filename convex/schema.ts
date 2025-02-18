@@ -70,18 +70,18 @@ jobs: defineTable({
 
   // --- Offers Table (Applications submitted by candidates) ---
   offers: defineTable({
-    jobId: v.id("jobs"),                     // Reference to the job the candidate applied for
-    candidateId: v.id("users"),              // The candidate who applied
-    coverLetter: v.optional(v.string()),     // Cover letter text
+    jobId: v.id("jobs"),                     // Référence à l'offre d'emploi
+    candidateId: v.id("users"),              // Le candidat qui a postulé
+    coverLetter: v.optional(v.string()),     // Lettre de motivation
+    resume: v.optional(v.string()),          // 📂 Identifiant du fichier du CV
     status: v.string(),                      // Pending, Interview, Accepted, Rejected, etc.
-    appliedAt: v.float64(),                  // Timestamp when the application was submitted
-    reviewedAt: v.optional(v.float64()),     // Timestamp when the application was reviewed
-    recruiterNotes: v.optional(v.string()),
-    updatedAt: v.optional(v.float64()), // Track status updates
-    // Notes from recruiter about the application
+    appliedAt: v.float64(),                  // Date de candidature
+    reviewedAt: v.optional(v.float64()),     // Date de révision
+    recruiterNotes: v.optional(v.string()),  // Notes du recruteur
+    updatedAt: v.optional(v.float64()),      // Date de mise à jour du statut
   }).index("jobId", ["jobId"])
     .index("candidateId", ["candidateId"]),
-    
+  
     experienceLevelOptions: defineTable({
       value: v.string(),
       label: v.string(),

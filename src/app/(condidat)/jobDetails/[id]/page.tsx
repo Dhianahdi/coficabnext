@@ -17,17 +17,36 @@ import BlockEditor from "@/components/BlockEditor"; // Import BlockEditor
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 export default function JobDetailsPage() {
-  // Use useParams to get the job ID from the URL
   const params = useParams();
   const jobId = params.id as Id<"jobs">;
-
-  // Fetch the job details using the job ID
   const job = useQuery(api.queries.jobs.getJobById, { id: jobId });
-  const isLoading = job === undefined; // Define isLoading properly
+  const isLoading = job === undefined;
 
-  // Show a loading state while the job data is being fetched
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [coverLetter, setCoverLetter] = useState("");
+  const [resume, setResume] = useState(null);
+  const [error, setError] = useState("");
+
+  const handleSubmit = () => {
+    if (!coverLetter.trim()) {
+      setError("La lettre de motivation est obligatoire.");
+      return;
+    }
+    if (!resume) {
+      setError("Veuillez télécharger votre CV.");
+      return;
+    }
+    setError("");
+    setIsDialogOpen(false);
+    alert("Candidature soumise avec succès !");
+  };
+
   if (!job) {
     return (
       <div className="flex justify-center items-center min-h-screen w-full">
@@ -36,33 +55,47 @@ export default function JobDetailsPage() {
     );
   }
 
-  // Status icons for different job statuses
   const statusIcons = {
-    Pending: <Clock size={12} className="text-yellow-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
-    Open: <CheckCircle size={12} className="text-green-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
-    Closed: <XCircle size={12} className="text-red-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
+    Pending: <Clock size={12} className="text-yellow-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />, 
+    Open: <CheckCircle size={12} className="text-green-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />, 
+    Closed: <XCircle size={12} className="text-red-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />, 
   };
 
-  // Get the appropriate icon for the job status
   const icon = statusIcons[job.status];
 
   return (
     <AdminPanelLayout>
       <ContentLayout title="Job Details">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            Job Details & Application
-          </h1>
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">Job Details & Application</h1>
 
-          <Button className="flex items-center justify-center w-[160px] h-[40px] gap-2">
-            <SendHorizontal size={18} />
-            <span>Apply Now</span>
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center justify-center w-[160px] h-[40px] gap-2">
+                <SendHorizontal size={18} />
+                <span>Apply Now</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Apply for {job.title}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {error && <p className="text-red-500">{error}</p>}
+                <Label>Cover Letter</Label>
+                <Textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Write your cover letter..." />
+                <Label>Upload Resume</Label>
+                <Input type="file" onChange={(e:any) => setResume(e.target.files?.[0] || null)} />
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button className="bg-primary" onClick={handleSubmit}>Submit Application</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <p className="leading-7 [&:not(:first-child)]:mb-6">
-          View job details, requirements, and compensation. Submit your application to take the next step in your career.
-        </p>
+        <p className="leading-7 [&:not(:first-child)]:mb-6">View job details, requirements, and compensation. Submit your application to take the next step in your career.</p>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-[300px] w-full">
@@ -70,11 +103,9 @@ export default function JobDetailsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-
-
-            {/* Left Panel */}
-            <div className="space-y-6">
+          
+               {/* Left Panel */}
+               <div className="space-y-6">
               {/* Job Details Section */}
               <div className=" flex-1 flex flex-col">
 
@@ -200,7 +231,6 @@ export default function JobDetailsPage() {
                 </div>
               </Card>
             </div>
-
           </div>
         )}
       </ContentLayout>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { CalendarDays, CheckCircle, Clock, FileUser, Save, SendHorizontal, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -21,31 +21,99 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function JobDetailsPage() {
   const params = useParams();
   const jobId = params.id as Id<"jobs">;
   const job = useQuery(api.queries.jobs.getJobById, { id: jobId });
+  const Me = useQuery(api.auth.getMe);
+  const createOffer = useMutation(api.mutations.offers.createOffer); // Utiliser la mutation createOffer
+
   const isLoading = job === undefined;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [resume, setResume] = useState(null);
   const [error, setError] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (!coverLetter.trim()) {
-      setError("La lettre de motivation est obligatoire.");
-      return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file:any = e.target.files?.[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        setError("Please upload a PDF file.");
+        setResume(null); 
+      } else {
+        setError("");
+        setResume(file); 
+      }
     }
-    if (!resume) {
-      setError("Veuillez télécharger votre CV.");
-      return;
-    }
-    setError("");
-    setIsDialogOpen(false);
-    alert("Candidature soumise avec succès !");
   };
+
+  const handleSubmit = async () => {
+    if (!resume) {
+      setError("Please upload your resume.");
+      return;
+    }
+
+    if (!Me) {
+      setError("You must be logged in to apply.");
+      return;
+    }
+
+
+    try {
+      setIsSubmitting(true);
+
+      const formData = new FormData();
+      formData.append("file", resume);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload the file.");
+      }
+
+      const data = await response.json();
+      const fileName = data.fileName;
+
+      // Add the application using the createOffer mutation
+      await createOffer({
+        jobId: jobId as Id<"jobs">,
+        candidateId: Me.id as Id<"users">, 
+        coverLetter: coverLetter,
+        resume: fileName, 
+        status: "Pending", 
+        appliedAt: Date.now(),
+      });
+
+      // Show a success message
+      toast({
+        title: "Application submitted successfully",
+        description: "Your application has been recorded.",
+      });
+
+      // Close the dialog
+setIsDialogOpen(false);
+      // Reset the form
+      setCoverLetter("");
+      setResume(null);
+      setError("");
+    } catch (error) {
+      console.error("Error submitting the application:", error);
+      setError("An error occurred while submitting the application.");
+    }  finally {
+      setIsSubmitting(false);
+    }
+  };
+  
 
   if (!job) {
     return (
@@ -85,12 +153,14 @@ export default function JobDetailsPage() {
                 <Label>Cover Letter</Label>
                 <Textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Write your cover letter..." />
                 <Label>Upload Resume</Label>
-                <Input type="file" onChange={(e:any) => setResume(e.target.files?.[0] || null)} />
-              </div>
+                <Input type="file" accept="application/pdf" onChange={handleFileChange} />
+                {error && <p className="text-red-500">{error}</p>}              </div>
               <DialogFooter>
                 <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button className="bg-primary" onClick={handleSubmit}>Submit Application</Button>
-              </DialogFooter>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit Application"}
+          </Button>
+                        </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

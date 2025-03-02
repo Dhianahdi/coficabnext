@@ -19,6 +19,7 @@ import type * as functions_setup from "../functions/setup.js";
 import type * as http from "../http.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as mutations_departments from "../mutations/departments.js";
+import type * as mutations_form from "../mutations/form.js";
 import type * as mutations_jobs from "../mutations/jobs.js";
 import type * as mutations_offers from "../mutations/offers.js";
 import type * as mutations_permissions from "../mutations/permissions.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/permissions": typeof lib_permissions;
   "mutations/departments": typeof mutations_departments;
+  "mutations/form": typeof mutations_form;
   "mutations/jobs": typeof mutations_jobs;
   "mutations/offers": typeof mutations_offers;
   "mutations/permissions": typeof mutations_permissions;

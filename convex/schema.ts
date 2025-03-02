@@ -93,6 +93,42 @@ jobs: defineTable({
       label: v.string(),
     }).index("value", ["value"]),
 
+  // --- Forms Table ---
+  forms: defineTable({
+    title: v.string(),
+    description: v.string(),
+    createdAt: v.float64(),
+    updatedAt: v.optional(v.float64()),
+    createdBy: v.id("users"), // L'utilisateur qui a créé le formulaire
+  }).index("createdBy", ["createdBy"]),
+
+  // --- Questions Table ---
+  questions: defineTable({
+    formId: v.id("forms"), // Référence au formulaire
+    text: v.string(), // Le texte de la question
+    type: v.union(
+      v.literal("single-choice"),
+      v.literal("multiple-choice"),
+      v.literal("open-ended")
+    ), // Le type de question
+    options: v.optional(v.array(v.string())), // Les options pour les questions à choix
+    answer: v.optional(v.union(v.string(), v.array(v.string()))), // La réponse (texte ou tableau d'options sélectionnées)
+  }).index("formId", ["formId"]),
+// Dans votre fichier schema.ts
+responses: defineTable({
+  formId: v.id("forms"), // Référence au formulaire
+  questionId: v.string(), // Référence à la question
+  answer: v.union(v.string(), v.array(v.string())), // Réponse (texte ou tableau d'options)
+  userId: v.id("users"), // Référence à l'utilisateur
+  submittedAt: v.float64(), // Date de soumission
+}).index("formId", ["formId"]),
+
+// Dans votre fichier schema.ts
+jobForms: defineTable({
+  jobId: v.id("jobs"), // Référence au job
+  formId: v.id("forms"), // Référence au formulaire
+}).index("jobId", ["jobId"]) // Index pour rechercher les formulaires par jobId
+  .index("formId", ["formId"]), // Index pour rechercher les jobs par formId
 });
 
 export default schema;

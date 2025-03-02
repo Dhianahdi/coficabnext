@@ -23,7 +23,16 @@ const BlockEditor = ({ onChange, initialContent, editable }: EditorProps) => {
     const response = await edgestore.publicFiles.upload({ file });
     return response.url;
   };
-
+  const transformGeminiResponseToBlocks = (text: string): PartialBlock[] => {
+    // Diviser le texte en paragraphes
+    const paragraphs = text.split("\n\n");
+  
+    // Transformer chaque paragraphe en un bloc de texte
+    return paragraphs.map((paragraph) => ({
+      type: "paragraph",
+      content: paragraph,
+    }));
+  };
   const customDarkTheme: Theme = {
     colors: {
       editor: {
@@ -65,10 +74,13 @@ const BlockEditor = ({ onChange, initialContent, editable }: EditorProps) => {
 
     let parsedInitialContent: PartialBlock[];
     try {
+      // Essayer de parser le contenu initial comme JSON
       parsedInitialContent = JSON.parse(initialContent);
     } catch (error) {
-      console.error("Failed to parse initial content:", error);
-      return;
+      console.error("Failed to parse initial content as JSON. Falling back to plain text.", error);
+
+      // Si le parsing échoue, traiter le contenu comme du texte brut
+      parsedInitialContent = transformGeminiResponseToBlocks(initialContent);
     }
 
     editor.replaceBlocks(editor.document, parsedInitialContent);

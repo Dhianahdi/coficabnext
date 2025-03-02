@@ -93,3 +93,30 @@ export const getExperienceLevelOptions = query({
       return await db.query("employmentTypeOptions").collect();
     },
   });
+
+  export const getFormsForJob = query({
+    args: {
+      jobId: v.id("jobs"), // ID du job
+    },
+    handler: async (ctx, args) => {
+      // Récupérer les associations dans la table de jointure
+      const jobForms = await ctx.db
+        .query("jobForms")
+        .filter((q) => q.eq("jobId", args.jobId.toString()))
+        .collect();
+  
+      // Récupérer les formulaires associés
+      const forms = await Promise.all(
+        jobForms.map(async (jobForm) => {
+          return await ctx.db.get(jobForm.formId);
+        })
+      );
+  
+      return forms.filter((form) => form !== null); // Filtrer les formulaires non trouvés
+    },
+  });
+  export const getForms = query({
+    handler: async (ctx) => {
+      return await ctx.db.query("forms").collect();
+    },
+  });

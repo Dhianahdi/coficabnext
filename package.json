@@ -56,6 +56,8 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.5.1",
     "emblor": "^1.4.7",
+    "framer-motion": "^12.4.10",
+    "html-pdf": "^3.0.1",
     "immer": "^10.1.1",
     "input-otp": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
@@ -67,6 +69,7 @@
     "pdf-parse": "^1.1.1",
     "pdf2json": "^3.1.5",
     "pdfjs-dist": "^4.10.38",
+    "puppeteer": "^24.3.1",
     "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
@@ -86,6 +89,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@types/html-pdf": "^3.0.3",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/lodash": "^4.17.15",
     "@types/node": "^20",

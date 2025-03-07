@@ -122,8 +122,9 @@ export const updateJob = mutation({
     experienceLevel: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     applicationDeadline: v.optional(v.float64()),
-    interviewProcess: v.optional(v.string()), // Ensure interviewProcess is included
+    interviewProcess: v.optional(v.string()), 
     collaborators: v.optional(v.array(v.id("users"))),
+    formIds: v.optional(v.array(v.id("forms"))), // Ajout des formIds comme dans createJob
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -149,6 +150,14 @@ export const updateJob = mutation({
         if (!collaborator) throw new Error(`Collaborator ID ${collaboratorId} not found`);
       }
     }
+    
+    // Vérifier que les formulaires existent si fournis
+    if (args.formIds) {
+      for (const formId of args.formIds) {
+        const form = await ctx.db.get(formId);
+        if (!form) throw new Error(`Form ID ${formId} not found`);
+      }
+    }
 
     // Prepare the update object, excluding undefined values
     const updateData = {
@@ -162,7 +171,7 @@ export const updateJob = mutation({
       experienceLevel: args.experienceLevel,
       tags: args.tags,
       applicationDeadline: args.applicationDeadline,
-      interviewProcess: args.interviewProcess, // Ensure interviewProcess is included
+      interviewProcess: args.interviewProcess,
       collaborators: args.collaborators,
       updatedAt: Date.now(),
     };
@@ -175,10 +184,30 @@ export const updateJob = mutation({
     // Update the job in the database
     await ctx.db.patch(args.jobId, filteredUpdateData);
 
+    // Gérer la mise à jour des formulaires associés si fournis
+    if (args.formIds) {
+      // Supprimer les associations existantes
+      const existingAssociations = await ctx.db
+        .query("jobForms")
+        .filter((q) => q.eq(q.field("jobId"), args.jobId))
+        .collect();
+      
+      for (const association of existingAssociations) {
+        await ctx.db.delete(association._id);
+      }
+      
+      // Créer les nouvelles associations
+      for (const formId of args.formIds) {
+        await ctx.db.insert("jobForms", {
+          jobId: args.jobId,
+          formId,
+        });
+      }
+    }
+
     return args.jobId;
   },
 });
-
 // Add a new experience level option
 export const addExperienceLevelOption = mutation({
   args: { value: v.string(), label: v.string() },

@@ -7,9 +7,13 @@ export const createOffer = mutation({
     jobId: v.id("jobs"),
     candidateId: v.id("users"),
     coverLetter: v.optional(v.string()),
-    resume: v.optional(v.string()), // Identifiant du fichier du CV
-    status: v.literal("Pending"), // Nouvelle candidature = "Pending"
+    resume: v.optional(v.string()), 
+    status: v.literal("Pending"), 
     appliedAt: v.float64(),
+    score: v.optional(v.number()),
+    reportPdf: v.optional(v.string()), 
+
+
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("offers", {
@@ -29,6 +33,9 @@ export const updateOffer = mutation({
     recruiterNotes: v.optional(v.string()),
     reviewedAt: v.optional(v.float64()),
     updatedAt: v.float64(), // Date de mise à jour
+    score: v.optional(v.number()),
+    reportPdf: v.optional(v.string()), 
+    // Nouvel attribut score
   },
   handler: async (ctx, args) => {
     return await ctx.db.patch(args.id, {
@@ -36,6 +43,7 @@ export const updateOffer = mutation({
       recruiterNotes: args.recruiterNotes,
       reviewedAt: args.reviewedAt ?? undefined,
       updatedAt: args.updatedAt,
+      score: args.score, // Mise à jour du score
     });
   },
 });
@@ -45,5 +53,21 @@ export const deleteOffer = mutation({
   args: { id: v.id("offers") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
+  },
+});
+
+export const updateRecruiterNotes = mutation({
+  args: {
+    offerId: v.id("offers"), // ID de l'offre à mettre à jour
+    notes: v.string(), // Les nouvelles notes du recruteur
+  },
+  handler: async (ctx, args) => {
+    const { offerId, notes } = args;
+
+    await ctx.db.patch(offerId, {
+      recruiterNotes: notes,
+    });
+
+    return "Notes updated successfully!";
   },
 });

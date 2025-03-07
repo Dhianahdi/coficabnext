@@ -73,12 +73,16 @@ jobs: defineTable({
     jobId: v.id("jobs"),                     // Référence à l'offre d'emploi
     candidateId: v.id("users"),              // Le candidat qui a postulé
     coverLetter: v.optional(v.string()),     // Lettre de motivation
-    resume: v.optional(v.string()),          // 📂 Identifiant du fichier du CV
+    resume: v.optional(v.string()), 
+    notes: v.optional(v.string()),          
     status: v.string(),                      // Pending, Interview, Accepted, Rejected, etc.
     appliedAt: v.float64(),                  // Date de candidature
     reviewedAt: v.optional(v.float64()),     // Date de révision
     recruiterNotes: v.optional(v.string()),  // Notes du recruteur
-    updatedAt: v.optional(v.float64()),      // Date de mise à jour du statut
+    updatedAt: v.optional(v.float64()),  
+    score: v.optional(v.number()), 
+    reportPdf: v.optional(v.string()), 
+
   }).index("jobId", ["jobId"])
     .index("candidateId", ["candidateId"]),
   
@@ -121,14 +125,37 @@ responses: defineTable({
   answer: v.union(v.string(), v.array(v.string())), // Réponse (texte ou tableau d'options)
   userId: v.id("users"), // Référence à l'utilisateur
   submittedAt: v.float64(), // Date de soumission
-}).index("formId", ["formId"]),
+}).index("formId", ["formId"])
+.index("userId", ["userId"]), // Add this line to define an index on userId,
 
 // Dans votre fichier schema.ts
 jobForms: defineTable({
   jobId: v.id("jobs"), // Référence au job
   formId: v.id("forms"), // Référence au formulaire
 }).index("jobId", ["jobId"]) // Index pour rechercher les formulaires par jobId
-  .index("formId", ["formId"]), // Index pour rechercher les jobs par formId
-});
+  .index("formId", ["formId"]),
+  
+  
+  // --- UserForms Table ---
+  userForms: defineTable({
+    userId: v.id("users"), // Référence à l'utilisateur
+    formId: v.id("forms"), // Référence au formulaire
+    assignedAt: v.float64(), // Date d'assignation
+  })
+    .index("userId", ["userId"]) // Index pour rechercher les formulaires par utilisateur
+    .index("formId", ["formId"])
+    .index("userId_formId", ["userId", "formId"]), // Index composite pour rechercher par userId et formId
+ 
+    
+    
+    
+    
+    
+    
+    
+    });
+
+
+
 
 export default schema;

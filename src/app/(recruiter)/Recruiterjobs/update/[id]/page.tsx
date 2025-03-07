@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save } from "lucide-react";
+import { Check, Loader2, Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tag } from "emblor";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter, useParams } from "next/navigation";
 import InputWithCancel from "@/components/JobManagement/components/InputWithCancel";
 import { GenreInput } from "@/components/JobManagement/components/GenreInput";
@@ -39,6 +39,8 @@ export default function UpdateJobPage() {
     const job = useQuery(api.queries.jobs.getJobById, { id: jobId });
     const updateJob = useMutation(api.mutations.jobs.updateJob);
     const departments = useQuery(api.queries.departments.getDepartments) || [];
+    const forms = useQuery(api.queries.jobs.getForms) || [];
+    const formIds = useQuery(api.mutations.form.getFormsByJobId, { jobId });
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -110,6 +112,17 @@ export default function UpdateJobPage() {
         setExperienceLevel(newOption);
     };
 
+
+    const [selectedFormIds, setSelectedFormIds] = useState<Id<"forms">[]>([]);
+
+// Gérer la sélection des formulaires
+const handleFormSelection = (formId: Id<"forms">) => {
+    if (selectedFormIds.includes(formId)) {
+        setSelectedFormIds(selectedFormIds.filter((id) => id !== formId));
+    } else {
+        setSelectedFormIds([...selectedFormIds, formId]);
+    }
+};
     // Handle adding new experience level option
     const addExperienceLevelOption = useMutation(api.mutations.jobs.addExperienceLevelOption);
     const handleAddNewExperienceLevelOption = async (newOption: string) => {
@@ -143,6 +156,8 @@ export default function UpdateJobPage() {
             setTags(job.tags?.map((tag) => ({ id: tag, text: tag })) || []); // Ensure tags are mapped correctly
             setApplicationDeadline(job.applicationDeadline ? new Date(job.applicationDeadline) : undefined);
             setInterviewProcess(job.interviewProcess || "");
+            setSelectedFormIds(formIds || []); // Pré-remplir les formulaires sélectionnés
+
         }
     }, [job]);
 
@@ -152,7 +167,7 @@ export default function UpdateJobPage() {
             toast.error("Title and description are required.");
             return;
         }
-
+    
         try {
             setIsSaving(true);
             await updateJob({
@@ -165,9 +180,10 @@ export default function UpdateJobPage() {
                 employmentType: employmentType || undefined,
                 location: location || undefined,
                 experienceLevel: experienceLevel || undefined,
-                tags: tags.map((tag) => tag.text), // Ensure tags are mapped correctly
+                tags: tags.map((tag) => tag.text),
                 applicationDeadline: applicationDeadline ? applicationDeadline.getTime() : undefined,
                 interviewProcess: interviewProcess || undefined,
+                formIds: selectedFormIds, // Ajouter les formulaires sélectionnés
             });
             toast.success("Job updated successfully!");
             router.push("/Recruiterjobs");
@@ -419,6 +435,36 @@ export default function UpdateJobPage() {
                                     />
                                 </div>
                             </div>
+
+                            <div className="flex-1 flex flex-col">
+    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Associated Forms</h3>
+    <p className="text-sm text-muted-foreground">Select forms to associate with this job posting.</p>
+</div>
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {forms.map((form) => (
+        <Card
+            key={form._id}
+            className={`p-4 cursor-pointer transition-all duration-200 ${
+                selectedFormIds.includes(form._id)
+                    ? "border-2 border-primary shadow-lg"
+                    : "border border-gray-200 hover:shadow-md"
+            }`}
+            onClick={() => handleFormSelection(form._id)}
+        >
+            <CardHeader className="p-0">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    {form.title}
+                    {selectedFormIds.includes(form._id) && (
+                        <Check className="h-4 w-4 text-primary" />
+                    )}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 mt-2">
+                <p className="text-sm text-muted-foreground">{form.description}</p>
+            </CardContent>
+        </Card>
+    ))}
+</div>
                         </div>
                     </div>
                 )}

@@ -225,6 +225,7 @@ export default function AddJobPage() {
                 tags: tags.map((tag) => tag.text),
                 applicationDeadline: applicationDeadline ? applicationDeadline.getTime() : undefined,
                 interviewProcess: interviewProcess || undefined, // Ensure interviewProcess is included
+                formIds:selectedFormIds,
             });
 
             toast.success("Job saved successfully!");

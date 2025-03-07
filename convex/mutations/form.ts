@@ -157,3 +157,101 @@ export const submitResponse = mutation({
     }
   },
 });
+export const getFormsByJobId = query({
+  args: {
+    jobId: v.id("jobs"), // ID du job
+  },
+  handler: async (ctx, args) => {
+    // Récupérer les formulaires associés au job
+    const jobForms = await ctx.db
+      .query("jobForms")
+      .withIndex("jobId", (q) => q.eq("jobId", args.jobId))
+      .collect();
+
+    // Retourner uniquement les formId
+    return jobForms.map((jobForm) => jobForm.formId);
+  },
+});
+// convex/forms.ts
+export const assignFormsToUser = mutation({
+  args: {
+    userId: v.id("users"), // ID de l'utilisateur
+    formIds: v.array(v.id("forms")), // Liste des IDs des formulaires à assigner
+  },
+  handler: async (ctx, args) => {
+    // Vérifier si les formulaires sont déjà assignés à l'utilisateur
+    const existingAssignments = await ctx.db
+      .query("userForms")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Filtrer les formulaires déjà assignés
+    const newFormIds = args.formIds.filter(
+      (formId) =>
+        !existingAssignments.some((assignment) => assignment.formId === formId)
+    );
+
+    // Assigner les nouveaux formulaires
+    await Promise.all(
+      newFormIds.map((formId) =>
+        ctx.db.insert("userForms", {
+          userId: args.userId,
+          formId,
+          assignedAt: Date.now(),
+        })
+      )
+    );
+
+    return newFormIds.length; 
+  },
+});
+
+
+
+export const getUserForms = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Récupérer les userForms associés à l'utilisateur
+    const userForms = await ctx.db
+      .query("userForms")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Pour chaque userForm, récupérer les détails du formulaire
+    const userFormsWithDetails = await Promise.all(
+      userForms.map(async (userForm) => {
+        const form = await ctx.db.get(userForm.formId); // Récupérer les détails du formulaire
+        return {
+          ...userForm,
+          form, // Ajouter les détails du formulaire à l'objet userForm
+        };
+      })
+    );
+
+    return userFormsWithDetails;
+  },
+});
+
+
+export const hasUserRespondedToForm = mutation({
+  args: {
+    userId: v.id("users"), // ID de l'utilisateur
+    formId: v.id("forms"), // ID du formulaire
+  },
+  handler: async (ctx, args) => {
+    const { userId, formId } = args;
+
+    // Rechercher une réponse correspondant à l'utilisateur et au formulaire
+    const response = await ctx.db
+      .query("responses")
+      .withIndex("formId", (q) => q.eq("formId", formId))
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .first();
+
+    // Retourner `true` si une réponse existe, sinon `false`
+    return !!response;
+  },
+});
+

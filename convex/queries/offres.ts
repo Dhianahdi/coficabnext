@@ -57,3 +57,31 @@ export const getOffersByJobId = query({
     return offersWithCandidates;
   },
 });
+
+export const getOffersByCandidateId = query({
+  args: {
+    candidateId: v.id("users"), // ID du candidat
+  },
+  handler: async (ctx, args) => {
+    const { candidateId } = args;
+
+    // Récupérer toutes les offres pour ce candidat
+    const offers = await ctx.db
+      .query("offers")
+      .filter((q) => q.eq(q.field("candidateId"), candidateId))
+      .collect();
+
+    // Joindre les informations supplémentaires (comme le titre du poste et le nom de l'entreprise)
+    const offersWithDetails = await Promise.all(
+      offers.map(async (offer) => {
+        const job = await ctx.db.get(offer.jobId);
+        return {
+          ...offer,
+          jobTitle: job?.title || "N/A",
+        };
+      })
+    );
+
+    return offersWithDetails;
+  },
+});

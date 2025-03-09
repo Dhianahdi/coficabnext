@@ -132,11 +132,10 @@ export const getFormWithQuestions = query({
   },
 });
 
-// Dans votre fichier mutations.ts
 export const submitResponse = mutation({
   args: {
     formId: v.id("forms"),
-    userId: v.id("users"), // Ajouter l'ID de l'utilisateur
+    userId: v.id("users"), // ID de l'utilisateur
     responses: v.array(
       v.object({
         questionId: v.string(),
@@ -146,6 +145,8 @@ export const submitResponse = mutation({
   },
   handler: async (ctx, args) => {
     const submittedAt = Date.now();
+
+    // Insérer les réponses dans la table "responses"
     for (const response of args.responses) {
       await ctx.db.insert("responses", {
         formId: args.formId,
@@ -154,6 +155,22 @@ export const submitResponse = mutation({
         userId: args.userId, // Inclure l'ID de l'utilisateur
         submittedAt,
       });
+    }
+
+    // Mettre à jour l'entrée correspondante dans la table "userForms"
+    const userForm = await ctx.db
+      .query("userForms")
+      .withIndex("userId_formId", (q) =>
+        q.eq("userId", args.userId).eq("formId", args.formId)
+      )
+      .first();
+
+    if (userForm) {
+      await ctx.db.patch(userForm._id, {
+        completed: true, // Marquer le formulaire comme complété
+      });
+    } else {
+      throw new Error("UserForm entry not found.");
     }
   },
 });
@@ -176,7 +193,8 @@ export const getFormsByJobId = query({
 export const assignFormsToUser = mutation({
   args: {
     userId: v.id("users"), // ID de l'utilisateur
-    formIds: v.array(v.id("forms")), // Liste des IDs des formulaires à assigner
+    formIds: v.array(v.id("forms")), 
+    jobId: v.id("jobs"), // ID du job (nouvel argument)
   },
   handler: async (ctx, args) => {
     // Vérifier si les formulaires sont déjà assignés à l'utilisateur
@@ -198,6 +216,10 @@ export const assignFormsToUser = mutation({
           userId: args.userId,
           formId,
           assignedAt: Date.now(),
+          jobId: args.jobId, // Ajouter le jobId
+
+          completed: false, // Définir completed à false par défaut
+
         })
       )
     );
@@ -255,3 +277,52 @@ export const hasUserRespondedToForm = mutation({
   },
 });
 
+export const getFilledFormsByJobId = query({
+  args: {
+    jobId: v.id("jobs"),
+  },
+  handler: async (ctx, args) => {
+    const userForms = await ctx.db
+      .query("userForms")
+      .withIndex("jobId", (q) => q.eq("jobId", args.jobId))
+      .collect();
+
+    const groupedByEmail: Record<string, any[]> = {};
+
+    for (const userForm of userForms) {
+      const user = await ctx.db.get(userForm.userId);
+      if (!user) continue;
+
+      const userEmail = user.email;
+
+      const form = await ctx.db.get(userForm.formId);
+      if (!form) continue;
+
+      const questions = await ctx.db
+        .query("questions")
+        .withIndex("formId", (q) => q.eq("formId", userForm.formId))
+        .collect();
+
+      const responses = await ctx.db
+        .query("responses")
+        .withIndex("formId", (q) => q.eq("formId", userForm.formId))
+        .filter((q) => q.eq(q.field("userId"), userForm.userId))
+        .collect();
+
+      if (!groupedByEmail[userEmail]) {
+        groupedByEmail[userEmail] = [];
+      }
+
+      groupedByEmail[userEmail].push({
+        ...form,
+        userEmail,
+        assignedAt: userForm.assignedAt,
+        completed: userForm.completed,
+        questions,
+        responses,
+      });
+    }
+
+    return groupedByEmail;
+  },
+});

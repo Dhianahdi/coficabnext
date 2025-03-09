@@ -136,19 +136,38 @@ jobForms: defineTable({
   .index("formId", ["formId"]),
   
   
-  // --- UserForms Table ---
-  userForms: defineTable({
-    userId: v.id("users"), // Référence à l'utilisateur
-    formId: v.id("forms"), // Référence au formulaire
-    assignedAt: v.float64(), // Date d'assignation
+ // --- UserForms Table ---
+userForms: defineTable({
+  userId: v.id("users"), // Référence à l'utilisateur
+  formId: v.id("forms"), // Référence au formulaire
+  jobId: v.id("jobs"), // Référence au job (nouvel attribut)
+  assignedAt: v.float64(), // Date d'assignation
+  completed: v.boolean(), // Indique si le formulaire est complété
+})
+  .index("userId", ["userId"]) // Index pour rechercher les formulaires par utilisateur
+  .index("formId", ["formId"]) // Index pour rechercher les formulaires par formulaire
+  .index("userId_formId", ["userId", "formId"]) // Index composite pour rechercher par userId et formId
+  .index("completed", ["completed"]) // Index pour rechercher par statut de complétion
+  .index("jobId", ["jobId"]), // Nouvel index pour rechercher par jobId
+    
+  meetings: defineTable({
+    title: v.string(), // Titre de la réunion
+    description: v.optional(v.string()), // Description de la réunion
+    type: v.union(v.literal("online"), v.literal("in-person")), // Type de réunion
+    meetingLink: v.optional(v.string()), // Lien de la réunion (si en ligne)
+    date: v.number(), // Date de la réunion (timestamp)
+    startTime: v.number(), // Heure de début (timestamp)
+    organizerId: v.id("users"), // ID de l'organisateur
+    participantId: v.id("users"), // ID du participant (un seul participant)
+    status: v.union(
+      v.literal("scheduled"),
+      v.literal("completed"),
+      v.literal("canceled")
+    ), // Statut de la réunion
   })
-    .index("userId", ["userId"]) // Index pour rechercher les formulaires par utilisateur
-    .index("formId", ["formId"])
-    .index("userId_formId", ["userId", "formId"]), // Index composite pour rechercher par userId et formId
- 
-    
-    
-    
+    .index("organizerId", ["organizerId"])
+    .index("startTime", ["startTime"])
+    .index("date", ["date"]), // Index pour la date
     
     
     

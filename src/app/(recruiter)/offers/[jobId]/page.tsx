@@ -8,7 +8,7 @@ import { Id } from "../../../../../convex/_generated/dataModel";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Spinner } from "@/components/spinner";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { PDFViewer } from "@/components/PDFViewer/PDFViewer";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import Link from "next/dist/client/link";
 
 export default function JobOffersPage() {
   const params = useParams();
@@ -28,9 +29,12 @@ export default function JobOffersPage() {
   const job = useQuery(api.queries.jobs.getJobById, { id });
   const rawOffers = useQuery(api.queries.offres.getOffersByJobId, { jobId });
   const formIds = useQuery(api.mutations.form.getFormsByJobId, { jobId });
+  const updateOfferStatus = useMutation(api.mutations.offers.updateOfferStatus);
+  const scheduleMeeting = useMutation(api.mutations.meetings.scheduleMeeting);
 
   const assignFormsToUser = useMutation(api.mutations.form.assignFormsToUser);
   const updateRecruiterNotes = useMutation(api.mutations.offers.updateRecruiterNotes); // Ajout de la mutation
+  const user = useQuery(api.auth.getMe);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -40,7 +44,14 @@ export default function JobOffersPage() {
   const [openNotesDialog, setOpenNotesDialog] = useState(false); // État pour ouvrir le Dialog des notes
   const [currentNotes, setCurrentNotes] = useState(""); // État pour stocker les notes actuelles
   const [currentOfferId, setCurrentOfferId] = useState<Id<"offers"> | null>(null); // État pour stocker l'ID de l'offre actuelle
-
+  const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
+  const [meetingTitle, setMeetingTitle] = useState("");
+  const [meetingDescription, setMeetingDescription] = useState("");
+  const [meetingType, setMeetingType] = useState<"online" | "in-person">("online");
+  const [meetingLink, setMeetingLink] = useState("");
+  const [meetingDate, setMeetingDate] = useState<number>(Date.now());
+  const [meetingStartTime, setMeetingStartTime] = useState<number>(Date.now());
+  const [currentCandidateId, setCurrentCandidateId] = useState<Id<"users"> | null>(null);
   const isLoading = !job || !rawOffers;
 
   const getStatusBadge = (status: string) => {
@@ -117,6 +128,42 @@ export default function JobOffersPage() {
     }
   };
 
+  
+  const handleUpdateStatus = async (offerId: Id<"offers">, status:"Pending" | "Interview" | "Accepted" | "Rejected") => {
+    try {
+      await updateOfferStatus({ offerId, status });
+      toast.success(`Offer status updated to ${status}`);
+    } catch (error) {
+      console.error("Error updating offer status:", error);
+      toast.error("An error occurred while updating the offer status.");
+    }
+  };
+  const handleOpenMeetingDialog = (candidateId: Id<"users">) => {
+    setCurrentCandidateId(candidateId);
+    setOpenMeetingDialog(true);
+  };
+
+  const handleScheduleMeeting = async () => {
+    if (!currentCandidateId || !user) return;
+
+    try {
+      await scheduleMeeting({
+        title: meetingTitle,
+        description: meetingDescription,
+        type: meetingType,
+        meetingLink: meetingType === "online" ? meetingLink : undefined,
+        date: meetingDate,
+        startTime: meetingStartTime,
+        organizerId: user.id as Id<"users">, // ID de l'organisateur (recruteur)
+        participantId: currentCandidateId,
+      });
+      toast.success("Meeting scheduled successfully!");
+      setOpenMeetingDialog(false);
+    } catch (error) {
+      console.error("Error scheduling meeting:", error);
+      toast.error("An error occurred while scheduling the meeting.");
+    }
+  };
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -198,7 +245,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
     setIsAssigning(true); // Activer le loader
   
     try {
-      const assignedCount = await assignFormsToUser({ userId, formIds });
+      const assignedCount = await assignFormsToUser({ userId, formIds,jobId });
   
       if (assignedCount === 0) {
         toast.info("You have already assigned these forms.");
@@ -276,8 +323,15 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                 <span>Created At: {new Date(job?._creationTime).toLocaleDateString()}</span>
               </div>
             </CardContent>
+            <CardFooter>
+              <Link href={`/filled-forms/${jobId}`} passHref>
+                <Button className="bg-green-600 hover:bg-green-700 transition-colors duration-300">
+                  View Filled Forms
+                </Button>
+              </Link>
+            </CardFooter>
           </Card>
-
+  
           {/* Barre de recherche et filtre de tri */}
           <div className="flex gap-4">
             <Input
@@ -296,111 +350,149 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Tableau des offres */}
-          <Card className="border border-gray-200 shadow-sm">
-            <Table>
-              <TableCaption className="text-lg font-semibold text-gray-900">
-                List of offers for this job.
-              </TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Candidate</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Applied At</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Recruiter Notes</TableHead>
-                  <TableHead>CV</TableHead>
-                  <TableHead>Report</TableHead>
-                  <TableHead>Assign Forms</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {offers?.map((offer) => {
-                  const statusBadge = getStatusBadge(offer.status);
-
-                  return (
-                    <TableRow key={offer._id}>
-                      <TableCell className="font-medium">{offer.candidateName}</TableCell>
-                      <TableCell>{offer.candidateEmail}</TableCell>
-                      <TableCell>
-                        <Badge className={`${statusBadge.color} flex items-center gap-1`}>
-                          {statusBadge.icon}
-                          {offer.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date(offer.appliedAt).toLocaleDateString()}</TableCell>
-                      <TableCell>{offer.score || "N/A"}</TableCell>
-                      <TableCell>{offer.recruiterNotes || "No notes"}</TableCell>
-                      <TableCell>
-                        {offer.resume ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (offer.resume) {
-                                handleOpenPdf(`/uploads/${offer.resume}`);
-                              }
-                            }}
-                          >
-                            <Download size={16} className="mr-2" />
-                            View CV
-                          </Button>
-                        ) : (
-                          <span className="text-gray-500">No CV available</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {offer.reportPdf ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (offer.reportPdf) {
-                                handleOpenPdf(`/uploads/rapports/${offer.reportPdf}`);
-                              }
-                            }}
-                          >
-                            <Download size={16} className="mr-2" />
-                            View Report
-                          </Button>
-                        ) : (
-                          <span className="text-gray-500">No report available</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
+  
+          {/* Liste des offres sous forme de cartes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {offers?.map((offer) => {
+              const statusBadge = getStatusBadge(offer.status);
+  
+              return (
+                <Card
+                  key={offer._id}
+                  className="hover:shadow-lg transition-shadow duration-300 relative overflow-hidden"
+                >
+                  {/* Image de profil */}
+                  <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-500 to-purple-500" />
+                  <div className="relative p-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-lg">
+                        <span className="text-2xl font-bold text-blue-800">
+                          {offer.candidateName[0]}
+                        </span>
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-900">
+                          {offer.candidateName}
+                        </CardTitle>
+                        <CardDescription className="text-gray-600">
+                          {offer.candidateEmail}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </div>
+  
+                  {/* Informations du candidat */}
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Applied At:</span>
+                      <span className="text-sm font-medium">
+                        {new Date(offer.appliedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Score:</span>
+                      <span className="text-sm font-medium">{offer.score || "N/A"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Current Status:</span>
+                    <div className="flex items-center gap-2 mt-2">
+      
+        <Select 
+          value={offer.status}
+          onValueChange={(value: "Pending" | "Interview" | "Accepted" | "Rejected") =>
+            handleUpdateStatus(offer._id, value)
+          }
+        >
+          <SelectTrigger className="w-[120px]">
+            <SelectValue placeholder="Change Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="Interview">Interview</SelectItem>
+            <SelectItem value="Accepted">Accepted</SelectItem>
+            <SelectItem value="Rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">CV:</span>
+                      {offer.resume ? (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleAssignForms(offer.candidateId, offer.candidateEmail)}
-                          disabled={isAssigning}
+                          onClick={() => handleOpenPdf(`/uploads/${offer.resume}`)}
                         >
-                          {isAssigning ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Assign Forms"
-                          )}
+                          <Download size={16} className="mr-2" />
+                          View CV
                         </Button>
-                      </TableCell>
-                      <TableCell>
+                      ) : (
+                        <span className="text-sm text-gray-500">No CV available</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Report:</span>
+                      {offer.reportPdf ? (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOpenNotesDialog(offer._id, offer.recruiterNotes || "")}
+                          onClick={() => handleOpenPdf(`/uploads/rapports/${offer.reportPdf}`)}
                         >
-                          <Edit size={16} className="mr-2" />
-                          Notes
+                          <Download size={16} className="mr-2" />
+                          View Report
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </Card>
-
+                      ) : (
+                        <span className="text-sm text-gray-500">No report available</span>
+                      )}
+                    </div>
+                  </CardContent>
+  
+                  {/* Section des actions */}
+                  <CardFooter className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAssignForms(offer.candidateId, offer.candidateEmail)}
+                        disabled={isAssigning}
+                      >
+                        {isAssigning ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Assign Forms"
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenNotesDialog(offer._id, offer.recruiterNotes || "")}
+                      >
+                        <Edit size={16} className="mr-2" />
+                        Notes
+                      </Button>
+                    </div>
+                   
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenMeetingDialog(offer.candidateId)}
+                    >
+                      Schedule Meeting
+                    </Button>
+                  </CardFooter>
+  
+                  {/* Badge de statut */}
+                  <div className="absolute top-4 right-4">
+                    <Badge className={`${statusBadge.color} flex items-center gap-1`}>
+                      {statusBadge.icon}
+                      {offer.status}
+                    </Badge>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+  
           {/* Modal pour afficher les PDF */}
           <Dialog open={openPdfViewer} onOpenChange={setOpenPdfViewer}>
             <DialogContent className="max-w-4xl">
@@ -410,7 +502,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
               {currentPdfUrl && <PDFViewer fileUrl={currentPdfUrl} />}
             </DialogContent>
           </Dialog>
-
+  
           {/* Modal pour afficher et modifier les notes */}
           <Dialog open={openNotesDialog} onOpenChange={setOpenNotesDialog}>
             <DialogContent>
@@ -426,6 +518,70 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
               />
               <DialogFooter>
                 <Button onClick={handleUpdateNotes}>Save</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+  
+          {/* Modal pour planifier une réunion */}
+          <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Schedule a Meeting</DialogTitle>
+                <DialogDescription>
+                  Plan a meeting with the candidate.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Meeting Title"
+                  value={meetingTitle}
+                  onChange={(e) => setMeetingTitle(e.target.value)}
+                />
+                <Textarea
+                  placeholder="Meeting Description"
+                  value={meetingDescription}
+                  onChange={(e) => setMeetingDescription(e.target.value)}
+                />
+                <Select
+                  value={meetingType}
+                  onValueChange={(value: "online" | "in-person") => setMeetingType(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select meeting type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="in-person">In-Person</SelectItem>
+                  </SelectContent>
+                </Select>
+                {meetingType === "online" && (
+                  <Input
+                    placeholder="Meeting Link (e.g., Google Meet)"
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                  />
+                )}
+                <Input
+                  type="date"
+                  value={new Date(meetingDate).toISOString().split("T")[0]}
+                  onChange={(e) => setMeetingDate(new Date(e.target.value).getTime())}
+                />
+                <Input
+                  type="time"
+                  value={new Date(meetingStartTime).toLocaleTimeString("en-US", {
+                    hour12: false,
+                  })}
+                  onChange={(e) => {
+                    const time = e.target.value.split(":");
+                    const date = new Date(meetingDate);
+                    date.setHours(parseInt(time[0], 10));
+                    date.setMinutes(parseInt(time[1], 10));
+                    setMeetingStartTime(date.getTime());
+                  }}
+                />
+              </div>
+              <DialogFooter>
+                <Button onClick={handleScheduleMeeting}>Schedule</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

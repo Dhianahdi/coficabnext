@@ -8,8 +8,8 @@ import { useParams } from "next/navigation";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Spinner } from "@/components/ui/spinner";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 
 export default function FilledFormsPage() {
   // Récupérer le jobId depuis les paramètres de l'URL

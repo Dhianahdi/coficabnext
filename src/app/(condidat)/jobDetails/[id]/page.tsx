@@ -41,7 +41,7 @@ export default function JobDetailsPage() {
   const [extractedText, setExtractedText] = useState("");
 
   const existingApplication = useQuery(api.queries.offres.getOfferByCandidateAndJob, {
-    candidateId: Me?.id as Id<"users">,
+    candidateId: Me?._id as Id<"users">,
     jobId: jobId,
   });
 
@@ -241,7 +241,7 @@ export default function JobDetailsPage() {
 
       await createOffer({
         jobId: jobId as Id<"jobs">,
-        candidateId: Me.id as Id<"users">,
+        candidateId: Me._id as Id<"users">,
         coverLetter: coverLetter,
         resume: fileName,
         status: "Pending",

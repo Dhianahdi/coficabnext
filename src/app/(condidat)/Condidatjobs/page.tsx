@@ -4,10 +4,7 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import CardPost from "@/components/Home/CardPost";
 import { useQuery } from "convex/react";
-import { Card } from "@/components/ui/card";
-import { Spinner } from "@/components/spinner";
 import { api } from "../../../../convex/_generated/api";
-import { Skeleton } from "@/components/ui/skeleton";
 import { CardPostSkeleton } from "@/components/Home/CardPostSkeleton"; // Import the skeleton component
 
 export default function Condidatjobs() {
@@ -19,8 +16,7 @@ export default function Condidatjobs() {
     return (
       <AdminPanelLayout>
         <ContentLayout title="Recent Jobs">
-         
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
             Available Jobs
           </h1>
           <small className="text-sm font-medium leading-none">
@@ -37,13 +33,22 @@ export default function Condidatjobs() {
     );
   }
 
-  if (jobs.length === 0) {
-    // No jobs found
+  // Filter jobs with status "Open" and applicationDeadline > now
+  const currentTimestamp = Date.now();
+  console.log(currentTimestamp)
+  const openJobs = jobs.filter(job => 
+    job.status === "Open" && 
+    job.applicationDeadline !== undefined && 
+    job.applicationDeadline > currentTimestamp
+  );
+
+  if (openJobs.length === 0) {
+    // No open jobs found
     return (
       <AdminPanelLayout>
         <ContentLayout title="Recent Jobs">
           <div className="mt-6">
-            <p className="text-muted-foreground">No jobs found.</p>
+            <p className="text-muted-foreground">No open jobs found.</p>
           </div>
         </ContentLayout>
       </AdminPanelLayout>
@@ -54,7 +59,6 @@ export default function Condidatjobs() {
     <AdminPanelLayout>
       <ContentLayout title="Recent Jobs">
         <div>
-
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
             Available Jobs
           </h1>
@@ -62,11 +66,9 @@ export default function Condidatjobs() {
             Browse the latest job listings tailored to your interests and skills. Stay ahead with real-time updates!
           </small>
 
-
-
           {/* Render the CardPost components in a grid */}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {jobs.map((job) => (
+            {openJobs.map((job) => (
               <CardPost
                 key={job._id}
                 user={{

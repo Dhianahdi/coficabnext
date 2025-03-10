@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { cn } from "@/lib/utils";
 import { Loader2, Eye, EyeOff, IdCardIcon, User, Mail, Phone, Check, X, LogIn } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -26,16 +25,15 @@ export function UserRegisterForm({ className, ...props }: React.HTMLAttributes<H
     const [generatedCode, setGeneratedCode] = useState("");
     const [pending, setPending] = useState(false);
     const [loadingProvider, setLoadingProvider] = useState<"github" | "google" | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // ✅ Sign Up with Password
     const onPasswordSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
-
         e.preventDefault();
         if (password !== confirmPassword) {
             toast.error("Passwords do not match!");
             return;
         }
-console.log(name, email, password)
         setPending(true);
         try {
             await signIn("password", { name, email, password, flow: "signUp" });
@@ -100,7 +98,7 @@ console.log(name, email, password)
                 toast.error("Invalid email or password!");
             } finally {
                 setPending(false);
-            }          //  router.push("/dashboard");
+            }
         } else {
             toast.error("Incorrect code, please try again.");
         }
@@ -112,7 +110,7 @@ console.log(name, email, password)
                 <form className="grid gap-4" noValidate>
                     {/* Full Name */}
                     <div className="grid gap-1">
-                        <Label htmlFor="name" className="sr-only">Full Name</Label>
+                        <Label htmlFor="name" className="text-sm font-medium text-gray-700">Full Name</Label>
                         <div className="relative">
                             <Input
                                 disabled={pending || loadingProvider !== null}
@@ -122,6 +120,7 @@ console.log(name, email, password)
                                 placeholder="Full Name"
                                 type="text"
                                 required
+                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
                             />
                             <IdCardIcon className="absolute inset-y-0 right-3 text-gray-400" size={16} />
                         </div>
@@ -129,7 +128,7 @@ console.log(name, email, password)
 
                     {/* Email */}
                     <div className="grid gap-1">
-                        <Label htmlFor="email" className="sr-only">Email</Label>
+                        <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
                         <div className="relative">
                             <Input
                                 disabled={pending || loadingProvider !== null}
@@ -139,6 +138,7 @@ console.log(name, email, password)
                                 placeholder="Email Address"
                                 type="email"
                                 required
+                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
                             />
                             <Mail className="absolute inset-y-0 right-3 text-gray-400" size={16} />
                         </div>
@@ -146,7 +146,7 @@ console.log(name, email, password)
 
                     {/* Phone Number */}
                     <div className="grid gap-1">
-                        <Label htmlFor="phone" className="sr-only">Phone Number</Label>
+                        <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone Number</Label>
                         <div className="relative">
                             <Input
                                 disabled={pending || loadingProvider !== null}
@@ -156,6 +156,7 @@ console.log(name, email, password)
                                 placeholder="Phone Number"
                                 type="tel"
                                 required
+                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
                             />
                             <Phone className="absolute inset-y-0 right-3 text-gray-400" size={16} />
                         </div>
@@ -163,7 +164,7 @@ console.log(name, email, password)
 
                     {/* Password */}
                     <div className="grid gap-1">
-                        <Label htmlFor="password" className="sr-only">Password</Label>
+                        <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
                         <div className="relative">
                             <Input
                                 disabled={pending || loadingProvider !== null}
@@ -171,16 +172,23 @@ console.log(name, email, password)
                                 onChange={(e) => setPassword(e.target.value)}
                                 id="password"
                                 placeholder="Password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 required
+                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
                             />
-                            <EyeOff className="absolute inset-y-0 right-3 text-gray-400" size={16} />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-3 text-gray-400"
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                         </div>
                     </div>
 
                     {/* Confirm Password */}
                     <div className="grid gap-1">
-                        <Label htmlFor="confirmPassword" className="sr-only">Confirm Password</Label>
+                        <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</Label>
                         <div className="relative">
                             <Input
                                 disabled={pending || loadingProvider !== null}
@@ -188,28 +196,39 @@ console.log(name, email, password)
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 id="confirmPassword"
                                 placeholder="Confirm Password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 required
+                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
                             />
-                            <EyeOff className="absolute inset-y-0 right-3 text-gray-400" size={16} />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-3 text-gray-400"
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                         </div>
                     </div>
 
                     {/* Send Code Button */}
-                    <Button onClick={handleSendMail} className="w-full" disabled={pending}>
+                    <Button
+                        onClick={handleSendMail}
+                        className="w-full bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300"
+                        disabled={pending}
+                    >
                         {pending ? <Loader2 className="animate-spin" /> : "Send Code"}
                     </Button>
                 </form>
             ) : (
                 // Step 2: Code Verification
                 <div className="grid gap-4">
-                    <h2 className="text-lg font-semibold text-center">Code Verification</h2>
+                    <h2 className="text-lg font-semibold text-center text-gray-900">Code Verification</h2>
                     <p className="text-sm text-gray-500 text-center">
                         A code has been sent to <strong>{email}</strong>. Please enter it below.
                     </p>
 
                     <div className="grid gap-1">
-                        <Label htmlFor="code" className="sr-only">Verification Code</Label>
+                        <Label htmlFor="code" className="text-sm font-medium text-gray-700">Verification Code</Label>
                         <Input
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
@@ -217,39 +236,45 @@ console.log(name, email, password)
                             placeholder="Enter Code"
                             type="text"
                             required
+                            className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
                         />
                     </div>
 
-                    <Button onClick={handleVerifyCode} className="w-full">
+                    <Button
+                        onClick={handleVerifyCode}
+                        className="w-full bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300"
+                    >
                         Verify
                     </Button>
                 </div>
             )}
 
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-background px-2 text-muted-foreground">
-                                    Or
-                                </span>
-                            </div>
-                        </div>
-               
-                        <Button
-                            disabled={pending || loadingProvider !== null} // Disable if pending or loadingProvider is set
-                            onClick={() => handleProviderSignUp("google")}
-                            variant="outline"
-                            type="button"
-                            className="w-full"
-                        >
-                            {loadingProvider === "google" ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                "Continue with Google"
-                            )}
-                        </Button>
+            {/* Divider */}
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">
+                        Or
+                    </span>
+                </div>
+            </div>
+
+            {/* Google Sign Up Button */}
+            <Button
+                disabled={pending || loadingProvider !== null}
+                onClick={() => handleProviderSignUp("google")}
+                variant="outline"
+                type="button"
+                className="w-full rounded-lg border border-gray-300 hover:bg-gray-100 transition-all duration-300"
+            >
+                {loadingProvider === "google" ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    "Continue with Google"
+                )}
+            </Button>
         </div>
     );
 }

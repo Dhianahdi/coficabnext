@@ -190,10 +190,7 @@ export default function CardPost({ user, post }: CardPostProps) {
           >
             {loading ? "Loading..." : "View Details"}
           </Button>
-          <Button onClick={handleApply} className="w-full flex items-center justify-center">
-              <CheckCircle className="mr-2 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
-              Apply Now
-            </Button>
+        
         </div>
       </CardContent>
     </Card>

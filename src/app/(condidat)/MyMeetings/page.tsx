@@ -18,7 +18,7 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 export default function MyMeetingsPage() {
   const [selectedDate, setSelectedDate] = useState<number | null>(null); // Null signifie pas de filtre
   const Me = useQuery(api.auth.getMe);
-  const userId = Me?.id as Id<"users">;
+  const userId = Me?._id as Id<"users">;
 
   // Récupérer les réunions de l'utilisateur
   const meetings = useQuery(api.mutations.meetings.getUserMeetings, { userId });

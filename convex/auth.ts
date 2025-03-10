@@ -47,8 +47,6 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     }
   },
 });
-
-
 export const getMe = query({
   args: {},
   handler: async (ctx) => {
@@ -59,14 +57,17 @@ export const getMe = query({
     if (!user) return null;
 
     const role = user.roleId ? await ctx.db.get(user.roleId as Id<"roles">) : null;
+    const department = user.departmentId ? await ctx.db.get(user.departmentId as Id<"departments">) : null;
 
     return {
-      ...user, // Spread toutes les propriétés de l'utilisateur
-      role: role?.name || "Guest", // Ajouter le nom du rôle
-      permissions: role?.permissions || [], // Ajouter les permissions du rôle
+      ...user, // Toutes les propriétés de l'utilisateur
+      role: role?.name || "Guest", // Nom du rôle
+      permissions: role?.permissions || [], // Permissions du rôle
+      department: department ? { id: department._id, name: department.name } : null, // Nom du département
     };
   },
 });
+
 
 export const updateUserRole = mutation({
   args: {

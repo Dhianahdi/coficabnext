@@ -154,7 +154,7 @@ export default function JobOffersPage() {
         meetingLink: meetingType === "online" ? meetingLink : undefined,
         date: meetingDate,
         startTime: meetingStartTime,
-        organizerId: user.id as Id<"users">, // ID de l'organisateur (recruteur)
+        organizerId: user._id as Id<"users">, // ID de l'organisateur (recruteur)
         participantId: currentCandidateId,
       });
       toast.success("Meeting scheduled successfully!");

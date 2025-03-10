@@ -19,7 +19,7 @@ export default function CandidatePage() {
 
   // Récupérer les offres depuis Convex
   const offers = useQuery(api.queries.offres.getOffersByCandidateId, {
-    candidateId: Me?.id as Id<"users">, // Utilise l'ID du candidat connecté
+    candidateId: Me?._id as Id<"users">, // Utilise l'ID du candidat connecté
   });
 
   // Filtrer et trier les offres

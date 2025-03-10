@@ -31,6 +31,8 @@ export const fetchAllUsers = query({
 export const createUser = mutation({
   args: {
     name: v.string(),
+    status: v.optional(v.string()),
+
     email: v.string(),
     image: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -58,6 +60,8 @@ export const updateUser = mutation({
   args: {
     userId: v.id("users"),
     name: v.optional(v.string()),
+        status: v.optional(v.string()),
+    
     image: v.optional(v.string()),
     phone: v.optional(v.string()),
     roleId: v.optional(v.id("roles")),
@@ -132,5 +136,154 @@ export const blockUser = mutation({
   args: { userId: v.id("users"), isBlocked: v.boolean() },
   handler: async ({ db }, { userId, isBlocked }) => {
     await db.patch(userId, { isBlocked });
+  },
+});
+
+
+export const inviteUser = mutation({
+  args: {
+    email: v.string(), // Email de l'utilisateur invité
+    departmentId: v.optional(v.id("departments")), // ID du département sélectionné
+  },
+  handler: async (ctx, args) => {
+    const { email, departmentId } = args;
+
+    // Vérifiez si l'utilisateur existe déjà
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", email)) // Utiliser l'index "by_email"
+      .unique();
+
+    if (existingUser) {
+      throw new Error("User with this email already exists.");
+    }
+
+    // Créez un nouvel utilisateur avec un statut "invited"
+    await ctx.db.insert("users", {
+      email,
+      departmentId,
+      status: "invited", // Statut pour indiquer que l'utilisateur est invité
+    });
+
+    // Retournez un message de succès
+    return { success: true, message: "User invited successfully!" };
+  },
+});
+
+export const createInvitation = mutation({
+  args: {
+    email: v.string(),
+    departmentId: v.id("departments"),
+  },
+  handler: async (ctx, args) => {
+    // Vérifier si une invitation existe déjà pour cet e-mail
+    const existingInvitation = await ctx.db
+      .query("invitations")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existingInvitation) {
+      throw new Error("Invitation already exists for this email.");
+    }
+
+    // Créer une nouvelle invitation
+    await ctx.db.insert("invitations", {
+      email: args.email,
+      departmentId: args.departmentId,
+      status: "pending", // Statut initial
+    });
+
+    return { message: "Invitation created successfully!" };
+  },
+});
+
+export const getInvitationByEmail = query({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const invitation = await ctx.db
+      .query("invitations")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (!invitation) {
+      throw new Error("Invitation not found.");
+    }
+
+    return invitation;
+  },
+});
+
+
+// convex/mutations/invitations.ts
+export const deleteExpiredInvitations = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const invitations = await ctx.db
+      .query("invitations")
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+
+    const now = Date.now();
+    const expirationTime = 24 * 60 * 60 * 1000; // 24 heures
+
+    for (const invitation of invitations) {
+      if (now - invitation._creationTime > expirationTime) {
+        await ctx.db.patch(invitation._id, {
+          status: "expired", // Marquer comme expirée
+        });
+        await ctx.db.delete(invitation._id); // Supprimer l'invitation
+      }
+    }
+
+    return { message: "Expired invitations deleted successfully." };
+  },
+});
+
+export const markInvitationAsCompleted = mutation({
+  args: {
+    invitationId: v.id("invitations"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.invitationId, {
+      status: "completed",
+    });
+
+    return { message: "Invitation marked as completed." };
+  },
+});
+
+
+export const updateUserDepartmentAndStatus = mutation({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, { email }) => {
+    // Récupérer les utilisateurs avec le même email
+    const users = await ctx.db.query("users").withIndex("email", (q) => q.eq("email", email)).collect();
+
+    if (users.length !== 2) {
+      throw new Error("There should be exactly two users with the same email.");
+    }
+
+    // Trouver l'utilisateur qui a un name et celui qui n'en a pas
+    const userWithName = users.find((user) => user.name);
+    const userWithoutName = users.find((user) => !user.name);
+
+    if (!userWithName || !userWithoutName) {
+      throw new Error("Could not find the correct users to update.");
+    }
+
+    // Mettre à jour le departmentId et le status de l'utilisateur avec un name
+    await ctx.db.patch(userWithName._id, {
+      departmentId: userWithoutName.departmentId,
+      status: "Accepted",
+    });
+
+    // Supprimer l'utilisateur sans name
+    await ctx.db.delete(userWithoutName._id);
+
+    return { success: true };
   },
 });

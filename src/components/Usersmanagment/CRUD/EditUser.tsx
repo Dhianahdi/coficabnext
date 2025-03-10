@@ -21,7 +21,7 @@ import { toast } from "sonner";
 export function EditUser({ user }: { user: any }) {
   // Charger les rôles et départements depuis la base de données
   const roles = useQuery(api.mutations.roles.getAllRoles) || [];
-  const departments = useQuery(api.mutations.department.getAllDepartments) || [];
+  const departments = useQuery(api.mutations.departments.getAllDepartments) || [];
 
   // États pour la sélection des rôles et départements
   const [roleId, setRoleId] = useState(user.role?._id || "");

@@ -8,6 +8,8 @@ const schema = defineSchema({
   // --- Users Table ---
   users: defineTable({
     name: v.optional(v.string()),
+    status: v.optional(v.string()),
+
     image: v.optional(v.string()),
     email: v.string(),
     emailVerificationTime: v.optional(v.float64()),
@@ -169,7 +171,11 @@ userForms: defineTable({
     .index("startTime", ["startTime"])
     .index("date", ["date"]), // Index pour la date
     
-    
+    invitations: defineTable({
+      email: v.string(),
+      departmentId: v.id("departments"),
+      status: v.union(v.literal("pending"), v.literal("completed"), v.literal("expired")),
+    }).index("by_email", ["email"]), // Index pour rechercher par e-mail
     
     
     });

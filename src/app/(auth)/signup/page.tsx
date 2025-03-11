@@ -18,18 +18,18 @@ export default function RegisterPage() {
             <div className="md:hidden flex justify-center">
                 <div className="w-1/2"> {/* Adjust parent container width */}
                     <Image
-                        src="/img/pilot.png"
+                        src="/logo-black.svg"
                         layout="responsive" // Makes it responsive
-                        width={800} // Specify original image width for aspect ratio
-                        height={800} // Use the same width and height for a perfect circle
+                        width={400} // Specify original image width for aspect ratio
+                        height={400} // Use the same width and height for a perfect circle
                         alt="Authentication"
                         className="block dark:hidden rounded-full object-cover" // Rounded and centered
                     />
                     <Image
-                        src="/img/pilot.png"
+                        src="/logo-white.png"
                         layout="responsive"
-                        width={800}
-                        height={800} // Same width and height for consistency
+                        width={400}
+                        height={400} // Same width and height for consistency
                         alt="Authentication"
                         className="hidden dark:block rounded-full object-cover" // Rounded and centered
                     />
@@ -44,38 +44,36 @@ export default function RegisterPage() {
                         buttonVariants({ variant: "secondary" }),
                         "my-6 md:my-0 md:absolute md:right-8 md:top-8 flex justify-center"
                     )}
-
                 >
                     Signin
                 </Link>
 
                 {/* Left Panel */}
-                <div className="relative hidden h-full flex-col  p-10  lg:flex dark:border-r">
-                    {/* Background Image */}
-                    <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: "url('/img/pilot.png')" }} // Replace with your image path
-                    />
-                    {/* Overlay for better text visibility */}
-                    {/* Content */}
-                    <div className="relative z-20 flex items-center text-lg font-medium">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="mr-2 h-6 w-6"
-                        >
-                            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-                        </svg>
-                        Acme Inc
+                <div className="relative hidden h-full flex-col items-center justify-center p-10 lg:flex dark:border-r">
+                    <div className="w-1/2">
+                        {/* Light Mode Logo */}
+                        <Image
+                            src="/logo-black.svg"
+                            layout="responsive"
+                            width={200}
+                            height={200}
+                            alt="Authentication"
+                            className="block dark:hidden rounded-full object-cover mb-4"
+                        />
+                        {/* Dark Mode Logo */}
+                        <Image
+                            src="/logo-white.png"
+                            layout="responsive"
+                            width={200}
+                            height={200}
+                            alt="Authentication"
+                            className="hidden dark:block rounded-full object-cover mb-4"
+                        />
                     </div>
-
+                    <p className="text-center text-lg font-medium">
+                        Welcome to COFICAB’s portal. Sign up to access your account and explore our latest updates and resources.
+                    </p>
                 </div>
-
 
                 {/* Right Panel */}
                 <div className="lg:p-8 flex flex-col justify-center flex-1">

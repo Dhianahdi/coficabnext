@@ -18,7 +18,7 @@ const CustomPassword = Password<DataModel>({
 });
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [GitHub, Google, CustomPassword],
+  providers: [GitHub, Google, CustomPassword,],
   callbacks: {
     async afterUserCreatedOrUpdated(ctx, args) {
       if (args.existingUserId) return;

@@ -177,6 +177,17 @@ userForms: defineTable({
       status: v.union(v.literal("pending"), v.literal("completed"), v.literal("expired")),
     }).index("by_email", ["email"]), // Index pour rechercher par e-mail
     
+    messages: defineTable({
+      senderId: v.id("users"), // ID de l'expéditeur
+      receiverId: v.id("users"), // ID du destinataire
+      content: v.string(), // Contenu du message
+      timestamp: v.number(), // Timestamp du message
+      status: v.union(v.literal("sent"), v.literal("delivered"), v.literal("read")), // Statut du message
+      type: v.union(v.literal("text"), v.literal("image"), v.literal("file")), // Type de message
+    })
+    .index("by_sender", ["senderId"]) // Index pour rechercher par expéditeur
+    .index("by_receiver", ["receiverId"]) // Index pour rechercher par destinataire
+    .index("by_timestamp", ["timestamp"]), // Index pour trier par timestamp
     
     });
 

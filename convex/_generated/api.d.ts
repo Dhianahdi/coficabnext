@@ -22,15 +22,18 @@ import type * as mutations_departments from "../mutations/departments.js";
 import type * as mutations_form from "../mutations/form.js";
 import type * as mutations_jobs from "../mutations/jobs.js";
 import type * as mutations_meetings from "../mutations/meetings.js";
+import type * as mutations_messages from "../mutations/messages.js";
 import type * as mutations_offers from "../mutations/offers.js";
 import type * as mutations_permissions from "../mutations/permissions.js";
 import type * as mutations_roles from "../mutations/roles.js";
+import type * as mutations_stats from "../mutations/stats.js";
 import type * as mutations_user from "../mutations/user.js";
 import type * as queries_departments from "../queries/departments.js";
 import type * as queries_jobs from "../queries/jobs.js";
 import type * as queries_offres from "../queries/offres.js";
 import type * as queries_permissions from "../queries/permissions.js";
 import type * as queries_roles from "../queries/roles.js";
+import type * as ResendOTPPasswordReset from "../ResendOTPPasswordReset.js";
 import type * as users from "../users.js";
 
 /**
@@ -51,15 +54,18 @@ declare const fullApi: ApiFromModules<{
   "mutations/form": typeof mutations_form;
   "mutations/jobs": typeof mutations_jobs;
   "mutations/meetings": typeof mutations_meetings;
+  "mutations/messages": typeof mutations_messages;
   "mutations/offers": typeof mutations_offers;
   "mutations/permissions": typeof mutations_permissions;
   "mutations/roles": typeof mutations_roles;
+  "mutations/stats": typeof mutations_stats;
   "mutations/user": typeof mutations_user;
   "queries/departments": typeof queries_departments;
   "queries/jobs": typeof queries_jobs;
   "queries/offres": typeof queries_offres;
   "queries/permissions": typeof queries_permissions;
   "queries/roles": typeof queries_roles;
+  ResendOTPPasswordReset: typeof ResendOTPPasswordReset;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

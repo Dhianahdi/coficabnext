@@ -240,17 +240,79 @@ export default function AddJobPage() {
         }
     };
 
-
     const transformGeminiResponseToBlocks = (text: string): PartialBlock[] => {
-        // Diviser le texte en paragraphes
-        const paragraphs = text.split("\n\n");
-      
-        // Transformer chaque paragraphe en un bloc de texte
-        return paragraphs.map((paragraph) => ({
-          type: "paragraph",
-          content: paragraph,
-        }));
-      };
+        const blocks: PartialBlock[] = [];
+        const lines = text.split("\n");
+    
+        let currentBlock: PartialBlock | null = null;
+    
+        lines.forEach((line) => {
+            // Détecter les lignes contenant **mot** et les transformer en blocs de niveau 3
+            if (line.includes("**")) {
+                if (currentBlock) {
+                    blocks.push(currentBlock);
+                }
+                // Remplacer **mot** par <strong>mot</strong> pour le texte en gras
+                const formattedLine = line.replace(/\*\*(.*?)\*\*/g, "$1");
+                currentBlock = {
+                    type: "heading",
+                    content: formattedLine,
+                    props: {
+                        level: 3, // Niveau de titre (h3)
+                    },
+                };
+            }
+            // Détecter les titres (## Titre)
+            else if (line.startsWith("## ")) {
+                if (currentBlock) {
+                    blocks.push(currentBlock);
+                }
+                currentBlock = {
+                    type: "heading",
+                    content: line.replace("## ", ""),
+                    props: {
+                        level: 2, // Niveau de titre (h2)
+                    },
+                };
+            }
+            // Détecter les listes (* Item)
+            else if (line.startsWith("* ")) {
+                if (!currentBlock || currentBlock.type !== "bulletListItem") {
+                    if (currentBlock) {
+                        blocks.push(currentBlock);
+                    }
+                    currentBlock = {
+                        type: "bulletListItem",
+                        content: line.replace("* ", ""),
+                    };
+                } else {
+                    // Si le bloc actuel est déjà une liste, ajouter un nouvel élément
+                    currentBlock.content += "\n" + line.replace("* ", "");
+                }
+            }
+            // Détecter les paragraphes normaux
+            else {
+                if (currentBlock && currentBlock.type === "paragraph") {
+                    currentBlock.content += "\n" + line;
+                } else {
+                    if (currentBlock) {
+                        blocks.push(currentBlock);
+                    }
+                    currentBlock = {
+                        type: "paragraph",
+                        content: line,
+                    };
+                }
+            }
+        });
+    
+        if (currentBlock) {
+            blocks.push(currentBlock);
+        }
+    
+        return blocks;
+    };
+    
 
       const generateDescription = async () => {
         setIsGeneratingDescription(true);

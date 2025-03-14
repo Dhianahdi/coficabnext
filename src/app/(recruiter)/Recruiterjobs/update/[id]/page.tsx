@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Check, Loader2, Save } from "lucide-react";
+import { Check, Loader2, Plus, Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import ReusableSelect from "@/components/ReusableSelect";
 import { Spinner } from "@/components/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PartialBlock, PartialInlineContent } from "@blocknote/core";
 
 interface Option {
     value: string;
@@ -56,6 +57,142 @@ export default function UpdateJobPage() {
     const [applicationDeadline, setApplicationDeadline] = useState<Date | undefined>(undefined);
     const [interviewProcess, setInterviewProcess] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    // Ajoutez ces états au début du composant
+const [keywords, setKeywords] = useState(""); // Mots-clés pour générer la description
+const [isGeneratingDescription, setIsGeneratingDescription] = useState(false); // État de chargement
+
+const generateDescription = async () => {
+    setIsGeneratingDescription(true);
+  
+    try {
+      // Construire le prompt pour Gemini en utilisant les données du formulaire
+      const prompt = `Generate a detailed job description based on the following information:
+  - Title: ${title}
+  - Department: ${departments.find((dept) => dept._id === departmentId)?.name || "Not specified"}
+  - Requirements: ${requirements}
+  - Salary Range: ${salaryRange}
+  - Employment Type: ${employmentType}
+  - Location: ${location}
+  - Experience Level: ${experienceLevel}
+  - Tags: ${tags.map((tag) => tag.text).join(", ")}
+  - Application Deadline: ${applicationDeadline ? format(applicationDeadline, "PPP") : "Not specified"}
+  - Interview Process: ${interviewProcess}`;
+  
+      // Envoyer la requête à l'API Gemini
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBX_Yq9iRL7hqCEwpZeUP4zepSaEk33yag",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
+  
+      const data = await response.json();
+      if (response.ok) {
+        const generatedDescription = data.candidates[0].content.parts[0].text;
+  
+        // Transformer la réponse de Gemini en blocs compatibles avec BlockEditor
+        const blocks = transformGeminiResponseToBlocks(generatedDescription);
+  
+        // Convertir les blocs en JSON
+        const descriptionJSON = JSON.stringify(blocks);
+        // Mettre à jour la description dans l'éditeur
+        setDescription(descriptionJSON);
+        toast.success("Description generated successfully!");
+      } else {
+        console.error("API Error:", data);
+        toast.error("Failed to generate description.");
+      }
+    } catch (error) {
+      console.error("Request Error:", error);
+      toast.error("An error occurred while generating the description.");
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
+  const transformGeminiResponseToBlocks = (text: string): PartialBlock[] => {
+    const blocks: PartialBlock[] = [];
+    const lines = text.split("\n");
+
+    let currentBlock: PartialBlock | null = null;
+
+    lines.forEach((line) => {
+        // Détecter les lignes contenant **mot** et les transformer en blocs de niveau 3
+        if (line.includes("**")) {
+            if (currentBlock) {
+                blocks.push(currentBlock);
+            }
+            // Remplacer **mot** par <strong>mot</strong> pour le texte en gras
+            const formattedLine = line.replace(/\*\*(.*?)\*\*/g, "$1");
+            currentBlock = {
+                type: "heading",
+                content: formattedLine,
+                props: {
+                    level: 3, // Niveau de titre (h3)
+                },
+            };
+        }
+        // Détecter les titres (## Titre)
+        else if (line.startsWith("## ")) {
+            if (currentBlock) {
+                blocks.push(currentBlock);
+            }
+            currentBlock = {
+                type: "heading",
+                content: line.replace("## ", ""),
+                props: {
+                    level: 2, // Niveau de titre (h2)
+                },
+            };
+        }
+        // Détecter les listes (* Item)
+        else if (line.startsWith("* ")) {
+            if (!currentBlock || currentBlock.type !== "bulletListItem") {
+                if (currentBlock) {
+                    blocks.push(currentBlock);
+                }
+                currentBlock = {
+                    type: "bulletListItem",
+                    content: line.replace("* ", ""),
+                };
+            } else {
+                // Si le bloc actuel est déjà une liste, ajouter un nouvel élément
+                currentBlock.content += "\n" + line.replace("* ", "");
+            }
+        }
+        // Détecter les paragraphes normaux
+        else {
+            if (currentBlock && currentBlock.type === "paragraph") {
+                currentBlock.content += "\n" + line;
+            } else {
+                if (currentBlock) {
+                    blocks.push(currentBlock);
+                }
+                currentBlock = {
+                    type: "paragraph",
+                    content: line,
+                };
+            }
+        }
+    });
+
+    if (currentBlock) {
+        blocks.push(currentBlock);
+    }
+
+    return blocks;
+};
 
     // Fetch experience level options
     const fetchedExperienceLevelOptions = useQuery(api.queries.jobs.getExperienceLevelOptions);
@@ -249,16 +386,35 @@ const handleFormSelection = (formId: Id<"forms">) => {
                         <div className="space-y-6">
                             {/* Description Section */}
                             <Card className="p-6 h-full flex flex-col">
-                                <div className=" flex-1 flex flex-col">
-                                    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Description</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        Update the detailed description of the job.
-                                    </p>
-                                    <div className="flex-1 overflow-y-auto">
-                                        <BlockEditor initialContent={description} onChange={setDescription} editable />
+                                    <div className="flex-1 flex flex-col">
+                                        <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Description</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Provide a detailed description of the job, including responsibilities, qualifications, and any other relevant information.
+                                        </p>
+                                        <div className="mt-4">
+                                            <Button
+                                                onClick={generateDescription}
+                                                disabled={isGeneratingDescription}
+                                                className="flex items-center gap-2"
+                                            >
+                                                {isGeneratingDescription ? (
+                                                    <Loader2 className="animate-spin" size={18} />
+                                                ) : (
+                                                    <Plus size={18} />
+                                                )}
+                                                <span>Generate Description</span>
+                                            </Button>
+                                        </div>
+                                         <div className="flex-1 overflow-y-auto">
+                                            <BlockEditor
+                                              key={description} 
+                                              initialContent={description}
+                                              onChange={setDescription}
+                                                editable={true}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            </Card>
+                                </Card>
                         </div>
 
                         {/* Right Panel */}

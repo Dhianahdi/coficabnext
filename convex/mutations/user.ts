@@ -5,18 +5,26 @@ import { Id } from "../_generated/dataModel";
 
 export const fetchAllUsers = query({
   handler: async (ctx) => {
+    // Récupérer tous les utilisateurs
     const users = await ctx.db.query("users").collect();
 
     // Charger les rôles et départements pour chaque utilisateur
     const usersWithDetails = await Promise.all(
       users.map(async (user) => {
+        // Récupérer le rôle de l'utilisateur
         const role = user.roleId ? await ctx.db.get(user.roleId as Id<"roles">) : null;
-        const department = user.departmentId ? await ctx.db.get(user.departmentId as Id<"departments">) : null;
+
+        // Récupérer le département de l'utilisateur
+        const department = user.departmentId
+          ? await ctx.db.get(user.departmentId as Id<"departments">)
+          : null;
 
         return {
           ...user,
           role: role ? { _id: role._id, name: role.name } : { _id: null, name: "N/A" },
-          department: department ? { _id: department._id, name: department.name } : { _id: null, name: "N/A" },
+          department: department
+            ? { _id: department._id, name: department.name }
+            : { _id: null, name: "N/A" },
         };
       })
     );

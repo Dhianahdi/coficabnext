@@ -1,16 +1,16 @@
-import { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { UserAuthForm } from "@/components/auth-screens/Signin/page";
-
-export const metadata: Metadata = {
-    title: "Authentication",
-    description: "Authentication forms built using the components.",
-};
+import { ResetPassword } from "@/components/auth-screens/ResetPassword/page";
 
 export default function AuthenticationPage() {
+    const [showResetPassword, setShowResetPassword] = useState(false);
+
     return (
         <div className="min-h-screen flex flex-col">
             {/* Hidden for small screens */}
@@ -80,12 +80,27 @@ export default function AuthenticationPage() {
                 <div className="lg:p-8 flex flex-col justify-center flex-1">
                     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
                         <div className="flex flex-col space-y-2 text-center">
-                            <h1 className="text-2xl font-semibold tracking-tight">Welcome Back</h1>
+                            <h1 className="text-2xl font-semibold tracking-tight">
+                                {showResetPassword ? "Reset Password" : "Welcome Back"}
+                            </h1>
                             <p className="text-sm text-muted-foreground">
-                                Log in to access your account and manage your preferences.
+                                {showResetPassword
+                                    ? "Enter your email to reset your password."
+                                    : "Log in to access your account and manage your preferences."}
                             </p>
                         </div>
-                        <UserAuthForm />
+
+                        {/* Afficher UserAuthForm ou ResetPassword en fonction de l'état */}
+                        {showResetPassword ? <ResetPassword /> : <UserAuthForm />}
+
+                        {/* Bouton "Forgot Password" ou "Back to Sign In" */}
+                        <button
+                            onClick={() => setShowResetPassword(!showResetPassword)}
+                            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-primary"
+                        >
+                            {showResetPassword ? "Back to Sign In" : "Forgot Password?"}
+                        </button>
+
                         <p className="px-8 text-center text-sm text-muted-foreground">
                             By clicking continue, you agree to our{" "}
                             <Link href="/terms" className="underline underline-offset-4 hover:text-primary">

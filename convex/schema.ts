@@ -188,7 +188,26 @@ userForms: defineTable({
     .index("by_sender", ["senderId"]) // Index pour rechercher par expéditeur
     .index("by_receiver", ["receiverId"]) // Index pour rechercher par destinataire
     .index("by_timestamp", ["timestamp"]), // Index pour trier par timestamp
-    
+   
+   
+    // --- Notifications Table ---
+notifications: defineTable({
+  userId: v.id("users"), // ID de l'utilisateur qui reçoit la notification
+  title: v.string(), // Titre de la notification
+  message: v.string(), // Message de la notification
+  link: v.optional(v.string()), // Lien optionnel pour rediriger l'utilisateur
+  type: v.union(
+    v.literal("info"),
+    v.literal("warning"),
+    v.literal("error"),
+    v.literal("success")
+  ), // Type de notification (info, warning, error, success)
+  isRead: v.boolean(), // Indique si la notification a été lue
+  createdAt: v.number(), // Timestamp de création de la notification
+})
+  .index("userId", ["userId"]) // Index pour rechercher les notifications par utilisateur
+  .index("isRead", ["isRead"]) // Index pour filtrer les notifications lues/non lues
+  .index("createdAt", ["createdAt"]), // Index pour trier les notifications par date de création
     });
 
 

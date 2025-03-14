@@ -43,15 +43,14 @@ type Group = {
 export function getMenuList(
   pathname: string,
   userRole?: string,
-  modules?: ModuleItem[]
 ): Group[] {
   const groups: Group[] = [
     {
       groupLabel: "",
       menus: [
         {
-          href: "/",
-          label: "Home",
+          href: "/recruiter",
+          label: "Dashboard",
           icon: LayoutGrid,
           submenus: [],
         },
@@ -62,34 +61,31 @@ export function getMenuList(
       menus: [
         {
           href: "",
-          label: "Posts",
+          label: "Jobs",
           icon: SquarePen,
           submenus: [
-            { href: "/posts", label: "All Posts" },
-            { href: "/posts/new", label: "New Post" },
+            { href: "/Recruiterjobs", label: "All Jobs" },
+            { href: "/Recruiterjobs/add", label: "New Jobs" },
           ],
         },
         {
-          href: "/categories",
-          label: "Categories",
-          icon: Bookmark,
+          href: "/offers",
+          label: "Offers",
+          icon: FileText,
         },
+
         {
-          href: "/test",
-          label: "test",
-          icon: Tag,
-        },
-        {
-          href: "/stories",
-          label: "My Stories",
+          href: "/RecMeetings",
+          label: "My Meetings",
           icon: Book,
         },
         {
-          href: "/chapters",
-          label: "My Chapters",
+          href: "/messages",
+          label: "My messages",
           icon: FileText,
         },
       ],
+   
     },
     {
       groupLabel: "Settings",
@@ -100,7 +96,7 @@ export function getMenuList(
           icon: Users,
         },
         {
-          href: "/account",
+          href: "/Profile",
           label: "Account",
           icon: Settings,
         },
@@ -108,35 +104,115 @@ export function getMenuList(
     },
   ];
 
-  // Append module items with their dedicated routes.
-  if (modules && modules.length > 0) {
-    groups.push({
-      groupLabel: "Modules",
-      menus: modules.map((mod) => ({
-        href: mod.route, // For example, "/crm" or "/project-management"
-        label: mod.name,
-        icon: mod.icon || Settings,
-      })),
-    });
-  }
-
-  if (userRole === "Super Admin") {
-    groups.push({
-      groupLabel: "Super Administration",
+  const groupscolab: Group[] = [
+   
+    {
+      groupLabel: "Contents",
       menus: [
         {
-          href: "/(superAdmin)/dashboard",
-          label: "Admin Dashboard",
-          icon: LayoutGrid,
+          href: "",
+          label: "Jobs",
+          icon: SquarePen,
+          submenus: [
+            { href: "/Recruiterjobs", label: "All Jobs" },
+          ],
         },
         {
-          href: "/usermanagment",
-          label: "User Managment",
+          href: "/offers",
+          label: "Offers",
+          icon: FileText,
+        },
+
+        {
+          href: "/RecMeetings",
+          label: "My Meetings",
+          icon: Book,
+        },
+        {
+          href: "/messages",
+          label: "My messages",
+          icon: FileText,
+        },
+      ],
+   
+    },
+    {
+      groupLabel: "Settings",
+      menus: [
+       
+        {
+          href: "/Profile",
+          label: "Account",
+          icon: Settings,
+        },
+      ],
+    },
+  ];
+  const groupsGeust: Group[] = [
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/candidate",
+          label: "Dashboard",
+          icon: LayoutGrid,
+          submenus: [],
+        },
+      ],
+    },
+    {
+      groupLabel: "Contents",
+      menus: [
+    
+        {
+          href: "/Condidatjobs",
+          label: "Jobs",
+          icon: SquarePen,
+        },
+
+        {
+          href: "/MyMeetings",
+          label: "My Meetings",
+          icon: Book,
+        },
+        {
+          href: "/test/Mytests",
+          label: "My tests",
+          icon: FileText,
+        },
+        {
+          href: "/messages",
+          label: "My messages",
+          icon: FileText,
+        },
+      ],
+    },
+    {
+      groupLabel: "Settings",
+      menus: [
+        
+        {
+          href: "/Profile",
+          label: "Account",
+          icon: Settings,
+        },
+      ],
+    },
+  ];
+ 
+  if (userRole === "RH") {
+    groups.push({
+      groupLabel: " Administration",
+      menus: [
+      
+        {
+          href: "/Departments",
+          label: "departments",
           icon: Users,
         },
         {
           href: "/roles",
-          label: "Roles & Permissions",
+          label: "Roles & Users",
           icon: Users,
         },
       
@@ -144,5 +220,10 @@ export function getMenuList(
     });
   }
 
-  return groups;
-}
+  if (userRole === "RH") {
+    return groups;
+  } else if (userRole === null) {
+    return groupsGeust;
+  } else {
+    return groupscolab;
+  }}

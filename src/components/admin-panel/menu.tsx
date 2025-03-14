@@ -30,19 +30,17 @@ export function Menu({ isOpen }: MenuProps) {
   const { signOut } = useAuthActions();
   const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname();
-
+  const currentUser1 = useQuery(api.auth.getMe);
+console.log(currentUser1)
   // Retrieve the current user (including role)
   const { data: currentUser, isLoading } = useCurrentUser();
   const userRole = currentUser?.role || "Guest";
 
   // Fetch activated modules (if any) using the current user's companyId.
-  const activatedModules = useQuery(
-    api.queries.modules.getActivatedModules,
-    currentUser?.companyId ? { companyId: currentUser.companyId } : "skip"
-  );
+ 
 
   // Get the menu list with the current user's role and activated modules.
-  const menuList = getMenuList(pathname, userRole, activatedModules);
+  const menuList = getMenuList(pathname, currentUser1?.department?.name);
 
   // Optionally, show a loader while waiting for user data.
   if (isLoading) {

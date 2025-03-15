@@ -1,7 +1,8 @@
+"use client"; // Marquer ce composant comme un composant client
+
 import Link from "next/link";
 import { MenuIcon, PanelsTopLeft } from "lucide-react";
-import Image from "next/image";
-import { useTheme } from "next-themes"; // Pour détecter le thème actuel
+import { useTheme } from "next-themes"; // Importer useTheme
 
 import { Button } from "@/components/ui/button";
 import { Menu } from "@/components/admin-panel/menu";
@@ -35,12 +36,11 @@ export function SheetMenu() {
           >
             <Link href="/dashboard" className="flex items-center gap-2">
               {/* Afficher le logo */}
-              <Image
+              <img
                 src={logo}
                 alt="COFICAB Logo"
-                width={100} // Ajustez la largeur selon vos besoins
-                height={100} // Ajustez la hauteur selon vos besoins
-                className="transition-all ease-in-out duration-300"
+                width={80} // Ajustez la largeur selon vos besoins
+                height={80} // Ajustez la hauteur selon vos besoins
               />
               {/* Masquer le texte "Brand" */}
               <SheetTitle className="font-bold text-lg sr-only">Brand</SheetTitle>

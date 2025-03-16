@@ -53,7 +53,7 @@ export default function CreateFormPage() {
 
     try {
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBX_Yq9iRL7hqCEwpZeUP4zepSaEk33yag",
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`,    
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -173,7 +173,7 @@ export default function CreateFormPage() {
       const formId = await createForm({
         title: formTitle,
         description: formDescription,
-        createdBy:Me.id as Id<"users">, // Utilisez Me._id
+        createdBy:Me._id as Id<"users">, // Utilisez Me._id
       });
 
       // Ajouter les questions au formulaire

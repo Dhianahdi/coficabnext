@@ -12,8 +12,19 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RecruiterDashboard() {
+
+   const Me = useQuery(api.auth.getMe);
+    const router = useRouter();
+  
+    useEffect(() => {
+      if (Me && Me.department?.name !== "RH") {
+        router.push("/access-denied");
+      }
+    }, [Me, router]);
   // Récupérer les données depuis Convex
   const topCandidates = useQuery(api.mutations.stats.getTopCandidates);
   const jobStats = useQuery(api.mutations.stats.getJobStats);

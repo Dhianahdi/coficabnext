@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation, query } from "../_generated/server";
 
 // Mutation pour créer une nouvelle notification
 export const createNotification = mutation({
@@ -59,8 +59,7 @@ export const deleteNotification = mutation({
   },
 });
 
-// Mutation pour récupérer les notifications d'un utilisateur
-export const getNotificationsForUser = mutation({
+export const getNotificationsForUser = query({
   args: {
     userId: v.id("users"), // ID de l'utilisateur
   },

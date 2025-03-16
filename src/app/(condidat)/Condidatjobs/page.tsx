@@ -6,8 +6,18 @@ import CardPost from "@/components/Home/CardPost";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { CardPostSkeleton } from "@/components/Home/CardPostSkeleton"; // Import the skeleton component
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Condidatjobs() {
+    const Me = useQuery(api.auth.getMe);
+    const router = useRouter();
+  
+    useEffect(() => {
+      if (Me && Me.department?.name !== null) {
+        router.push("/access-denied");
+      }
+    }, [Me, router]);
   // Fetch jobs from Convex
   const jobs = useQuery(api.queries.jobs.getJobs);
 

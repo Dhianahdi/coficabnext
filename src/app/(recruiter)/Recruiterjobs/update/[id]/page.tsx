@@ -33,7 +33,14 @@ interface Option {
 }
 
 export default function UpdateJobPage() {
-    const router = useRouter();
+     const Me = useQuery(api.auth.getMe);
+      const router = useRouter();
+    
+      useEffect(() => {
+        if (Me && Me.department?.name !== "RH") {
+          router.push("/access-denied");
+        }
+      }, [Me, router]);
     const params = useParams();
     const jobId = params.id as Id<"jobs">;
 

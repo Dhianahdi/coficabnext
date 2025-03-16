@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -14,11 +14,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useRouter } from "next/navigation";
 
 export default function MyMeetingsPage() {
   const [selectedDate, setSelectedDate] = useState<number | null>(null); // Null signifie pas de filtre
   const Me = useQuery(api.auth.getMe);
   const userId = Me?._id as Id<"users">;
+  const router = useRouter();
 
   // Récupérer les réunions de l'utilisateur
   const meetings = useQuery(api.mutations.meetings.getUserMeetings, { userId });

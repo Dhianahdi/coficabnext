@@ -17,9 +17,15 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
 
 export default function JobsPage() {
-  const router = useRouter();
-  const rawJobs = useQuery(api.queries.jobs.getJobs);
   const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Me && Me.department?.name !== "RH") {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
+  const rawJobs = useQuery(api.queries.jobs.getJobs);
   const offers = useQuery(api.queries.offres.getOffers);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

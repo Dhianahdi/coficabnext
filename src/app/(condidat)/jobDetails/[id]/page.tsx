@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { CalendarDays, CheckCircle, Clock, FileUser, Save, SendHorizontal, XCircle } from "lucide-react";
@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function JobDetailsPage() {
@@ -29,7 +29,13 @@ export default function JobDetailsPage() {
   const job = useQuery(api.queries.jobs.getJobById, { id: jobId });
   const Me = useQuery(api.auth.getMe);
   const createOffer = useMutation(api.mutations.offers.createOffer);
+  const router = useRouter();
 
+  useEffect(() => {
+    if (Me && Me.department?.name !== null) {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
   const isLoading = job === undefined;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);

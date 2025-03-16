@@ -14,7 +14,15 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/spinner"; // Import the Spinner component
 
 export default function JobsPage() {
-  const router = useRouter();
+
+   const Me = useQuery(api.auth.getMe);
+    const router = useRouter();
+  
+    useEffect(() => {
+      if (Me && Me.department?.name !== "RH") {
+        router.push("/access-denied");
+      }
+    }, [Me, router]);
   const rawJobs = useQuery(api.queries.jobs.getJobs);
   const [isRedirecting, setIsRedirecting] = useState(false); // State for loading spinner
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react"; // Ajout de useEffect
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,15 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 export default function FormPage() {
+
+  const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Me && Me.department?.name !== null) {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
   // Get the form ID from the URL
   const params = useParams();
   const formId = params.id as Id<"forms">;
@@ -40,7 +49,7 @@ export default function FormPage() {
     if (user && formId) {
       const checkResponse = async () => {
         const hasResponded = await hasUserResponded({
-          userId: user.id as Id<"users">, // Add the user ID
+          userId: user._id as Id<"users">, // Add the user ID
           formId: formId,   // Utiliser l'ID du formulaire
         });
         setHasAlreadyResponded(hasResponded);
@@ -90,7 +99,7 @@ export default function FormPage() {
     try {
       await submitResponse({
         formId,
-        userId: user.id as Id<"users">, // Add the user ID
+        userId: user._id as Id<"users">, // Add the user ID
         responses: Object.entries(responses).map(([questionId, answer]) => ({
           questionId,
           answer,

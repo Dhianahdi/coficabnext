@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +11,20 @@ import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useRouter } from "next/navigation";
 
 export default function CandidatePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Me && Me.department?.name !== null) {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
 
   // Récupérer les offres depuis Convex
   const offers = useQuery(api.queries.offres.getOffersByCandidateId, {

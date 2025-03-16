@@ -12,11 +12,22 @@ import { Spinner } from "@/components/ui/spinner";
 import { motion } from "framer-motion";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function MyFormsPage() {
+
+  const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Me && Me.department?.name !== null) {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
   // Récupérer l'utilisateur actuel
   const user = useQuery(api.auth.getMe);
-  const userId = user?.id as Id<"users">;
+  const userId = user?._id as Id<"users">;
 
   // Récupérer les formulaires assignés à l'utilisateur
   const userForms = useQuery(api.mutations.form.getUserForms, { userId });

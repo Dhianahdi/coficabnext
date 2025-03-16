@@ -30,7 +30,7 @@ const JitsiMeeting = ({ roomName, userInfo }: JitsiMeetingProps) => {
   const currentUser = useQuery(api.auth.getMe);
 
   // Définir roomName et userInfo dynamiquement
-  const dynamicRoomName = currentUser ? `room-${currentUser._id}` : roomName || "default-room";
+  const dynamicRoomName = roomName;
   const dynamicUserInfo = {
     displayName: currentUser?.name || userInfo?.displayName || "Guest",
     email: currentUser?.email || userInfo?.email || "guest@example.com",

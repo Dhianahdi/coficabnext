@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Spinner } from "@/components/ui/spinner";
@@ -50,7 +50,14 @@ export default function FilledFormsPage() {
   const [searchEmail, setSearchEmail] = useState("");
   const [selectedForm, setSelectedForm] = useState<SelectedForm | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+ const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
 
+  useEffect(() => {
+    if (Me && Me.department?.name !== "RH") {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
   const filledFormsByEmail = useQuery(api.mutations.form.getFilledFormsByJobId, {
     jobId,
   });

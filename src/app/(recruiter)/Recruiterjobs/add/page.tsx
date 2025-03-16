@@ -39,7 +39,14 @@ interface Option {
 }
 
 export default function AddJobPage() {
-    const router = useRouter();
+     const Me = useQuery(api.auth.getMe);
+      const router = useRouter();
+    
+      useEffect(() => {
+        if (Me && Me.department?.name !== "RH") {
+          router.push("/access-denied");
+        }
+      }, [Me, router]);
     const createJob = useMutation(api.mutations.jobs.createJob);
     const departments = useQuery(api.queries.departments.getDepartments) || [];
     const forms = useQuery(api.queries.jobs.getForms) || []; // Récupérer les formulaires disponibles

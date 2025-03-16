@@ -34,7 +34,6 @@ export function Menu({ isOpen }: MenuProps) {
 console.log(currentUser1)
   // Retrieve the current user (including role)
   const { data: currentUser, isLoading } = useCurrentUser();
-  const userRole = currentUser?.role || "Guest";
 
   // Fetch activated modules (if any) using the current user's companyId.
  

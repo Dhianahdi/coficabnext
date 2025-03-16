@@ -1,21 +1,28 @@
-// app/filled-forms/[jobId]/page.tsx
 "use client";
 
 import { useQuery } from "convex/react";
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
+import { useEffect } from "react";
 
 export default function FilledFormsPage() {
   // Récupérer le jobId depuis les paramètres de l'URL
   const params = useParams();
   const jobId = params.id as Id<"jobs">;
+  const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
 
+  useEffect(() => {
+    if (Me && Me.department?.name !== "RH") {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
   // Récupérer les formulaires remplis groupés par e-mail
   const filledFormsByEmail = useQuery(api.mutations.form.getFilledFormsByJobId, {
     jobId,

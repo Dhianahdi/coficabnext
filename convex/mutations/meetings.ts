@@ -98,7 +98,6 @@ export const getUserMeetings = query({
       return meetings;
     },
   });
-
   export const getAllMeetings = query({
     handler: async (ctx) => {
       const meetings = await ctx.db.query("meetings").collect();
@@ -112,6 +111,10 @@ export const getUserMeetings = query({
             ...meeting,
             organizerName: organizer?.name || "Unknown Organizer",
             participantName: participant?.name || "Unknown Participant",
+            participantid: participant?._id || "Unknown Participant",
+            participantmail: participant?.email || "Unknown Participant",
+
+
           };
         })
       );

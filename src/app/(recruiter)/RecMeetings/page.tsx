@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { XCircle, Loader2, Clock, Video } from "lucide-react"; // Ajout de l'icône Video pour "Join"
+import { XCircle, Loader2, Clock, Video, Edit, User, Calendar, Link } from "lucide-react";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
@@ -24,13 +24,32 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatDate } from "@fullcalendar/core";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminMeetingsPage() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [updatedDate, setUpdatedDate] = useState<string>("");
+  const [updatedTime, setUpdatedTime] = useState<string>("");
+  const [updatedLink, setUpdatedLink] = useState<string>("");
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const meetings = useQuery(api.mutations.meetings.getAllMeetings);
+  console.log(meetings)
   const cancelMeeting = useMutation(api.mutations.meetings.cancelMeeting);
+  const updateMeeting = useMutation(api.mutations.meetings.updateMeeting);
+  const createNotification = useMutation(api.mutations.notifications.createNotification);
+
   const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Me && Me.department?.name !== "RH") {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
 
   if (!meetings) {
     return (
@@ -42,13 +61,17 @@ export default function AdminMeetingsPage() {
 
   const events = meetings.map((meeting: any) => ({
     id: meeting._id,
-    title: `${meeting.title} - ${meeting.status}`, // Ajouter le statut au titre
+    title: ` ${meeting.participantName}`,
     start: new Date(meeting.startTime),
     end: new Date(meeting.startTime + 3600000),
     status: meeting.status,
     type: meeting.type,
     organizerId: meeting.organizerId,
     participantId: meeting.participantId,
+    organizerName: meeting.organizerName,
+    participantName: meeting.participantName,
+    participantmail: meeting.participantmail,
+    meetingLink: meeting.meetingLink,
     backgroundColor: meeting.status === "canceled" ? "#FFEBEE" : meeting.status === "completed" ? "#E8F5E9" : "#E3F2FD",
   }));
 
@@ -64,19 +87,157 @@ export default function AdminMeetingsPage() {
     }
   };
 
+  const handleUpdateMeeting = async (userId: any,user: any) => {
+    if (!selectedEvent) return;
+  console.log({userId,user})
+    try {
+      const newStartTime = new Date(`${updatedDate}T${updatedTime}`).getTime();
+  
+      if (isNaN(newStartTime)) {
+        toast.error("Invalid date or time.");
+        return;
+      }
+  
+      // Mettre à jour la réunion
+      await updateMeeting({
+        meetingId: selectedEvent.id,
+        startTime: newStartTime,
+        meetingLink: updatedLink,
+      });
+  
+      const formattedDate = new Date(newStartTime).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+  
+      // Envoyer une notification à l'organisateur et au participant
+      const notificationTitle = "Meeting Updated";
+      const notificationMessage = `The meeting with "${selectedEvent.title}" has been updated. The new date and time is ${formattedDate}.`;
+      const notificationLink = `/meetings/${selectedEvent.id}`; // Lien vers la réunion
+  
+      await createNotification({
+        userId: userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        link: notificationLink,
+        type: "info",
+      });
+  
+      // Envoyer un e-mail avec le template moderne
+      const emailTemplate = `
+        <div style="
+          font-family: Arial, sans-serif;
+          color: #000;
+          background-color: #ffffff;
+          padding: 40px 20px;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          max-width: 600px;
+          margin: 0 auto;
+        ">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="
+              font-size: 28px;
+              font-weight: bold;
+              color: #111827;
+              margin: 0;
+            ">
+              ℹ Meeting Updated!
+            </h1>
+            <p style="
+              font-size: 16px;
+              color: #6b7280;
+              margin-top: 10px;
+            ">
+              The details of your meeting have been updated.
+            </p>
+          </div>
+      
+          <!-- Content -->
+          <div style="
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+          ">
+            <p style="
+              font-size: 16px;
+              color: #374151;
+              margin: 0;
+            ">
+              The meeting with <strong>${selectedEvent.title}</strong> has been updated. The new date and time is <strong>${formattedDate}</strong>.
+            </p>
+            <a href="${updatedLink}" style="
+              display: inline-block;
+              background-color: #3b82f6;
+              color: #ffffff;
+              font-size: 16px;
+              font-weight: bold;
+              text-decoration: none;
+              padding: 12px 24px;
+              border-radius: 6px;
+              margin-top: 20px;
+            ">
+              Join Meeting
+            </a>
+          </div>
+      
+          <!-- Footer -->
+          <div style="
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #6b7280;
+          ">
+            <p style="margin: 0;">
+              If you did not request this update, please contact support.
+            </p>
+            <p style="margin: 10px 0 0;">
+              Need help? <a href="mailto:support@example.com" style="color: #3b82f6; text-decoration: none;">Contact support</a>.
+            </p>
+          </div>
+        </div>
+      `;
+  
+      // Envoyer l'e-mail
+      const response = await fetch("/api/costummail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user,
+          subject: "Meeting Updated",
+          template: emailTemplate,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+  
+      toast.success("Meeting updated and email sent successfully!");
+      setIsEditMode(false);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating meeting:", error);
+      toast.error("Failed to update meeting.");
+    }
+  };
+
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event);
     setIsDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setSelectedEvent(null);
+    setIsEditMode(false);
+    setUpdatedDate(formatDate(info.event.start, { year: "numeric", month: "2-digit", day: "2-digit" }));
+    setUpdatedTime(formatDate(info.event.start, { hour: "2-digit", minute: "2-digit", hour12: false }));
+    setUpdatedLink(info.event.extendedProps?.meetingLink || "");
   };
 
   const handleJoinMeeting = () => {
-    // Rediriger vers l'URL de la réunion en ligne
-    const meetingUrl = "https://example.com/meeting"; // Remplacez par l'URL réelle
+    const meetingUrl = selectedEvent?.extendedProps?.meetingLink || "https://example.com/meeting";
     window.open(meetingUrl, "_blank");
   };
 
@@ -106,7 +267,7 @@ export default function AdminMeetingsPage() {
                 selectMirror={true}
                 dayMaxEvents={true}
                 eventClick={handleEventClick}
-                height="auto" // Ajustez la hauteur du calendrier
+                height="auto"
                 headerToolbar={{
                   left: "prev,next today",
                   center: "title",
@@ -126,63 +287,149 @@ export default function AdminMeetingsPage() {
 
           {/* Dialog pour afficher les détails de la réunion */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="sm:max-w-[425px] rounded-lg">
+            <DialogContent className="sm:max-w-[600px] rounded-lg max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-50 to-purple-50 shadow-2xl">
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold">{selectedEvent?.title}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  {selectedEvent?.title}
+                </DialogTitle>
+                <DialogDescription className="text-gray-600">
                   <Badge className={`${selectedEvent?.extendedProps?.status === "canceled" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"} flex items-center gap-1 rounded-full`}>
                     {selectedEvent?.extendedProps?.status === "canceled" ? <XCircle size={16} /> : <Clock size={16} />}
                     {selectedEvent?.extendedProps?.status}
                   </Badge>
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <p>
-                  <strong>Type:</strong> {selectedEvent?.extendedProps?.type}
-                </p>
-                <p>
-                  <strong>Start:</strong> {formatDate(selectedEvent?.start, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                <p>
-                  <strong>End:</strong> {formatDate(selectedEvent?.end, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={handleCloseDialog} className="rounded-lg">
-                  Close
-                </Button>
-                {selectedEvent?.extendedProps?.status === "scheduled" && (
+              <div className="space-y-6 p-4">
+                {isEditMode ? (
                   <>
-                    {selectedEvent?.extendedProps?.type === "online" && (
-                      <Button
-                        variant="default"
-                        onClick={handleJoinMeeting}
-                        className="rounded-lg bg-green-500 hover:bg-green-600"
-                      >
-                        <Video size={16} className="mr-2" />
-                        Join Meeting
-                      </Button>
+                    <div className="space-y-2">
+                      <Label className="text-gray-700">Date</Label>
+                      <Input
+                        type="date"
+                        value={updatedDate}
+                        onChange={(e) => setUpdatedDate(e.target.value)}
+                        className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-700">Time</Label>
+                      <Input
+                        type="time"
+                        value={updatedTime}
+                        onChange={(e) => setUpdatedTime(e.target.value)}
+                        className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-700">Meeting Link</Label>
+                      <Input
+                        type="url"
+                        value={updatedLink}
+                        onChange={(e) => setUpdatedLink(e.target.value)}
+                        className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <p className="text-gray-700 flex items-center gap-2">
+                        <User size={16} className="text-blue-500" />
+                        <strong>Organizer:</strong> {selectedEvent?.extendedProps?.organizerName}
+                      </p>
+                      <p className="text-gray-700 flex items-center gap-2">
+                        <User size={16} className="text-blue-500" />
+                        <strong>Participant:</strong> {selectedEvent?.extendedProps?.participantmail}
+                      </p>
+                      <p className="text-gray-700 flex items-center gap-2">
+                        <Calendar size={16} className="text-blue-500" />
+                        <strong>Start:</strong>{" "}
+                        {new Date(selectedEvent?.start).toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <p className="text-gray-700 flex items-center gap-2">
+                        <Calendar size={16} className="text-blue-500" />
+                        <strong>End:</strong>{" "}
+                        {new Date(selectedEvent?.end).toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <p className="text-gray-700 flex items-center gap-2">
+                        <Link size={16} className="text-blue-500" />
+                        <strong>Link:</strong> {selectedEvent?.extendedProps?.meetingLink || "N/A"}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <DialogFooter className="flex flex-col gap-4 p-4">
+                {isEditMode ? (
+                  <Button
+                  variant="default"
+                  onClick={async () => {
+                    setIsUpdating(true); // Activer le loader
+                    try {
+                      await handleUpdateMeeting(
+                        selectedEvent?.extendedProps.participantId,
+                        selectedEvent?.extendedProps.participantmail
+                      );
+                    } catch (error) {
+                      console.error("Error updating meeting:", error);
+                      toast.error("Failed to update meeting.");
+                    } finally {
+                      setIsUpdating(false); // Désactiver le loader
+                    }
+                  }}
+                  className="w-full sm:w-auto rounded-lg bg-green-500 hover:bg-green-600"
+                  disabled={isUpdating} // Désactiver le bouton pendant la mise à jour
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" /> // Afficher le loader
+                  ) : (
+                    "Save Changes" // Texte normal du bouton
+                  )}
+                </Button>
+                ) : (
+                  <>
+                    {selectedEvent?.extendedProps?.status === "scheduled" && (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {selectedEvent?.extendedProps?.type === "online" && (
+                          <Button
+                            variant="default"
+                            onClick={handleJoinMeeting}
+                            className="w-full sm:w-auto rounded-lg bg-blue-500 hover:bg-blue-600"
+                          >
+                            <Video size={16} className="mr-2" />
+                            Join Meeting
+                          </Button>
+                        )}
+                        <Button
+                          variant="default"
+                          onClick={() => setIsEditMode(true)}
+                          className="w-full sm:w-auto rounded-lg bg-yellow-500 hover:bg-yellow-600"
+                        >
+                          <Edit size={16} className="mr-2" />
+                          Edit Meeting
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleCancelMeeting(selectedEvent.id)}
+                          className="w-full sm:w-auto rounded-lg"
+                        >
+                          <XCircle size={16} className="mr-2" />
+                          Cancel Meeting
+                        </Button>
+                      </div>
                     )}
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleCancelMeeting(selectedEvent.id)}
-                      className="rounded-lg"
-                    >
-                      <XCircle size={16} className="mr-2" />
-                      Cancel Meeting
-                    </Button>
                   </>
                 )}
               </DialogFooter>

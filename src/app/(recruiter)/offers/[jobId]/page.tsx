@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
@@ -54,7 +54,22 @@ export default function JobOffersPage() {
   const [currentCandidateId, setCurrentCandidateId] = useState<Id<"users"> | null>(null);
   const isLoading = !job || !rawOffers;
 
+
+
+ const Me = useQuery(api.auth.getMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Me && Me.department?.name !== "RH") {
+      router.push("/access-denied");
+    }
+  }, [Me, router]);
+
+
+
   const getStatusBadge = (status: string) => {
+
+    
     switch (status) {
       case "Pending":
         return {

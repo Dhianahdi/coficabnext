@@ -8,13 +8,14 @@ import { api } from "../../../../convex/_generated/api";
 import { CardPostSkeleton } from "@/components/Home/CardPostSkeleton"; // Import the skeleton component
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Condidatjobs() {
     const Me = useQuery(api.auth.getMe);
     const router = useRouter();
   
     useEffect(() => {
-      if (Me && Me.department?.name !== null) {
+      if (Me && Me.department!== null) {
         router.push("/access-denied");
       }
     }, [Me, router]);
@@ -57,13 +58,29 @@ export default function Condidatjobs() {
     return (
       <AdminPanelLayout>
         <ContentLayout title="Recent Jobs">
-          <div className="mt-6">
-            <p className="text-muted-foreground">No open jobs found.</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-12 space-y-6">
+             <Image
+               src="/img/NoResultFound.png" // Chemin relatif depuis le dossier public
+               alt="No offers available"
+                         width={700} // Desired width of the image
+                         height={700} // Desired height of the image
+                         className="object-cover" // Ensures the image scales properly
+                       />
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  No jobs available at the moment
+                </h3>
+                <p className="text-gray-600">
+                  Check back later to discover new opportunities.
+                </p>
+              </div>
+            </div>
         </ContentLayout>
       </AdminPanelLayout>
     );
   }
+
+  
 
   return (
     <AdminPanelLayout>

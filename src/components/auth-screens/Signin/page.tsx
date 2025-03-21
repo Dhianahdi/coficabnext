@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { Loader2, Eye, EyeOff, Mail, User, LogIn, TriangleAlert } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,11 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [pending, setPending] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
     const [loadingProvider, setLoadingProvider] = useState<"github" | "google" | null>(null);
 
     const router = useRouter();
-
-    /*     const [state, setState] = useState<SignInFlow>("signIn");
-     */
 
     const onPasswordSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -40,8 +38,6 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
         }
     };
 
-
-
     const handleProviderSignIn = (provider: "github" | "google") => {
         setLoadingProvider(provider);
         signIn(provider)
@@ -49,6 +45,7 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                 setLoadingProvider(null);
             });
     };
+
     return (
         <div
             className={cn(
@@ -68,7 +65,7 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                 <form
                     onSubmit={onPasswordSignIn}
                     className="grid gap-1"
-                    noValidate // Disable native validation
+                    noValidate
                 >
                     <CardContent className="space-y-3">
                         <div className="space-y-4 w-full">
@@ -102,14 +99,25 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                                 id="password"
                                 placeholder="Please enter your password."
                                 autoComplete="current-password"
-                                type="password"
+                                type={showPassword ? "text" : "password"} // Toggle the input type between text and password
                                 required
                             />
+                            <div
+    className="absolute inset-y-0 end-0 flex items-center justify-center pe-3 cursor-pointer"
+    onClick={() => setShowPassword(!showPassword)} // Toggle the showPassword state on click
+>
+    {showPassword ? (
+        <EyeOff size={16} strokeWidth={2} className="text-muted-foreground/80" />
+    ) : (
+        <Eye size={16} strokeWidth={2} className="text-muted-foreground/80" />
+    )}
+</div>
+
                         </div>
                     </CardContent>
                     <CardFooter>
                         <Button
-                            disabled={pending || loadingProvider !== null} // Disable during pending or loadingProvider
+                            disabled={pending || loadingProvider !== null}
                             className="w-full"
                             type="submit"
                         >
@@ -120,7 +128,6 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                             )}
                         </Button>
                     </CardFooter>
-
                 </form>
             </Card>
 
@@ -136,7 +143,7 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
             </div>
           
             <Button
-                disabled={pending || loadingProvider !== null} // Disable if pending or loadingProvider is set
+                disabled={pending || loadingProvider !== null}
                 onClick={() => handleProviderSignIn("google")}
                 variant="outline"
                 type="button"
@@ -148,10 +155,6 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                     "Continue with Google"
                 )}
             </Button>
-
-
-
         </div>
-
     );
 }

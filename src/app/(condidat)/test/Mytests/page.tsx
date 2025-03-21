@@ -20,11 +20,6 @@ export default function MyFormsPage() {
   const Me = useQuery(api.auth.getMe);
   const router = useRouter();
 
-  useEffect(() => {
-    if (Me && Me.department?.name !== null) {
-      router.push("/access-denied");
-    }
-  }, [Me, router]);
   // Récupérer l'utilisateur actuel
   const user = useQuery(api.auth.getMe);
   const userId = user?._id as Id<"users">;
@@ -47,7 +42,7 @@ export default function MyFormsPage() {
   return (
     <AdminPanelLayout>
       <ContentLayout title="Dashboard">
-        <div className="min-h-screen bg-white p-6"> {/* Fond blanc */}
+        <div className="min-h-screen bg-background p-6">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -55,10 +50,18 @@ export default function MyFormsPage() {
               transition={{ duration: 0.5 }}
               className="text-center mb-12"
             >
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">My Forms</h1>
-              <p className="text-lg text-gray-600">
-                Here are the forms assigned to you. Complete them at your convenience.
-              </p>
+             
+
+                <Card className="border border-border shadow-lg bg-background">
+                        <CardHeader>
+                          <CardTitle className="text-2xl font-bold text-foreground">                  My Forms
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">
+                          Here are the forms assigned to you. Complete them at your convenience.
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+              
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -81,25 +84,25 @@ export default function MyFormsPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="hover:shadow-lg transition-shadow duration-300">
+                    <Card className="hover:shadow-lg transition-shadow duration-300 bg-background">
                       <CardHeader>
                         <div className="flex items-center space-x-4">
-                          <div className="p-3 bg-blue-100 rounded-full">
-                            <FileText className="h-6 w-6 text-blue-500" />
+                          <div className="p-3 bg-primary/10 rounded-full">
+                            <FileText className="h-6 w-6 text-primary" />
                           </div>
                           <div>
-                            <CardTitle className="text-xl font-bold text-gray-900">
+                            <CardTitle className="text-xl font-bold text-foreground">
                               {userForm.form.title} {/* Accès à form.title */}
                             </CardTitle>
-                            <CardDescription className="text-gray-600">
+                            <CardDescription className="text-muted-foreground">
                               {userForm.form.description} {/* Accès à form.description */}
                             </CardDescription>
                           </div>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <Clock className="h-4 w-4 text-gray-500" />
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
                           <span>
                             Assigned on: {new Date(userForm.assignedAt).toLocaleDateString()}
                           </span>
@@ -121,7 +124,7 @@ export default function MyFormsPage() {
                       <CardFooter>
                         <Link href={`/test/${userForm.formId}`} passHref>
                           <Button
-                            className="w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-300"
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300"
                             disabled={hasResponded} // Désactiver le bouton si le formulaire est déjà complété
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
@@ -142,8 +145,8 @@ export default function MyFormsPage() {
                 transition={{ duration: 0.5 }}
                 className="text-center mt-12"
               >
-                <h2 className="text-2xl font-bold text-gray-900">No Forms Assigned</h2>
-                <p className="text-gray-600">You currently have no forms to complete.</p>
+                <h2 className="text-2xl font-bold text-foreground">No Forms Assigned</h2>
+                <p className="text-muted-foreground">You currently have no forms to complete.</p>
               </motion.div>
             )}
           </div>

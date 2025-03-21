@@ -75,9 +75,20 @@ export default function AdminMeetingsPage() {
     backgroundColor: meeting.status === "canceled" ? "#FFEBEE" : meeting.status === "completed" ? "#E8F5E9" : "#E3F2FD",
   }));
 
-  const handleCancelMeeting = async (meetingId: Id<"meetings">) => {
+  const handleCancelMeeting = async (userId: any,meetingId: Id<"meetings">) => {
     try {
       await cancelMeeting({ meetingId });
+      const notificationTitle = "Meeting Canceled";
+      const notificationMessage = `The meeting with "${selectedEvent.title}" has been Canceled.`;
+      const notificationLink = `/MyMeetings`; // Lien vers la réunion
+  
+      await createNotification({
+        userId: userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        link: notificationLink,
+        type: "info",
+      });
       toast.success("Meeting canceled successfully!");
       setSelectedEvent(null);
       setIsDialogOpen(false);
@@ -116,7 +127,7 @@ export default function AdminMeetingsPage() {
       // Envoyer une notification à l'organisateur et au participant
       const notificationTitle = "Meeting Updated";
       const notificationMessage = `The meeting with "${selectedEvent.title}" has been updated. The new date and time is ${formattedDate}.`;
-      const notificationLink = `/meetings/${selectedEvent.id}`; // Lien vers la réunion
+      const notificationLink = `/MyMeetings`; // Lien vers la réunion
   
       await createNotification({
         userId: userId,
@@ -243,22 +254,22 @@ export default function AdminMeetingsPage() {
 
   return (
     <AdminPanelLayout>
-      <ContentLayout title="Admin Meetings">
-        <div className="p-6 space-y-6">
+      <ContentLayout title="My Meetings">
+        <div className="p-6 space-y-6 bg-background text-foreground">
           {/* Titre de la page */}
-          <Card className="border border-gray-200 shadow-sm bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+          <Card className="border-border bg-card shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-900">My Meetings</CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle className="text-2xl font-bold">My Meetings</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 View and manage all scheduled meetings.
               </CardDescription>
             </CardHeader>
           </Card>
 
           {/* Calendrier des réunions */}
-          <Card className="border border-gray-200 shadow-sm rounded-lg">
+          <Card className="border-border bg-card">
             <CardContent className="p-4">
-              <FullCalendar
+              <FullCalendar  
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 events={events}
@@ -273,12 +284,23 @@ export default function AdminMeetingsPage() {
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
+                eventClassNames="dark:bg-opacity-20" 
                 eventContent={(eventInfo) => (
-                  <div className="flex flex-col items-start">
-                    <span className="font-semibold">{eventInfo.event.title}</span>
-                    <Badge className={`${eventInfo.event.extendedProps.status === "canceled" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"} text-xs mt-1`}>
-                      {eventInfo.event.extendedProps.status}
-                    </Badge>
+                  <div className="flex flex-col items-start p-1">
+                    <span className="font-semibold text-foreground">
+                      {eventInfo.event.title}
+                    </span>
+                    <Badge
+      className={`${
+        eventInfo.event.extendedProps.status === "canceled"
+          ? "bg-red-100 text-red-800"
+          : eventInfo.event.extendedProps.status === "completed"
+          ? "bg-green-100 text-green-800"
+          : "bg-blue-100 text-blue-800"
+      } text-xs mt-1`}
+    >
+      {eventInfo.event.extendedProps.status}
+    </Badge>
                   </div>
                 )}
               />
@@ -287,62 +309,71 @@ export default function AdminMeetingsPage() {
 
           {/* Dialog pour afficher les détails de la réunion */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="sm:max-w-[600px] rounded-lg max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-50 to-purple-50 shadow-2xl">
+            <DialogContent className="sm:max-w-[600px] bg-card border-border">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-gray-900">
+                <DialogTitle className="text-2xl font-bold">
                   {selectedEvent?.title}
                 </DialogTitle>
-                <DialogDescription className="text-gray-600">
-                  <Badge className={`${selectedEvent?.extendedProps?.status === "canceled" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"} flex items-center gap-1 rounded-full`}>
-                    {selectedEvent?.extendedProps?.status === "canceled" ? <XCircle size={16} /> : <Clock size={16} />}
+                <DialogDescription>
+                  <Badge className={`
+                    ${selectedEvent?.extendedProps?.status === "canceled" 
+                      ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" 
+                        : selectedEvent?.extendedProps.status === "completed" 
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"}
+                    flex items-center gap-1
+                  `}>
+                    {selectedEvent?.extendedProps?.status === "canceled" ? 
+                      <XCircle size={16} /> : <Clock size={16} />}
                     {selectedEvent?.extendedProps?.status}
                   </Badge>
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-6 p-4">
+              <div className="space-y-6 p-4 text-foreground">
                 {isEditMode ? (
                   <>
                     <div className="space-y-2">
-                      <Label className="text-gray-700">Date</Label>
+                      <Label>Date</Label>
                       <Input
                         type="date"
                         value={updatedDate}
                         onChange={(e) => setUpdatedDate(e.target.value)}
-                        className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                        className="border-border focus:ring-primary"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-700">Time</Label>
+                      <Label>Time</Label>
                       <Input
                         type="time"
                         value={updatedTime}
                         onChange={(e) => setUpdatedTime(e.target.value)}
-                        className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                        className="border-border focus:ring-primary"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-700">Meeting Link</Label>
+                      <Label>Meeting Link</Label>
                       <Input
                         type="url"
                         value={updatedLink}
                         onChange={(e) => setUpdatedLink(e.target.value)}
-                        className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                        className="border-border focus:ring-primary"
+                        placeholder="https://"
                       />
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="space-y-2">
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <User size={16} className="text-blue-500" />
+                      <p className="flex items-center gap-2">
+                        <User size={16} className="text-primary" />
                         <strong>Organizer:</strong> {selectedEvent?.extendedProps?.organizerName}
                       </p>
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <User size={16} className="text-blue-500" />
+                      <p className="flex items-center gap-2">
+                        <User size={16} className="text-primary" />
                         <strong>Participant:</strong> {selectedEvent?.extendedProps?.participantmail}
                       </p>
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <Calendar size={16} className="text-blue-500" />
+                      <p className="flex items-center gap-2">
+                        <Calendar size={16} className="text-primary" />
                         <strong>Start:</strong>{" "}
                         {new Date(selectedEvent?.start).toLocaleString("en-US", {
                           year: "numeric",
@@ -352,8 +383,8 @@ export default function AdminMeetingsPage() {
                           minute: "2-digit",
                         })}
                       </p>
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <Calendar size={16} className="text-blue-500" />
+                      <p className="flex items-center gap-2">
+                        <Calendar size={16} className="text-primary" />
                         <strong>End:</strong>{" "}
                         {new Date(selectedEvent?.end).toLocaleString("en-US", {
                           year: "numeric",
@@ -363,8 +394,8 @@ export default function AdminMeetingsPage() {
                           minute: "2-digit",
                         })}
                       </p>
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <Link size={16} className="text-blue-500" />
+                      <p className="flex items-center gap-2">
+                        <Link size={16} className="text-primary" />
                         <strong>Link:</strong> {selectedEvent?.extendedProps?.meetingLink || "N/A"}
                       </p>
                     </div>
@@ -374,56 +405,56 @@ export default function AdminMeetingsPage() {
               <DialogFooter className="flex flex-col gap-4 p-4">
                 {isEditMode ? (
                   <Button
-                  variant="default"
-                  onClick={async () => {
-                    setIsUpdating(true); // Activer le loader
-                    try {
-                      await handleUpdateMeeting(
-                        selectedEvent?.extendedProps.participantId,
-                        selectedEvent?.extendedProps.participantmail
-                      );
-                    } catch (error) {
-                      console.error("Error updating meeting:", error);
-                      toast.error("Failed to update meeting.");
-                    } finally {
-                      setIsUpdating(false); // Désactiver le loader
-                    }
-                  }}
-                  className="w-full sm:w-auto rounded-lg bg-green-500 hover:bg-green-600"
-                  disabled={isUpdating} // Désactiver le bouton pendant la mise à jour
-                >
-                  {isUpdating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" /> // Afficher le loader
-                  ) : (
-                    "Save Changes" // Texte normal du bouton
-                  )}
-                </Button>
+                    variant="default"
+                    onClick={async () => {
+                      setIsUpdating(true);
+                      try {
+                        await handleUpdateMeeting(
+                          selectedEvent?.extendedProps.participantId,
+                          selectedEvent?.extendedProps.participantmail
+                        );
+                      } catch (error) {
+                        console.error("Error updating meeting:", error);
+                        toast.error("Failed to update meeting.");
+                      } finally {
+                        setIsUpdating(false);
+                      }
+                    }}
+                    className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
                 ) : (
                   <>
                     {selectedEvent?.extendedProps?.status === "scheduled" && (
                       <div className="flex flex-col sm:flex-row gap-2">
                         {selectedEvent?.extendedProps?.type === "online" && (
                           <Button
-                            variant="default"
+                            variant="secondary"
                             onClick={handleJoinMeeting}
-                            className="w-full sm:w-auto rounded-lg bg-blue-500 hover:bg-blue-600"
+                            className="w-full sm:w-auto"
                           >
                             <Video size={16} className="mr-2" />
                             Join Meeting
                           </Button>
                         )}
                         <Button
-                          variant="default"
+                          variant="outline"
                           onClick={() => setIsEditMode(true)}
-                          className="w-full sm:w-auto rounded-lg bg-yellow-500 hover:bg-yellow-600"
+                          className="w-full sm:w-auto"
                         >
                           <Edit size={16} className="mr-2" />
                           Edit Meeting
                         </Button>
                         <Button
                           variant="destructive"
-                          onClick={() => handleCancelMeeting(selectedEvent.id)}
-                          className="w-full sm:w-auto rounded-lg"
+                          onClick={() => handleCancelMeeting(selectedEvent?.extendedProps.participantId, selectedEvent.id)}
+                          className="w-full sm:w-auto"
                         >
                           <XCircle size={16} className="mr-2" />
                           Cancel Meeting

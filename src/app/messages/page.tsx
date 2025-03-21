@@ -28,14 +28,9 @@ export default function MessagesPage() {
   const getUnreadMessagesCountByConversation = useMutation(
     api.mutations.messages.getUnreadMessagesCountByConversation
   );
+  const createNotification = useMutation(api.mutations.notifications.createNotification);
 
   // Récupérer le département de l'utilisateur actuel
-  const department = useQuery(
-    api.queries.departments.getDepartmentById,
-    Me?.departmentId
-      ? { id: Me.departmentId as Id<"departments"> }
-      : "skip"
-  );
 
   // Appeler la query uniquement si senderId et receiverId sont définis
   const messages = useQuery(
@@ -137,29 +132,45 @@ export default function MessagesPage() {
         type: "text",
       });
       setMessageContent("");
+         // Envoyer une notification à l'organisateur et au participant
+         const notificationTitle = "Message";
+         const notificationMessage = `New message from${Me.name}.`;
+         const notificationLink = ``; // Lien vers la réunion
+     
+         await createNotification({
+           userId: selectedUserId,
+           title: notificationTitle,
+           message: notificationMessage,
+           link: notificationLink,
+           type: "success",
+         });
+
+      
+      
       toast.success("Message sent!");
     } catch (error) {
       toast.error("Failed to send message.");
     }
   };
 
+
   return (
     <AdminPanelLayout>
       <ContentLayout title="Recent Jobs">
         <div className="p-6">
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-6 text-foreground">
             Messaging
           </h1>
-          <div className="flex h-[calc(100vh-160px)] bg-gray-50 rounded-lg shadow-lg overflow-hidden">
+          <div className="flex h-[calc(100vh-160px)] bg-background rounded-lg shadow-lg overflow-hidden">
             {/* Sidebar - Liste des utilisateurs */}
-            <div className="w-1/4 bg-white border-r border-gray-200 p-6 overflow-y-auto">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Users</h2>
+            <div className="w-1/4 bg-background border-r border-border p-6 overflow-y-auto">
+              <h2 className="text-xl font-bold text-foreground mb-6">Users</h2>
               {/* Barre de recherche */}
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name..."
-                className="mb-6"
+                className="mb-6 bg-background text-foreground border-border"
               />
               <ul className="space-y-4">
                 {sortedUsers.map((user) => {
@@ -170,8 +181,8 @@ export default function MessagesPage() {
                       onClick={() => setSelectedUserId(user._id)}
                       className={`flex items-center p-4 rounded-lg cursor-pointer transition-all ${
                         selectedUserId === user._id
-                          ? "bg-blue-50 shadow-sm"
-                          : "hover:bg-gray-50"
+                          ? "bg-secondary text-secondary-foreground shadow-sm"
+                          : "hover:bg-secondary/50"
                       }`}
                     >
                       <Avatar className="mr-3">
@@ -181,12 +192,12 @@ export default function MessagesPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <p className="font-semibold text-foreground">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
                       {/* Indicateur de nouveaux messages non lus */}
                       {unreadCount > 0 && (
-                        <div className="w-5 h-5 flex items-center justify-center bg-red-500 text-white text-xs rounded-full">
+                        <div className="w-5 h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs rounded-full">
                           {unreadCount}
                         </div>
                       )}
@@ -197,9 +208,9 @@ export default function MessagesPage() {
             </div>
 
             {/* Zone de conversation */}
-            <div className="flex-1 flex flex-col bg-white">
+            <div className="flex-1 flex flex-col bg-background">
               {/* En-tête de la conversation */}
-              <div className="bg-white border-b border-gray-200 p-6">
+              <div className="bg-background border-b border-border p-6">
                 {selectedUserId ? (
                   <div className="flex items-center">
                     <Avatar className="mr-3">
@@ -211,19 +222,19 @@ export default function MessagesPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-foreground">
                         {users.find((u) => u._id === selectedUserId)?.name}
                       </p>
-                      <p className="text-sm text-gray-500">Online</p>
+                      <p className="text-sm text-muted-foreground">Online</p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500">Select a user to start chatting</p>
+                  <p className="text-muted-foreground">Select a user to start chatting</p>
                 )}
               </div>
 
               {/* Messages */}
-              <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+              <div className="flex-1 p-6 overflow-y-auto bg-secondary/10">
                 {selectedUserId ? (
                   messages?.length ? (
                     messages.map((message) => (
@@ -238,8 +249,8 @@ export default function MessagesPage() {
                         <div
                           className={`max-w-[70%] p-4 rounded-lg ${
                             message.senderId === Me._id
-                              ? "bg-blue-500 text-white"
-                              : "bg-white shadow-sm"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background shadow-sm"
                           }`}
                         >
                           <p>{message.content}</p>
@@ -250,27 +261,27 @@ export default function MessagesPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center">No messages yet.</p>
+                    <p className="text-muted-foreground text-center">No messages yet.</p>
                   )
                 ) : (
-                  <p className="text-gray-500 text-center">Select a user to view messages.</p>
+                  <p className="text-muted-foreground text-center">Select a user to view messages.</p>
                 )}
               </div>
 
               {/* Zone de saisie de message */}
               {selectedUserId && (
-                <div className="bg-white border-t border-gray-200 p-6">
+                <div className="bg-background border-t border-border p-6">
                   <div className="flex gap-4">
                     <Input
                       value={messageContent}
                       onChange={(e) => setMessageContent(e.target.value)}
                       placeholder="Type a message..."
-                      className="flex-1"
+                      className="flex-1 bg-background text-foreground border-border"
                       onKeyPress={(e) => {
                         if (e.key === "Enter") handleSendMessage();
                       }}
                     />
-                    <Button onClick={handleSendMessage}>
+                    <Button onClick={handleSendMessage} className="bg-primary text-primary-foreground hover:bg-primary/90">
                       <Send className="w-5 h-5" />
                     </Button>
                   </div>

@@ -1,12 +1,13 @@
-import { convexAuth, getAuthUserId } from "@convex-dev/auth/server";
+import { convexAuth, getAuthUserId, modifyAccountCredentials } from "@convex-dev/auth/server";
 import GitHub from "@auth/core/providers/github";
 import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { DataModel } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { checkPermission } from "./lib/permissions";
 import { Id } from "./_generated/dataModel";
+import { api, internal } from "./_generated/api";
 
 const CustomPassword = Password<DataModel>({
   profile(params) {
@@ -82,5 +83,34 @@ export const updateUserRole = mutation({
     if (!canUpdateRoles) throw new Error("Insufficient permissions");
 
     await ctx.db.patch(args.userId, { roleId: args.newRoleId });
+  },
+});
+
+
+
+
+export const changePassword = mutation({
+  args: {
+    currentPassword: v.string(), // Mot de passe actuel
+    newPassword: v.string(), // Nouveau mot de passe
+  },
+  handler: async (ctx, { currentPassword, newPassword }) => {
+    // Vérifier l'identité de l'utilisateur
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Récupérer l'ID du compte
+    const accountId = identity.tokenIdentifier;
+
+      // Planifier l'action pour s'exécuter après la mutation
+      await ctx.scheduler.runAfter(0, api.actions.modifyAccountCredentials.modifyAccountCredentialsAction, {
+        accountId,
+        providerId: "password",
+        currentSecret: currentPassword,
+        newSecret: newPassword,
+      });
+    return { success: true }; // Retourner un succès
   },
 });

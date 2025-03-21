@@ -100,3 +100,51 @@ export const markAllNotificationsAsRead = mutation({
     }
   },
 });
+
+export const sendNotificationToRHDepartment = mutation({
+  args: {
+    title: v.string(), // Titre de la notification
+    message: v.string(), // Message de la notification
+    link: v.optional(v.string()), // Lien optionnel
+    type: v.union(
+      v.literal("info"),
+      v.literal("warning"),
+      v.literal("error"),
+      v.literal("success")
+    ), // Type de notification
+  },
+  handler: async (ctx, args) => {
+    const { title, message, link, type } = args;
+
+    // Récupérer l'ID du département RH
+    const rhDepartment = await ctx.db
+      .query("departments")
+      .filter((q) => q.eq(q.field("name"), "RH"))
+      .first();
+
+    if (!rhDepartment) {
+      throw new Error("RH department not found");
+    }
+
+    // Récupérer tous les utilisateurs du département RH
+    const rhUsers = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("departmentId"), rhDepartment._id))
+      .collect();
+
+    // Créer une notification pour chaque utilisateur du département RH
+    for (const user of rhUsers) {
+      await ctx.db.insert("notifications", {
+        userId: user._id,
+        title,
+        message,
+        link,
+        type,
+        isRead: false, // Par défaut, la notification n'est pas lue
+        createdAt: Date.now(),
+      });
+    }
+
+    return { success: true, message: `Notifications sent to ${rhUsers.length} users.` };
+  },
+});

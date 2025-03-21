@@ -20,6 +20,7 @@ import { PDFViewer } from "@/components/PDFViewer/PDFViewer";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/dist/client/link";
+import Image from "next/image";
 
 export default function JobOffersPage() {
   const params = useParams();
@@ -54,6 +55,7 @@ export default function JobOffersPage() {
   const [currentCandidateId, setCurrentCandidateId] = useState<Id<"users"> | null>(null);
   const isLoading = !job || !rawOffers;
 
+  const createNotification = useMutation(api.mutations.notifications.createNotification);
 
 
  const Me = useQuery(api.auth.getMe);
@@ -144,24 +146,45 @@ export default function JobOffersPage() {
   };
 
   
-  const handleUpdateStatus = async (offerId: Id<"offers">, status:"Pending" | "Interview" | "Accepted" | "Rejected") => {
+  const handleUpdateStatus = async (userId: Id<"users">,offerId: Id<"offers">, status:"Pending" | "Interview" | "Accepted" | "Rejected") => {
     try {
       await updateOfferStatus({ offerId, status });
+      const notificationTitle = ` Your offer status updated to ${status}`;
+      const notificationMessage = ` Your offer status updated to ${status}`;
+      const notificationLink = ``; // Lien vers la réunion
+  
+      await createNotification({
+        userId: userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        link: notificationLink,
+        type: "info",
+      });
       toast.success(`Offer status updated to ${status}`);
     } catch (error) {
       console.error("Error updating offer status:", error);
       toast.error("An error occurred while updating the offer status.");
     }
   };
-  const handleOpenMeetingDialog = (candidateId: Id<"users">) => {
+  const handleOpenMeetingDialog = (offerId: Id<"offers">,candidateId: Id<"users">) => {
+    setCurrentOfferId(offerId);
+
     setCurrentCandidateId(candidateId);
     setOpenMeetingDialog(true);
   };
 
-  const handleScheduleMeeting = async () => {
+  const handleScheduleMeeting = async (offerId: Id<"offers">) => {
     if (!currentCandidateId || !user) return;
 
     try {
+      const formattedDate = new Date(meetingStartTime).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+  
       await scheduleMeeting({
         title: meetingTitle,
         description: meetingDescription,
@@ -172,6 +195,20 @@ export default function JobOffersPage() {
         organizerId: user._id as Id<"users">, // ID de l'organisateur (recruteur)
         participantId: currentCandidateId,
       });
+      const notificationTitle = "Meeting Updated";
+      const notificationMessage = `You have new meeting at ${formattedDate}.`;
+      const notificationLink = `/MyMeetings`; // Lien vers la réunion
+  
+      await createNotification({
+        userId: currentCandidateId,
+        title: notificationTitle,
+        message: notificationMessage,
+        link: notificationLink,
+        type: "info",
+      });
+      const status="Interview"
+      await updateOfferStatus({ offerId, status});
+
       toast.success("Meeting scheduled successfully!");
       setOpenMeetingDialog(false);
     } catch (error) {
@@ -251,7 +288,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
   };
 
 
-  const handleAssignForms = async (userId: Id<"users">, candidateEmail: string) => {
+  const handleAssignForms = async (offerId: Id<"offers">,userId: Id<"users">, candidateEmail: string) => {
     if (!formIds || formIds.length === 0) {
       toast.error("No form is associated with this job.");
       return;
@@ -275,7 +312,20 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
         const emailTemplateHtml = emailTemplate(assignedCount, job?.title || "Job", formLinks);
   
         await sendEmail(candidateEmail, emailSubject, emailTemplateHtml);
-        toast.success("Email sent successfully!");
+        const notificationTitle = "New forms Assigned";
+        const notificationMessage = `Forms Assigned to You`;
+        const notificationLink = `/Mytests`; // Lien vers la réunion
+    
+        await createNotification({
+          userId: userId,
+          title: notificationTitle,
+          message: notificationMessage,
+          link: notificationLink,
+          type: "info",
+        });
+        const status="Under test"
+        await updateOfferStatus({ offerId, status});
+        toast.success("Forms Assigned successfully!");
       }
     } catch (error) {
       console.error("Error assigning forms:", error);
@@ -284,16 +334,47 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
       setIsAssigning(false); // Désactiver le loader
     }
   };
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return "text-green-600";
+    if (score > 50) return "text-yellow-600";
+    return "text-red-600";
+  };
 
+  if (rawOffers.length === 0) {
+    // No open jobs found
+    return (
+      <AdminPanelLayout>
+        <ContentLayout title="Recent Jobs">
+        <div className="flex flex-col items-center justify-center py-12 space-y-6">
+              <Image
+    src="/img/NoResultFound.png" // Chemin relatif depuis le dossier public
+    alt="No offers available"
+              width={700} // Desired width of the image
+              height={700} // Desired height of the image
+              className="object-cover" // Ensures the image scales properly
+            />
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  No offers available at the moment
+                </h3>
+                <p className="text-gray-600">
+                  Check back later to discover new opportunities.
+                </p>
+              </div>
+            </div>
+        </ContentLayout>
+      </AdminPanelLayout>
+    );
+  }
   return (
     <AdminPanelLayout>
       <ContentLayout title="Dashboard">
         <div className="p-6 space-y-6">
           {/* En-tête de la page */}
-          <Card className="border border-gray-200 shadow-lg bg-gradient-to-r from-blue-50 to-purple-50">
+          <Card className="border border-border bg-background text-foreground shadow-lg">
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-full">
+                <div className="p-3 bg-gradient-to-r from-blue-200 to-blue-500 rounded-full">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -304,15 +385,15 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-blue-500"
+                    className="text-white"
                   >
                     <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34" />
                     <polygon points="18 2 22 6 12 16 8 16 8 12 18 2" />
                   </svg>
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold text-gray-900">{job?.title}</CardTitle>
-                  <CardDescription className="text-lg text-gray-600">{job?.departmentName}</CardDescription>
+                  <CardTitle className="text-2xl font-bold text-foreground">{job?.title}</CardTitle>
+                  <CardDescription className="text-lg text-muted-foreground">{job?.departmentName}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -328,7 +409,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-gray-500"
+                  className="text-muted-foreground"
                 >
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                   <line x1="16" y1="2" x2="16" y2="6" />
@@ -340,7 +421,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
             </CardContent>
             <CardFooter>
               <Link href={`/filled-forms/${jobId}`} passHref>
-                <Button className="bg-green-600 hover:bg-green-700 transition-colors duration-300">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                   View Filled Forms
                 </Button>
               </Link>
@@ -348,16 +429,16 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
           </Card>
   
           {/* Barre de recherche et filtre de tri */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 bg-background p-4 rounded-lg shadow-sm border border-border">
             <Input
-              placeholder="Search candidates by name or email..."
+              placeholder="Rechercher un candidat..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
+              className="flex-1 border-border bg-background text-foreground"
             />
             <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by score" />
+              <SelectTrigger className="w-[180px] border-border bg-background text-foreground">
+                <SelectValue placeholder="Trier par score" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="desc">Highest score first</SelectItem>
@@ -374,22 +455,22 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
               return (
                 <Card
                   key={offer._id}
-                  className="hover:shadow-lg transition-shadow duration-300 relative overflow-hidden"
+                  className="hover:shadow-lg transition-shadow duration-300 relative overflow-hidden bg-background text-foreground"
                 >
                   {/* Image de profil */}
-                  <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-500 to-purple-500" />
+                  <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-200 to-blue-500" />
                   <div className="relative p-6">
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-lg">
-                        <span className="text-2xl font-bold text-blue-800">
+                      <div className="w-16 h-16 rounded-full bg-background flex items-center justify-center border-4 border-background shadow-lg">
+                        <span className="text-2xl font-bold text-primary">
                           {offer.candidateName[0]}
                         </span>
                       </div>
                       <div>
-                        <CardTitle className="text-xl font-bold text-gray-900">
+                        <CardTitle className="text-xl font-bold text-foreground">
                           {offer.candidateName}
                         </CardTitle>
-                        <CardDescription className="text-gray-600">
+                        <CardDescription className="text-muted-foreground">
                           {offer.candidateEmail}
                         </CardDescription>
                       </div>
@@ -399,65 +480,68 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                   {/* Informations du candidat */}
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Applied At:</span>
-                      <span className="text-sm font-medium">
+                      <span className="text-sm text-muted-foreground">Applied At:</span>
+                      <span className="text-sm font-medium text-foreground">
                         {new Date(offer.appliedAt).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Score:</span>
-                      <span className="text-sm font-medium">{offer.score || "N/A"}</span>
+                      <span className="text-sm text-muted-foreground">Score:</span>
+                      <span className={`text-sm font-medium ${getScoreColor(offer.score || 0)}`}>
+                        {offer.score || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Current Status:</span>
-                    <div className="flex items-center gap-2 mt-2">
-      
-        <Select 
-          value={offer.status}
-          onValueChange={(value: "Pending" | "Interview" | "Accepted" | "Rejected") =>
-            handleUpdateStatus(offer._id, value)
-          }
-        >
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Change Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Interview">Interview</SelectItem>
-            <SelectItem value="Accepted">Accepted</SelectItem>
-            <SelectItem value="Rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+                      <span className="text-sm text-muted-foreground">Current Status:</span>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Select
+                          value={offer.status}
+                          onValueChange={(value: "Pending" | "Interview" | "Accepted" | "Rejected") =>
+                            handleUpdateStatus(offer.candidateId, offer._id, value)
+                          }
+                        >
+                          <SelectTrigger className="w-[120px] border-border bg-background text-foreground">
+                            <SelectValue placeholder="Change Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Interview">Interview</SelectItem>
+                            <SelectItem value="Accepted">Accepted</SelectItem>
+                            <SelectItem value="Rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">CV:</span>
+                      <span className="text-sm text-muted-foreground">CV:</span>
                       {offer.resume ? (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenPdf(`/uploads/${offer.resume}`)}
+                          className="border-border bg-background text-foreground"
                         >
                           <Download size={16} className="mr-2" />
                           View CV
                         </Button>
                       ) : (
-                        <span className="text-sm text-gray-500">No CV available</span>
+                        <span className="text-sm text-muted-foreground">No CV available</span>
                       )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Report:</span>
+                      <span className="text-sm text-muted-foreground">Report:</span>
                       {offer.reportPdf ? (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenPdf(`/uploads/rapports/${offer.reportPdf}`)}
+                          className="border-border bg-background text-foreground"
                         >
                           <Download size={16} className="mr-2" />
                           View Report
                         </Button>
                       ) : (
-                        <span className="text-sm text-gray-500">No report available</span>
+                        <span className="text-sm text-muted-foreground">No report available</span>
                       )}
                     </div>
                   </CardContent>
@@ -468,8 +552,9 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleAssignForms(offer.candidateId, offer.candidateEmail)}
+                        onClick={() => handleAssignForms(offer._id, offer.candidateId, offer.candidateEmail)}
                         disabled={isAssigning}
+                        className="border-border bg-background text-foreground"
                       >
                         {isAssigning ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -481,16 +566,18 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenNotesDialog(offer._id, offer.recruiterNotes || "")}
+                        className="border-border bg-background text-foreground"
                       >
                         <Edit size={16} className="mr-2" />
                         Notes
                       </Button>
                     </div>
-                   
+  
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleOpenMeetingDialog(offer.candidateId)}
+                      onClick={() => handleOpenMeetingDialog(offer._id, offer.candidateId)}
+                      className="border-border bg-background text-foreground"
                     >
                       Schedule Meeting
                     </Button>
@@ -510,7 +597,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
   
           {/* Modal pour afficher les PDF */}
           <Dialog open={openPdfViewer} onOpenChange={setOpenPdfViewer}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-4xl bg-background text-foreground">
               <DialogHeader>
                 <DialogTitle>PDF Viewer</DialogTitle>
               </DialogHeader>
@@ -520,7 +607,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
   
           {/* Modal pour afficher et modifier les notes */}
           <Dialog open={openNotesDialog} onOpenChange={setOpenNotesDialog}>
-            <DialogContent>
+            <DialogContent className="bg-background text-foreground">
               <DialogHeader>
                 <DialogTitle>Recruiter Notes</DialogTitle>
                 <DialogDescription>Edit the notes for this candidate.</DialogDescription>
@@ -529,17 +616,19 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                 value={currentNotes}
                 onChange={(e) => setCurrentNotes(e.target.value)}
                 placeholder="Enter your notes here..."
-                className="mt-4"
+                className="mt-4 bg-background text-foreground border-border"
               />
               <DialogFooter>
-                <Button onClick={handleUpdateNotes}>Save</Button>
+                <Button onClick={handleUpdateNotes} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Save
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
   
           {/* Modal pour planifier une réunion */}
           <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
-            <DialogContent>
+            <DialogContent className="bg-background text-foreground">
               <DialogHeader>
                 <DialogTitle>Schedule a Meeting</DialogTitle>
                 <DialogDescription>
@@ -551,17 +640,19 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                   placeholder="Meeting Title"
                   value={meetingTitle}
                   onChange={(e) => setMeetingTitle(e.target.value)}
+                  className="bg-background text-foreground border-border"
                 />
                 <Textarea
                   placeholder="Meeting Description"
                   value={meetingDescription}
                   onChange={(e) => setMeetingDescription(e.target.value)}
+                  className="bg-background text-foreground border-border"
                 />
                 <Select
                   value={meetingType}
                   onValueChange={(value: "online" | "in-person") => setMeetingType(value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background text-foreground border-border">
                     <SelectValue placeholder="Select meeting type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -574,12 +665,14 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                     placeholder="Meeting Link (e.g., Google Meet)"
                     value={meetingLink}
                     onChange={(e) => setMeetingLink(e.target.value)}
+                    className="bg-background text-foreground border-border"
                   />
                 )}
                 <Input
                   type="date"
                   value={new Date(meetingDate).toISOString().split("T")[0]}
                   onChange={(e) => setMeetingDate(new Date(e.target.value).getTime())}
+                  className="bg-background text-foreground border-border"
                 />
                 <Input
                   type="time"
@@ -593,10 +686,13 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                     date.setMinutes(parseInt(time[1], 10));
                     setMeetingStartTime(date.getTime());
                   }}
+                  className="bg-background text-foreground border-border"
                 />
               </div>
               <DialogFooter>
-                <Button onClick={handleScheduleMeeting}>Schedule</Button>
+                <Button onClick={() => handleScheduleMeeting(currentOfferId as Id<"offers">)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Schedule
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

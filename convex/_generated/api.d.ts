@@ -13,7 +13,9 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as actions_modifyAccountCredentials from "../actions/modifyAccountCredentials.js";
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as functions_setup from "../functions/setup.js";
 import type * as http from "../http.js";
@@ -46,7 +48,9 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "actions/modifyAccountCredentials": typeof actions_modifyAccountCredentials;
   auth: typeof auth;
+  crons: typeof crons;
   files: typeof files;
   "functions/setup": typeof functions_setup;
   http: typeof http;

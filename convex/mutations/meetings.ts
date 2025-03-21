@@ -123,4 +123,29 @@ export const getUserMeetings = query({
     },
   });
 
+
+  export const completePastMeetings = mutation({
+    handler: async (ctx) => {
+      // Récupérer la date actuelle en millisecondes
+      const now = Date.now();
+  
+      // Récupérer tous les meetings planifiés
+      const scheduledMeetings = await ctx.db
+        .query("meetings")
+        .filter((q) => q.eq(q.field("status"), "scheduled"))
+        .collect();
+  
+      // Parcourir chaque meeting planifié
+      for (const meeting of scheduledMeetings) {
+        // Vérifier si le meeting est terminé (startTime + 2 heures < maintenant)
+        if (meeting.startTime + 2 * 60 * 60 * 1000 < now) {
+          // Mettre à jour le statut du meeting à "completed"
+          await ctx.db.patch(meeting._id, {
+            status: "completed",
+          });
+        }
+      }
+    },
+  });
+
   

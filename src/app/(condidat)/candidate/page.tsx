@@ -20,11 +20,12 @@ export default function CandidatePage() {
   const Me = useQuery(api.auth.getMe);
   const router = useRouter();
 
-  useEffect(() => {
-    if (Me && Me.department?.name !== null) {
+  /*useEffect(() => {
+    if (Me && Me.department !== null) {
       router.push("/access-denied");
     }
   }, [Me, router]);
+  */
 
   // Récupérer les offres depuis Convex
   const offers = useQuery(api.queries.offres.getOffersByCandidateId, {

@@ -75,11 +75,12 @@ export const updateRecruiterNotes = mutation({
 export const updateOfferStatus = mutation({
   args: {
     offerId: v.id("offers"),
-    status: v.union(v.literal("Accepted"), v.literal("Rejected"), v.literal("Pending"), v.literal("Interview")),
+    status: v.union(v.literal("Accepted"), v.literal("Rejected"), v.literal("Pending"), v.literal("Interview"),v.literal("Under test")),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.offerId, { status: args.status });
   },
 });
+
 
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutGrid, Loader, LogOut, User, Bell, Info, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { LayoutGrid, Loader, LogOut, User, Bell, Info, AlertTriangle, CheckCircle, XCircle, MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,21 +28,24 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import { Dialog, DialogContent } from "../ui/dialog";
+import MessagesPage from "./MessagesPage";
 
 export function UserNav() {
   const { signOut } = useAuthActions();
   const { data, isLoading } = useCurrentUser();
   const [unreadCount, setUnreadCount] = useState(0);
   const Me = useQuery(api.auth.getMe);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(1); // Exemple : 3 messages non lus
 
   const notifications = useQuery(api.mutations.notifications.getNotificationsForUser, {
-    userId: Me?._id as Id<"users">, // ID de l'utilisateur actuel
+    userId: Me?._id as Id<"users">,
   });
 
-  // Mutation pour marquer toutes les notifications comme lues
   const markAllAsRead = useMutation(api.mutations.notifications.markAllNotificationsAsRead);
+  const markAsRead = useMutation(api.mutations.notifications.markNotificationAsRead);
 
-  // Mettre à jour le compteur de notifications non lues
   useEffect(() => {
     if (notifications) {
       const unread = notifications.filter((n) => !n.isRead).length;
@@ -61,7 +64,6 @@ export function UserNav() {
   const { image, name, email, role } = data;
   const avatarFallback = name!.charAt(0).toUpperCase();
 
-  // Fonction pour marquer toutes les notifications comme lues
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead({ userId: data._id });
@@ -72,7 +74,16 @@ export function UserNav() {
     }
   };
 
-  // Fonction pour formater la date
+  const handleMarkAsRead = async (notificationId: Id<"notifications">) => {
+    try {
+      await markAsRead({ notificationId });
+      toast.success("Notification marked as read.");
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error("Une erreur s'est produite.");
+    }
+  };
+
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -91,7 +102,36 @@ export function UserNav() {
 
   return (
     <div className="flex items-center gap-4">
-      {/* Icône de notifications */}
+      {/* Bouton de messagerie */}
+      <TooltipProvider disableHoverableContent>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMessagesOpen(true)}
+              className="relative hover:bg-muted/50 transition-colors"
+            >
+              <MessageCircle className="w-5 h-5" />
+              {/* Indicateur de nouveaux messages non lus */}
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                  {unreadMessagesCount}
+                </span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Messages</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Dialog open={isMessagesOpen} onOpenChange={setIsMessagesOpen}>
+        <DialogContent className="max-w-4xl h-[90vh] overflow-y-auto">
+          <MessagesPage />
+        </DialogContent>
+      </Dialog>
+
+      {/* Bouton de notifications */}
       <DropdownMenu>
         <TooltipProvider disableHoverableContent>
           <Tooltip delayDuration={100}>
@@ -99,9 +139,10 @@ export function UserNav() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-8 w-8 rounded-full p-0"
+                  size="icon"
+                  className="relative hover:bg-muted/50 transition-colors"
                 >
-                  <Bell className="h-4 w-4" />
+                  <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                       {unreadCount}
@@ -124,8 +165,8 @@ export function UserNav() {
                 className="text-sm text-primary"
                 onClick={handleMarkAllAsRead}
               >
-Mark all as read
-</Button>
+                Mark all as read
+              </Button>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -136,7 +177,6 @@ Mark all as read
               </p>
             ) : (
               notifications?.map((notification: any) => {
-                // Icône en fonction du type de notification
                 let icon;
                 switch (notification.type) {
                   case "info":
@@ -159,23 +199,21 @@ Mark all as read
                   <DropdownMenuItem
                     key={notification._id}
                     className="flex flex-col items-start gap-1 p-3 hover:bg-muted/50 transition-colors duration-200"
-                    asChild
+                    onClick={() => handleMarkAsRead(notification._id)}
                   >
-                    <Link href={notification.link || "#"}>
-                      <div className="flex items-center gap-2">
-                        {icon}
-                        <p className="text-sm font-medium">{notification.title}</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatTimeAgo(notification.createdAt)}
-                      </p>
-                      {!notification.isRead && (
-                        <span className="text-xs text-primary">Non lu</span>
-                      )}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {icon}
+                      <p className="text-sm font-medium">{notification.title}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatTimeAgo(notification.createdAt)}
+                    </p>
+                    {!notification.isRead && (
+                      <span className="text-xs text-primary">Non lu</span>
+                    )}
                   </DropdownMenuItem>
                 );
               })
@@ -192,7 +230,8 @@ Mark all as read
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="relative h-8 w-8 rounded-full"
+                  size="icon"
+                  className="relative h-8 w-8 rounded-full hover:bg-muted/50 transition-colors"
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage alt={name} src={image} />
@@ -208,15 +247,9 @@ Mark all as read
         <DropdownMenuContent className="w-70" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
-                <strong>{name}</strong>
-              </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                <strong>{email}</strong>
-              </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                <strong>{role}</strong>
-              </p>
+              <p className="text-sm font-medium leading-none">{name}</p>
+              <p className="text-xs leading-none text-muted-foreground">{email}</p>
+              <p className="text-xs leading-none text-muted-foreground">{role}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -227,8 +260,8 @@ Mark all as read
                 Dashboard
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:cursor-pointer">
-              <Link href="/Profile" className="flex items-center">
+            <DropdownMenuItem className="hover:cursor-pointer" asChild>
+              <Link href="/profile" className="flex items-center">
                 <User className="w-4 h-4 mr-3 text-muted-foreground" />
                 Profile
               </Link>

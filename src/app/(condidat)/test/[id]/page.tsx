@@ -18,15 +18,11 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 export default function FormPage() {
+  const createNotification = useMutation(api.mutations.notifications.sendNotificationToRHDepartment);
 
   const Me = useQuery(api.auth.getMe);
   const router = useRouter();
 
-  useEffect(() => {
-    if (Me && Me.department?.name !== null) {
-      router.push("/access-denied");
-    }
-  }, [Me, router]);
   // Get the form ID from the URL
   const params = useParams();
   const formId = params.id as Id<"forms">;
@@ -105,7 +101,16 @@ export default function FormPage() {
           answer,
         })),
       });
-
+      const notificationTitle = "Test";
+      const notificationMessage = `New test submited from ${Me?.name}.`;
+      const notificationLink = ``; // Lien vers la réunion
+  
+      await createNotification({
+        title: notificationTitle,
+        message: notificationMessage,
+        link: notificationLink,
+        type: "success",
+      });
       toast.success("Responses submitted successfully!");
       setHasAlreadyResponded(true); // Mettre à jour l'état après la soumission
     } catch (error) {
@@ -125,99 +130,120 @@ export default function FormPage() {
   }
 
   // Si l'utilisateur a déjà répondu, afficher un message
-  if (hasAlreadyResponded) {
-    return (
-      <AdminPanelLayout>
-        <ContentLayout title="Dashboard">
-          <div className="p-6 space-y-6">
-            <div className="max-w-4xl mx-auto">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold">Form Already Submitted</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    You have already submitted your responses to this form.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-          </div>
-        </ContentLayout>
-      </AdminPanelLayout>
-    );
-  }
-
+// Si l'utilisateur a déjà répondu, afficher un message
+if (hasAlreadyResponded) {
   return (
     <AdminPanelLayout>
       <ContentLayout title="Dashboard">
         <div className="p-6 space-y-6">
           <div className="max-w-4xl mx-auto">
-            <Card className="shadow-lg">
+            <Card className="shadow-lg bg-background">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">{form.title}</CardTitle>
-                <CardDescription className="text-gray-600">{form.description}</CardDescription>
+                <CardTitle className="text-2xl font-bold text-foreground">
+                  Form Already Submitted
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  You have already submitted your responses to this form.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {form.questions.map((question: any) => (
-                  <div key={question._id} className="space-y-4 p-4 border rounded-lg bg-white shadow-sm">
-                    <Label className="text-lg font-semibold">{question.text}</Label>
-                    {question.type === "single-choice" && (
-                      <RadioGroup
-                        onValueChange={(value) => handleResponseChange(question._id, value)}
-                      >
-                        {question.options?.map((option: any, index: any) => (
-                          <div key={index} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option} id={`${question._id}-${index}`} />
-                            <Label htmlFor={`${question._id}-${index}`}>{option}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    )}
-                    {question.type === "multiple-choice" && (
-                      <div className="space-y-2">
-                        {question.options?.map((option: any, index: any) => (
-                          <div key={index} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`${question._id}-${index}`}
-                              onCheckedChange={(checked) => {
-                                const currentAnswers = (responses[question._id] || []) as string[];
-                                const updatedAnswers = checked
-                                  ? [...currentAnswers, option]
-                                  : currentAnswers.filter((ans) => ans !== option);
-                                handleResponseChange(question._id, updatedAnswers);
-                              }}
-                            />
-                            <Label htmlFor={`${question._id}-${index}`}>{option}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {question.type === "open-ended" && (
-                      <Textarea
-                        placeholder="Your answer..."
-                        value={(responses[question._id] as string) || ""}
-                        onChange={(e) => handleResponseChange(question._id, e.target.value)}
-                        className="mt-2"
-                      />
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Submit Responses"
-                  )}
-                </Button>
-              </CardFooter>
             </Card>
           </div>
         </div>
       </ContentLayout>
     </AdminPanelLayout>
   );
+}
+
+return (
+  <AdminPanelLayout>
+    <ContentLayout title="Dashboard">
+      <div className="p-6 space-y-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="shadow-lg bg-background">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-foreground">{form.title}</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                {form.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {form.questions.map((question: any) => (
+                <div
+                  key={question._id}
+                  className="space-y-4 p-4 border rounded-lg bg-background shadow-sm border-border"
+                >
+                  <Label className="text-lg font-semibold text-foreground">{question.text}</Label>
+                  {question.type === "single-choice" && (
+                    <RadioGroup
+                      onValueChange={(value) => handleResponseChange(question._id, value)}
+                    >
+                      {question.options?.map((option: any, index: any) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value={option}
+                            id={`${question._id}-${index}`}
+                            className="text-primary"
+                          />
+                          <Label htmlFor={`${question._id}-${index}`} className="text-foreground">
+                            {option}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                  {question.type === "multiple-choice" && (
+                    <div className="space-y-2">
+                      {question.options?.map((option: any, index: any) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`${question._id}-${index}`}
+                            onCheckedChange={(checked) => {
+                              const currentAnswers = (responses[question._id] || []) as string[];
+                              const updatedAnswers = checked
+                                ? [...currentAnswers, option]
+                                : currentAnswers.filter((ans) => ans !== option);
+                              handleResponseChange(question._id, updatedAnswers);
+                            }}
+                            className="text-primary"
+                          />
+                          <Label htmlFor={`${question._id}-${index}`} className="text-foreground">
+                            {option}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {question.type === "open-ended" && (
+                    <Textarea
+                      placeholder="Your answer..."
+                      value={(responses[question._id] as string) || ""}
+                      onChange={(e) => handleResponseChange(question._id, e.target.value)}
+                      className="mt-2 bg-background text-foreground border-border"
+                    />
+                  )}
+                </div>
+              ))}
+            </CardContent>
+            <CardFooter>
+              <Button
+                onClick={handleSubmit}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Responses"
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    </ContentLayout>
+  </AdminPanelLayout>
+);
 }

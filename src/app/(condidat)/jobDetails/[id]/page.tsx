@@ -30,9 +30,10 @@ export default function JobDetailsPage() {
   const Me = useQuery(api.auth.getMe);
   const createOffer = useMutation(api.mutations.offers.createOffer);
   const router = useRouter();
+  const createNotification = useMutation(api.mutations.notifications.sendNotificationToRHDepartment);
 
   useEffect(() => {
-    if (Me && Me.department?.name !== null) {
+    if (Me && Me.department!== null) {
       router.push("/access-denied");
     }
   }, [Me, router]);
@@ -55,44 +56,184 @@ export default function JobDetailsPage() {
     try {
       // Template HTML avec des placeholders
       const templateHtml = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>CV Report</title>
-          <style>
-            /* Insérez ici le CSS du modèle */
-          </style>
-        </head>
-        <body>
-          <div class="report">
-            <div class="header">
-              <h1>CV Report for Job: {{jobTitle}}</h1>
-              <div class="score">Score: {{score}}/100</div>
+     <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Report</title>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+        .report {
+            width: 21cm;
+            min-height: 29.7cm;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #000;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #000;
+        }
+        .score {
+            background: #ff0000;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .section {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 4px solid #000;
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+        .section h2 {
+            font-size: 18px;
+            color: #000;
+            margin-bottom: 10px;
+        }
+        .section p {
+            font-size: 14px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        .section p i {
+            margin-right: 10px;
+        }
+        .check { color: #4caf50; }
+        .cross { color: #ff3b3b; }
+        /* Skill Bar */
+        .skill-bar {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .skill-name {
+            width: 160px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .bar {
+            flex: 1;
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .bar span {
+            display: block;
+            height: 100%;
+            border-radius: 5px;
+        }
+        .full { background: #4caf50; width: 100%; }
+        .almost { background: #4caf50; width: 75%; }
+        .mid { background: #4caf50; width: 50%; }
+        .bad { background: #4caf50; width: 25%; }
+        .no { background: #4caf50; width: 0%; }
+
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="report">
+        <div class="header">
+            <h1>CV Report for Job: {{jobTitle}}</h1>
+            <div class="score">Score: {{score}}/100</div>
+        </div>
+        <div class="section">
+            <h2>Analysis</h2>
+            <p>{{analysis}}</p>
+        </div>
+        <div class="section">
+            <h2>Insights</h2>
+            <p><i class="fas fa-check-circle check"></i> {{insight1}}</p>
+            <p><i class="fas fa-check-circle check"></i> {{insight2}}</p>
+            <p><i class="fas fa-check-circle check"></i> {{insight3}}</p>
+
+        </div>
+        <div class="section">
+            <h2>Weaknesses</h2>
+            <p><i class="fas fa-times-circle cross"></i> {{weakness1}}</p>
+            <p><i class="fas fa-times-circle cross"></i> {{weakness2}}</p>
+            <p><i class="fas fa-times-circle cross"></i> {{weakness3}}</p>
+
+        </div>
+        <div class="section">
+            <h2>Skills</h2>
+            <div class="skill-bar">
+                <span class="skill-name">{{Skills}}</span>
+                <div class="bar"><span class="full"></span></div>
             </div>
-            <div class="section">
-              <h2>Analysis</h2>
-              <p>{{analysis}}</p>
+            <div class="skill-bar">
+                <span class="skill-name">{{Skills}}</span>
+                <div class="bar"><span class="full"></span></div>
             </div>
-            <div class="section">
-              <h2>Job Details</h2>
-              <p><strong>Title:</strong> {{jobTitle}}</p>
-              <p><strong>Department:</strong> {{department}}</p>
-              <p><strong>Requirements:</strong> {{requirements}}</p>
-              <p><strong>Salary Range:</strong> {{salaryRange}}</p>
-              <p><strong>Location:</strong> {{location}}</p>
-              <p><strong>Employment Type:</strong> {{employmentType}}</p>
-              <p><strong>Experience Level:</strong> {{experienceLevel}}</p>
+            <div class="skill-bar">
+                <span class="skill-name">{{Skills}}</span>
+                <div class="bar"><span class="almost"></span></div>
             </div>
-            <div class="footer">
-              <p>Generated by Gemini AI</p>
-            </div>
-          </div>
-        </body>
-        </html>
+        </div>
+        <div class="footer">
+            <p>Generated by AI Assistant</p>
+        </div>
+    </div>
+</body>
+</html>
+
       `;
-  
+      const prompt = `
+      Generate a detailed HTML report for the CV below applied to the job title "${jobTitle}". Use the following template and fill in the placeholders with relevant data. Ensure the report is professional, modern, and easy to read.
+      
+      ### Instructions:
+      1. Replace placeholders like {{jobTitle}}, {{score}}, {{analysis}}, {{insight1}}, {{weakness1}}, etc., with actual data.
+      2. Provide a clear and concise analysis of the candidate's strengths and weaknesses.
+      3. Include specific insights and recommendations based on the CV and job requirements.
+      4. Ensure the skills section reflects the candidate's proficiency levels accurately.
+      
+      ### Template:
+      ${templateHtml}
+      
+      ### CV:
+      ${cvText}
+      
+      ### Job Details:
+      ${jobDetails}
+      
+      ### Additional Notes:
+      - Use a professional tone.
+      - Highlight key skills and experiences that match the job requirements.
+      - Provide actionable recommendations for improvement.
+      `;
       // Envoyer la requête à l'API Gemini
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`,      
@@ -105,16 +246,7 @@ export default function JobDetailsPage() {
               {
                 parts: [
                   {
-                    text: `Generate a detailed HTML report for the CV below applied to the job title "${jobTitle}". Use the following template and fill in the placeholders with relevant data:
-  
-                    Template:
-                    ${templateHtml}
-  
-                    CV:
-                    ${cvText}
-  
-                    Job Details:
-                    ${jobDetails}`,
+                    text: prompt,
                   },
                 ],
               },
@@ -256,7 +388,16 @@ export default function JobDetailsPage() {
         score: score,
         reportPdf: pdfFileName+".pdf", // Ajouter le chemin du PDF
       });
-
+      const notificationTitle = "Application";
+         const notificationMessage = `New applicatin from ${Me.name}.`;
+         const notificationLink = ``; // Lien vers la réunion
+     
+         await createNotification({
+           title: notificationTitle,
+           message: notificationMessage,
+           link: notificationLink,
+           type: "success",
+         });
       // Afficher un message de succès
       toast({
         title: "Application submitted successfully",

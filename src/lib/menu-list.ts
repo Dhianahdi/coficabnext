@@ -43,6 +43,7 @@ type Group = {
 export function getMenuList(
   pathname: string,
   userRole?: string,
+  
 ): Group[] {
   const groups: Group[] = [
     {
@@ -206,7 +207,7 @@ export function getMenuList(
       menus: [
       
         {
-          href: "/Departments",
+          href: "/departments",
           label: "departments",
           icon: Users,
         },
@@ -219,11 +220,12 @@ export function getMenuList(
       ],
     });
   }
+  console.log(userRole)
 
   if (userRole === "RH") {
     return groups;
-  } else if (userRole === null) {
-    return groupsGeust;
-  } else {
+  } else if (userRole != null) {
     return groupscolab;
+  } else {
+    return groupsGeust;
   }}

@@ -69,13 +69,13 @@ export default function MyProfilePage() {
       <ContentLayout title="My Profile">
         <div className="p-6 space-y-6">
           {/* Carte de Profil */}
-          <Card className="border border-gray-200 shadow-lg rounded-xl bg-gradient-to-br from-blue-50 to-purple-50">
+          <Card className="border border-border shadow-lg rounded-xl bg-background">
             <CardHeader>
-              <CardTitle className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <CardTitle className="text-3xl font-bold text-foreground flex items-center gap-2">
                 <User className="w-8 h-8" />
                 My Profile
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="text-muted-foreground">
                 Manage your personal information and preferences.
               </CardDescription>
             </CardHeader>
@@ -88,7 +88,7 @@ export default function MyProfilePage() {
                     <AvatarFallback>{name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
-                    <Label htmlFor="image" className="text-gray-700 font-medium">
+                    <Label htmlFor="image" className="text-foreground font-medium">
                       Profile Image URL
                     </Label>
                     <Input
@@ -96,14 +96,14 @@ export default function MyProfilePage() {
                       value={image}
                       onChange={(e) => setImage(e.target.value)}
                       disabled={!isEditing}
-                      className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="rounded-lg border-border focus:border-primary"
                     />
                   </div>
                 </div>
-
+  
                 {/* Section Nom */}
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-gray-700 font-medium flex items-center gap-2">
+                  <Label htmlFor="name" className="text-foreground font-medium flex items-center gap-2">
                     <User className="w-5 h-5" />
                     Name
                   </Label>
@@ -112,13 +112,13 @@ export default function MyProfilePage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={!isEditing}
-                    className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="rounded-lg border-border focus:border-primary"
                   />
                 </div>
-
+  
                 {/* Section Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-700 font-medium flex items-center gap-2">
+                  <Label htmlFor="email" className="text-foreground font-medium flex items-center gap-2">
                     <Mail className="w-5 h-5" />
                     Email
                   </Label>
@@ -126,13 +126,13 @@ export default function MyProfilePage() {
                     id="email"
                     value={email}
                     disabled
-                    className="rounded-lg border-gray-300 bg-gray-100"
+                    className="rounded-lg border-border bg-secondary"
                   />
                 </div>
-
+  
                 {/* Section Téléphone */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-gray-700 font-medium flex items-center gap-2">
+                  <Label htmlFor="phone" className="text-foreground font-medium flex items-center gap-2">
                     <Phone className="w-5 h-5" />
                     Phone
                   </Label>
@@ -141,13 +141,13 @@ export default function MyProfilePage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={!isEditing}
-                    className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="rounded-lg border-border focus:border-primary"
                   />
                 </div>
-
+  
                 {/* Section Notifications */}
                 <div className="space-y-2">
-                  <Label htmlFor="notifications" className="text-gray-700 font-medium flex items-center gap-2">
+                  <Label htmlFor="notifications" className="text-foreground font-medium flex items-center gap-2">
                     🔔 Notifications
                   </Label>
                   <div className="flex items-center gap-2">
@@ -157,19 +157,19 @@ export default function MyProfilePage() {
                       onCheckedChange={setIsNotificationEnabled}
                       disabled={!isEditing}
                     />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {isNotificationEnabled ? "Enabled" : "Disabled"}
                     </span>
                   </div>
                 </div>
-
+  
                 {/* Boutons d'Action */}
                 <div className="flex gap-3">
                   {isEditing ? (
                     <>
                       <Button
                         onClick={handleUpdateProfile}
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-all duration-300 flex items-center gap-2"
                       >
                         <Save className="w-5 h-5" />
                         Save Changes
@@ -177,7 +177,7 @@ export default function MyProfilePage() {
                       <Button
                         variant="outline"
                         onClick={() => setIsEditing(false)}
-                        className="rounded-lg border-gray-300 hover:bg-gray-100 transition-all duration-300 flex items-center gap-2"
+                        className="rounded-lg border-border hover:bg-secondary transition-all duration-300 flex items-center gap-2"
                       >
                         <Edit className="w-5 h-5" />
                         Cancel
@@ -186,7 +186,7 @@ export default function MyProfilePage() {
                   ) : (
                     <Button
                       onClick={() => setIsEditing(true)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 flex items-center gap-2"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-all duration-300 flex items-center gap-2"
                     >
                       <Edit className="w-5 h-5" />
                       Edit Profile

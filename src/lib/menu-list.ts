@@ -74,7 +74,15 @@ export function getMenuList(
           label: "Offers",
           icon: FileText,
         },
-
+        {
+          href: "",
+          label: "Forms and Tests",
+          icon: SquarePen,
+          submenus: [
+            { href: "/form", label: "All Forms" },
+            { href: "/form/add", label: "New Forms" },
+          ],
+        },
         {
           href: "/RecMeetings",
           label: "My Meetings",
@@ -91,11 +99,7 @@ export function getMenuList(
     {
       groupLabel: "Settings",
       menus: [
-        {
-          href: "/users",
-          label: "Users",
-          icon: Users,
-        },
+       
         {
           href: "/Profile",
           label: "Account",

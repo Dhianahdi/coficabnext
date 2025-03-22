@@ -1,7 +1,7 @@
 import Resend from "@auth/core/providers/resend";
 import { Resend as ResendAPI } from "resend";
 import { alphabet, generateRandomString } from "oslo/crypto";
-
+ 
 export const ResendOTPPasswordReset = Resend({
   id: "resend-otp",
   apiKey: "re_6dYK9pQa_NKx51Y6kDArQgNg8E6ckY1tR",
@@ -11,14 +11,14 @@ export const ResendOTPPasswordReset = Resend({
   async sendVerificationRequest({ identifier: email, provider, token }) {
     const resend = new ResendAPI(provider.apiKey);
     const { error } = await resend.emails.send({
-      from: "Mon Application <onboarding@resend.dev>",
+      from: "My App <onboarding@resend.dev>",
       to: [email],
-      subject: `Réinitialisez votre mot de passe sur Mon Application`,
-      text: "Votre code de réinitialisation de mot de passe est " + token,
+      subject: `Reset your password in My App`,
+      text: "Your password reset code is " + token,
     });
-
+ 
     if (error) {
-      throw new Error("Impossible d'envoyer l'e-mail");
+      throw new Error("Could not send");
     }
   },
 });

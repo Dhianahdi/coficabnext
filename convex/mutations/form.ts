@@ -326,3 +326,26 @@ export const getFilledFormsByJobId = query({
     return groupedByEmail;
   },
 });
+
+export const getFormsWithQuestions = query({
+  handler: async (ctx) => {
+    // Récupérer tous les formulaires
+    const forms = await ctx.db.query("forms").collect();
+
+    // Pour chaque formulaire, récupérer les questions associées
+    const formsWithQuestions = await Promise.all(
+      forms.map(async (form) => {
+        const questions = await ctx.db
+          .query("questions")
+          .withIndex("formId", (q) => q.eq("formId", form._id))
+          .collect();
+        return {
+          ...form,
+          questions,
+        };
+      })
+    );
+
+    return formsWithQuestions;
+  },
+});

@@ -37,7 +37,7 @@ export function UserNav() {
   const [unreadCount, setUnreadCount] = useState(0);
   const Me = useQuery(api.auth.getMe);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(1); // Exemple : 3 messages non lus
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0); // Exemple : 3 messages non lus
 
   const notifications = useQuery(api.mutations.notifications.getNotificationsForUser, {
     userId: Me?._id as Id<"users">,
@@ -45,6 +45,23 @@ export function UserNav() {
 
   const markAllAsRead = useMutation(api.mutations.notifications.markAllNotificationsAsRead);
   const markAsRead = useMutation(api.mutations.notifications.markNotificationAsRead);
+  const getUnreadMessagesCount = useMutation(api.mutations.messages.getUnreadMessagesCount);
+  useEffect(() => {
+    const fetchUnreadMessagesCount = async () => {
+      if (!Me?._id) return; // Ensure the user ID exists
+
+      try {
+        const count = await getUnreadMessagesCount({ userId: Me._id });
+        const numericValue = Number(count); // Converts to number
+
+        setUnreadMessagesCount(numericValue); // Update the state with the count
+      } catch (error) {
+        console.error("Failed to fetch unread messages count:", error);
+      }
+    };
+
+    fetchUnreadMessagesCount(); // Call the function to fetch the count
+  }, [Me?._id, getUnreadMessagesCount]);
 
   useEffect(() => {
     if (notifications) {

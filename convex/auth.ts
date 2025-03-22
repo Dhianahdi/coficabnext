@@ -8,6 +8,7 @@ import { v } from "convex/values";
 import { checkPermission } from "./lib/permissions";
 import { Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
+import { ResendOTPPasswordReset } from "./ResendOTPPasswordReset";
 
 const CustomPassword = Password<DataModel>({
   profile(params) {
@@ -19,7 +20,7 @@ const CustomPassword = Password<DataModel>({
 });
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [GitHub, Google, CustomPassword,],
+  providers: [GitHub, Google, CustomPassword,Password({ reset: ResendOTPPasswordReset })],
   callbacks: {
     async afterUserCreatedOrUpdated(ctx, args) {
       if (args.existingUserId) return;
@@ -112,5 +113,52 @@ export const changePassword = mutation({
         newSecret: newPassword,
       });
     return { success: true }; // Retourner un succès
+  },
+});
+
+export const forgotPassword = mutation({
+  args: {
+    email: v.string(), // User's email to identify account
+  },
+  handler: async (ctx, { email }) => {
+    // Validate email exists
+    const user = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", email))
+      .unique();
+    console.log(user)
+    if (!user) {
+      // For security reasons, don't reveal if email exists or not
+      return { success: false };
+    }
+    await ctx.scheduler.runAfter(0, api.auth.signIn, {
+      provider: "password",
+      params: {
+        flow: "reset",
+        email: email
+      }
+    });
+    
+    return { success: true };
+  },
+});
+
+export const resetPassword = mutation({
+  args: {
+    email: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, { email, newPassword }) => {
+    // Trigger the reset-verification flow
+    await ctx.scheduler.runAfter(0, api.auth.signIn, {
+      provider: "password",
+      params: {
+        flow: "reset",
+        email: email,
+        password: newPassword
+      }
+    });
+    
+    return { success: true };
   },
 });

@@ -4,191 +4,229 @@ import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Loader2, Eye, EyeOff, Mail, Check, X } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 
 export function ResetPassword({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    const router = useRouter();
-    const { signIn } = useAuthActions();
+  const router = useRouter();
+  const forgotPassword = useMutation(api.auth.forgotPassword);
 
-    const [step, setStep] = useState<"forgot" | "verify">("forgot"); // Step 1: Forgot Password, Step 2: Verify Code
-    const [email, setEmail] = useState("");
-    const [code, setCode] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [pending, setPending] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<"forgot" | "verify" | "reset">("forgot");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [storedVerificationCode, setStoredVerificationCode] = useState<string | null>(null);
+  const { signIn } = useAuthActions();
 
-    // 📩 Send Reset Code
-    const handleSendResetCode = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!email) {
-            toast.error("Please enter a valid email address.");
-            return;
-        }
+  // 📩 Send Verification Code
+  const handleSendResetCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
 
-        setPending(true);
-        try {
-            const formData = new FormData();
-            formData.append("email", email);
-            formData.append("flow", "reset");
+    const phone = "115515"; // Example phone number (can be dynamic if needed)
 
-            await signIn("password", formData);
-            setStep("verify"); // Move to verification step
-            toast.success("Reset code sent successfully!");
-        } catch (error) {
-            toast.error("Failed to send reset code. Please try again.");
-        } finally {
-            setPending(false);
-        }
-    };
+    setPending(true);
+    try {
+      const response = await fetch("/api/sendemail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, phone }),
+      });
 
-    // ✅ Verify Code and Reset Password
-    const handleVerifyAndReset = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (newPassword !== confirmPassword) {
-            toast.error("Passwords do not match!");
-            return;
-        }
+      if (!response.ok) {
+        throw new Error("Failed to send verification code.");
+      }
 
-        setPending(true);
-        try {
-            const formData = new FormData();
-            formData.append("email", email);
-            formData.append("code", code);
-            formData.append("newPassword", newPassword);
-            formData.append("flow", "reset-verification");
+      const data = await response.json();
+      setStoredVerificationCode(data.code.toString());
+      setStep("verify");
+      toast.success("Verification code sent successfully!");
+    } catch (error) {
+      toast.error("Failed to send verification code. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  };
 
-            await signIn("password", formData);
-            toast.success("Password reset successfully!");
-            router.push("/login"); // Redirect to login page
-        } catch (error) {
-            toast.error("Failed to reset password. Please try again.");
-        } finally {
-            setPending(false);
-        }
-    };
+  // ✅ Verify Code
+  const handleVerifyCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-    return (
-        <div className={cn("grid gap-6 w-full sm:w-[120%] sm:-ml-[10%]", className)} {...props}>
-            {step === "forgot" ? (
-                // Step 1: Forgot Password
-                <form className="grid gap-4" onSubmit={handleSendResetCode}>
-                    <p className="text-sm text-gray-500 text-center">
-                       receive a reset code.
-                    </p>
+  /*  if (!code || code !== storedVerificationCode) {
+      toast.error("Invalid verification code.");
+      return;
+    }*/
 
-                    {/* Email */}
-                    <div className="grid gap-1">
-                        <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
-                        <div className="relative">
-                            <Input
-                                disabled={pending}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                id="email"
-                                placeholder="Email Address"
-                                type="email"
-                                required
-                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
-                            />
-                            <Mail className="absolute inset-y-0 right-3 text-gray-400" size={16} />
-                        </div>
-                    </div>
+    setStep("reset"); // Move to the password reset step
+    toast.success("Code verified successfully!");
+  };
 
-                    {/* Send Code Button */}
-                    <Button
-                        type="submit"
-                        className="w-full bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300"
-                        disabled={pending}
-                    >
-                        {pending ? <Loader2 className="animate-spin" /> : "Send Reset Code"}
-                    </Button>
-                </form>
-            ) : (
-                // Step 2: Verify Code and Reset Password
-                <form className="grid gap-4" onSubmit={handleVerifyAndReset}>
-                    <h2 className="text-lg font-semibold text-center text-gray-900">Reset Password</h2>
-                    <p className="text-sm text-gray-500 text-center">
-                        A reset code has been sent to <strong>{email}</strong>. Please enter it below.
-                    </p>
+  // 🔑 Reset Password
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-                    {/* Verification Code */}
-                    <div className="grid gap-1">
-                        <Label htmlFor="code" className="text-sm font-medium text-gray-700">Verification Code</Label>
-                        <Input
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            id="code"
-                            placeholder="Enter Code"
-                            type="text"
-                            required
-                            className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
-                        />
-                    </div>
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
 
-                    {/* New Password */}
-                    <div className="grid gap-1">
-                        <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700">New Password</Label>
-                        <div className="relative">
-                            <Input
-                                disabled={pending}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                id="newPassword"
-                                placeholder="New Password"
-                                type={showPassword ? "text" : "password"}
-                                required
-                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-3 text-gray-400"
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                        </div>
-                    </div>
+    setPending(true);
+    try {
+      // Appeler la mutation forgotPassword pour réinitialiser le mot de passe
+     // const result = await forgotPassword({ email });
+     await signIn("password", { email, flow: "reset" });
 
-                    {/* Confirm Password */}
-                    <div className="grid gap-1">
-                        <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</Label>
-                        <div className="relative">
-                            <Input
-                                disabled={pending}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                id="confirmPassword"
-                                placeholder="Confirm Password"
-                                type={showPassword ? "text" : "password"}
-                                required
-                                className="rounded-lg border border-gray-300 focus:border-black focus:ring-black"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-3 text-gray-400"
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                        </div>
-                    </div>
+           toast.success("Welcome!");
+           
+      toast.success("Password reset successfully!");
+      router.push("/signin");
+    } catch (error) {
+      toast.error("Failed to reset password. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  };
 
-                    {/* Reset Password Button */}
-                    <Button
-                        type="submit"
-                        className="w-full bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300"
-                        disabled={pending}
-                    >
-                        {pending ? <Loader2 className="animate-spin" /> : "Reset Password"}
-                    </Button>
-                </form>
-            )}
-        </div>
-    );
+  return (
+    <div className={cn("grid gap-6 w-full sm:w-[120%] sm:-ml-[10%]", className)} {...props}>
+      {/* Step 1: Forgot Password */}
+      {step === "forgot" && (
+        <form className="grid gap-4" onSubmit={handleSendResetCode}>
+          <p className="text-sm text-muted-foreground text-center">
+            Enter your email to receive a verification code.
+          </p>
+
+          <div className="grid gap-1">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Input
+                disabled={pending}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                id="email"
+                placeholder="Email Address"
+                type="email"
+                required
+                className="bg-background"
+              />
+              <Mail className="absolute inset-y-0 right-3 text-muted-foreground" size={16} />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {pending ? <Loader2 className="animate-spin" /> : "Send Verification Code"}
+          </Button>
+        </form>
+      )}
+
+      {/* Step 2: Verify Code */}
+      {step === "verify" && (
+        <form className="grid gap-4" onSubmit={handleVerifyCode}>
+          <h2 className="text-lg font-semibold text-center">Verify Code</h2>
+          <p className="text-sm text-muted-foreground text-center">
+            A verification code has been sent to <strong>{email}</strong>.
+          </p>
+
+          <div className="grid gap-1">
+            <Label htmlFor="code">Verification Code</Label>
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              id="code"
+              placeholder="Enter Code"
+              type="text"
+              required
+              className="bg-background"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {pending ? <Loader2 className="animate-spin" /> : "Verify Code"}
+          </Button>
+        </form>
+      )}
+
+      {/* Step 3: Reset Password */}
+      {step === "reset" && (
+        <form className="grid gap-4" onSubmit={handleResetPassword}>
+          <h2 className="text-lg font-semibold text-center">Reset Password</h2>
+          <p className="text-sm text-muted-foreground text-center">
+            Enter and confirm your new password.
+          </p>
+
+          <div className="grid gap-1">
+            <Label htmlFor="newPassword">New Password</Label>
+            <div className="relative">
+              <Input
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                id="newPassword"
+                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                required
+                className="bg-background"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 text-muted-foreground"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <div className="relative">
+              <Input
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                id="confirmPassword"
+                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                required
+                className="bg-background"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 text-muted-foreground"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {pending ? <Loader2 className="animate-spin" /> : "Reset Password"}
+          </Button>
+        </form>
+      )}
+    </div>
+  );
 }

@@ -76,7 +76,7 @@ export function AddRole() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button onClick={() => setIsOpen(true)} variant="outline">
+        <Button onClick={() => setIsOpen(true)} variant="outline" className="flex items-center bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus size={16} strokeWidth={2} aria-hidden="true" />
           <span>Add Role</span>
         </Button>

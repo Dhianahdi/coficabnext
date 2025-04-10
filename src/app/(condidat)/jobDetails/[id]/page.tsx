@@ -32,11 +32,7 @@ export default function JobDetailsPage() {
   const router = useRouter();
   const createNotification = useMutation(api.mutations.notifications.sendNotificationToRHDepartment);
 
-  useEffect(() => {
-    if (Me && Me.department!== null) {
-      router.push("/access-denied");
-    }
-  }, [Me, router]);
+
   const isLoading = job === undefined;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -414,6 +410,13 @@ export default function JobDetailsPage() {
     } catch (error) {
       console.error("Error submitting the application:", error);
       setError("An error occurred while submitting the application.");
+      
+      // Afficher un message d'erreur
+      toast({
+        title: "Application failed",
+        description: "There was a problem submitting your application. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -452,20 +455,75 @@ export default function JobDetailsPage() {
               <DialogHeader>
                 <DialogTitle>Apply for {job.title}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                {existingApplication && <p className="text-red-500">You have already applied to this job.</p>}
-                {error && <p className="text-red-500">{error}</p>}
-                <Label>Cover Letter</Label>
-                <Textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Write your cover letter..." />
-                <Label>Upload Resume</Label>
-                <Input type="file" accept="application/pdf" onChange={(e) => setResume(e.target.files?.[0] || null)} />
-              </div>
-              <DialogFooter>
-                <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSubmit} disabled={isSubmitting || !!existingApplication}>
-                  {isSubmitting ? "Submitting..." : "Submit Application"}
-                </Button>
-              </DialogFooter>
+              {isSubmitting ? (
+                <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                  <Spinner variant="ring" size={40} className="text-primary" />
+                  <p className="text-center text-muted-foreground">
+                    Please wait while we process your application...
+                    <br />
+                    <span className="text-sm">This may take a few moments as we analyze your resume.</span>
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {existingApplication && (
+                      <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
+                        <XCircle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+                        <p className="text-red-700 font-medium">You have already applied to this job.</p>
+                      </div>
+                    )}
+                    {error && (
+                      <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
+                        <XCircle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+                        <p className="text-red-700 font-medium">{error}</p>
+                      </div>
+                    )}
+                    <Label>Cover Letter</Label>
+                    <Textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Write your cover letter..." />
+                    <Label>Upload Resume</Label>
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors">
+                      {resume ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileUser size={18} className="text-primary" />
+                          <span className="font-medium">{resume.name}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {(resume.size / 1024).toFixed(0)} KB
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="ml-auto h-8 px-2" 
+                            onClick={() => setResume(null)}
+                          >
+                            <XCircle size={16} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                            <FileUser size={24} className="text-primary" />
+                          </div>
+                          <p className="text-sm font-medium">Drag and drop your resume here or click to browse</p>
+                          <p className="text-xs text-muted-foreground">Supports PDF files up to 5MB</p>
+                        </>
+                      )}
+                      <Input 
+                        type="file" 
+                        accept="application/pdf" 
+                        onChange={(e) => setResume(e.target.files?.[0] || null)} 
+                        className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${resume ? 'pointer-events-none' : ''}`}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSubmit} disabled={!!existingApplication}>
+                      Submit Application
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         </div>
@@ -591,5 +649,4 @@ export default function JobDetailsPage() {
         )}
       </ContentLayout>
     </AdminPanelLayout>
-  );
-}
+  );}

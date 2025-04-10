@@ -107,7 +107,7 @@ export default function CardPost({ user, post }: CardPostProps) {
           </div>
         </div>
         {post.status && (
-          <Badge className="gap-1">
+          <Badge variant="outline" className="gap-1 bg-muted text-foreground">
             {icon}
             {post.status}
           </Badge>

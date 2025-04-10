@@ -14,7 +14,7 @@ export default function Home() {
           <h1 className="scroll-m-20 text-4xl font-bold tracking-tight mb-4">
             Welcome to CoRecSpace
           </h1>
-          <p className="text-xl text-muted-foreground mb-6">
+          <p className="text-xl text-muted mb-6">
             Revolutionize your recruitment process with our modern, AI-powered platform.
           </p>
           <div className="flex gap-4">

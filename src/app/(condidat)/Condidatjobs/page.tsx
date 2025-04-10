@@ -14,11 +14,7 @@ export default function Condidatjobs() {
     const Me = useQuery(api.auth.getMe);
     const router = useRouter();
   
-    useEffect(() => {
-      if (Me && Me.department!== null) {
-        router.push("/access-denied");
-      }
-    }, [Me, router]);
+
   // Fetch jobs from Convex
   const jobs = useQuery(api.queries.jobs.getJobs);
 

@@ -33,19 +33,19 @@ export default function CreateFormPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [useGemini, setUseGemini] = useState(false);
   const [numberOfQuestions, setNumberOfQuestions] = useState(5);
-  const [isSaving, setIsSaving] = useState(false); // État de chargement
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Mutations Convex
+  // Convex mutations
   const createForm = useMutation(api.mutations.form.createForm);
   const addQuestion = useMutation(api.mutations.form.addQuestion);
 
-  // Récupérer l'utilisateur actuel
+  // Get current user
   const Me = useQuery(api.auth.getMe);
 
-  // Générer des questions avec Gemini
+  // Generate questions with Gemini
   const generateQuestionsWithGemini = async () => {
     if (!formTitle.trim() || !formDescription.trim()) {
-      toast.error("Veuillez remplir le titre et la description du formulaire.");
+      toast.error("Please fill in the form title and description.");
       return;
     }
 
@@ -62,9 +62,9 @@ export default function CreateFormPage() {
               {
                 parts: [
                   {
-                    text: `Génère une liste de ${numberOfQuestions} questions pour un formulaire basé sur le titre suivant : ${formTitle} et la description suivante : ${formDescription}.
-                    Inclus des questions à choix unique, à choix multiple et des questions ouvertes.
-                    Formatte la réponse en JSON comme ceci :
+                    text: `Generate a list of ${numberOfQuestions} questions for a form based on the following title: ${formTitle} and description: ${formDescription}.
+                    Include single-choice questions, multiple-choice questions, and open-ended questions.
+                    Format the response in JSON like this:
                     [
                       { "text": "Question 1", "type": "single-choice", "options": ["Option 1", "Option 2", "Option 3"] },
                       { "text": "Question 2", "type": "multiple-choice", "options": ["Option 1", "Option 2"] },
@@ -83,28 +83,28 @@ export default function CreateFormPage() {
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const jsonMatch = rawText.match(/\[\s*{[\s\S]*}\s*\]/);
         if (!jsonMatch) {
-          throw new Error("Aucun JSON valide détecté dans la réponse.");
+          throw new Error("No valid JSON detected in the response.");
         }
 
         const generatedQuestions = JSON.parse(jsonMatch[0]);
         setQuestions(generatedQuestions);
-        toast.success("Questions générées avec succès !");
+        toast.success("Questions generated successfully!");
       } else {
-        console.error("Erreur API :", data);
-        toast.error("Erreur lors de la génération des questions.");
+        console.error("API Error:", data);
+        toast.error("Error generating questions.");
       }
     } catch (error) {
-      console.error("Erreur lors de la requête :", error);
-      toast.error("Impossible de générer les questions.");
+      console.error("Request error:", error);
+      toast.error("Unable to generate questions.");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Ajouter une question manuellement
+  // Add a question manually
   const addQuestionLocal = (type: QuestionType) => {
     const newQuestion: Question = {
-      text: "Nouvelle question",
+      text: "New question",
       type,
       options: type !== "open-ended" ? [] : undefined,
       answer: type === "open-ended" ? "" : undefined,
@@ -112,7 +112,7 @@ export default function CreateFormPage() {
     setQuestions([...questions, newQuestion]);
   };
 
-  // Mettre à jour une question
+  // Update a question
   const updateQuestion = (index: number, field: keyof Question, value: string | string[]) => {
     const updatedQuestions = [...questions];
     if (field === "options" && Array.isArray(value)) {
@@ -125,7 +125,7 @@ export default function CreateFormPage() {
     setQuestions(updatedQuestions);
   };
 
-  // Ajouter une option à une question à choix
+  // Add an option to a choice question
   const addOption = (index: number, option: string) => {
     const updatedQuestions = [...questions];
     if (updatedQuestions[index].options) {
@@ -134,7 +134,7 @@ export default function CreateFormPage() {
     setQuestions(updatedQuestions);
   };
 
-  // Supprimer une option d'une question
+  // Delete an option from a question
   const deleteOption = (questionIndex: number, optionIndex: number) => {
     const updatedQuestions = [...questions];
     if (updatedQuestions[questionIndex].options) {
@@ -143,40 +143,40 @@ export default function CreateFormPage() {
     setQuestions(updatedQuestions);
   };
 
-  // Supprimer une question
+  // Delete a question
   const deleteQuestion = (index: number) => {
     const updatedQuestions = questions.filter((_, i) => i !== index);
     setQuestions(updatedQuestions);
   };
 
-  // Sauvegarder le formulaire
+  // Save the form
   const handleSaveForm = async () => {
     if (!formTitle.trim() || !formDescription.trim()) {
-      toast.error("Veuillez remplir le titre et la description du formulaire.");
+      toast.error("Please fill in the form title and description.");
       return;
     }
 
     if (questions.length === 0) {
-      toast.error("Veuillez ajouter au moins une question.");
+      toast.error("Please add at least one question.");
       return;
     }
 
     if (!Me) {
-      toast.error("Vous devez être connecté pour enregistrer un formulaire.");
+      toast.error("You must be logged in to save a form.");
       return;
     }
 
-    setIsSaving(true); // Activer l'état de chargement
+    setIsSaving(true);
 
     try {
-      // Créer le formulaire
+      // Create the form
       const formId = await createForm({
         title: formTitle,
         description: formDescription,
-        createdBy:Me._id as Id<"users">, // Utilisez Me._id
+        createdBy: Me._id as Id<"users">,
       });
 
-      // Ajouter les questions au formulaire
+      // Add questions to the form
       for (const question of questions) {
         await addQuestion({
           formId,
@@ -186,25 +186,25 @@ export default function CreateFormPage() {
         });
       }
 
-      toast.success("Formulaire enregistré avec succès !");
+      toast.success("Form saved successfully!");
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde du formulaire :", error);
-      toast.error("Une erreur est survenue lors de la sauvegarde du formulaire.");
+      console.error("Error saving the form:", error);
+      toast.error("An error occurred while saving the form.");
     } finally {
-      setIsSaving(false); // Désactiver l'état de chargement
+      setIsSaving(false);
     }
   };
 
   return (
     <AdminPanelLayout>
-      <ContentLayout title="Créer un Formulaire">
+      <ContentLayout title="Create Form">
         <div className="max-w-7xl mx-auto mt-10 p-6">
           <div className="grid grid-cols-2 gap-6">
-            {/* Colonne de gauche : Prévisualisation du formulaire */}
+            {/* Left column: Form preview */}
             <div className="col-span-1">
               <Card>
                 <CardHeader>
-                  <CardTitle>Prévisualisation du Formulaire</CardTitle>
+                  <CardTitle>Form Preview</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {questions.map((question, index) => (
@@ -253,7 +253,7 @@ export default function CreateFormPage() {
                         </div>
                       )}
                       {question.type === "open-ended" && (
-                        <Textarea placeholder="Votre réponse..." className="mt-2" />
+                        <Textarea placeholder="Your answer..." className="mt-2" />
                       )}
                     </Card>
                   ))}
@@ -261,40 +261,40 @@ export default function CreateFormPage() {
               </Card>
             </div>
 
-            {/* Colonne de droite : Création du formulaire */}
+            {/* Right column: Form creation */}
             <div className="col-span-1">
               <Card>
                 <CardHeader>
-                  <CardTitle>Créer un Formulaire</CardTitle>
+                  <CardTitle>Create a Form</CardTitle>
                   <CardDescription>
-                    Utilisez cette page pour créer un formulaire en générant des questions avec Gemini ou en les ajoutant manuellement.
+                    Use this page to create a form by generating questions with Gemini or adding them manually.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {/* Titre et description du formulaire */}
+                    {/* Form title and description */}
                     <div className="space-y-2">
-                      <Label htmlFor="formTitle">Titre du Formulaire</Label>
+                      <Label htmlFor="formTitle">Form Title</Label>
                       <Input
                         id="formTitle"
-                        placeholder="Ex: Formulaire d'évaluation des compétences"
+                        placeholder="Ex: Skills Assessment Form"
                         value={formTitle}
                         onChange={(e) => setFormTitle(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="formDescription">Description du Formulaire</Label>
+                      <Label htmlFor="formDescription">Form Description</Label>
                       <Textarea
                         id="formDescription"
-                        placeholder="Ex: Ce formulaire vise à évaluer les compétences techniques des candidats."
+                        placeholder="Ex: This form aims to assess the technical skills of candidates."
                         value={formDescription}
                         onChange={(e) => setFormDescription(e.target.value)}
                       />
                     </div>
 
-                    {/* Nombre de questions à générer */}
+                    {/* Number of questions to generate */}
                     <div className="space-y-2">
-                      <Label htmlFor="numberOfQuestions">Nombre de questions à générer</Label>
+                      <Label htmlFor="numberOfQuestions">Number of questions to generate</Label>
                       <Input
                         id="numberOfQuestions"
                         type="number"
@@ -305,17 +305,17 @@ export default function CreateFormPage() {
                       />
                     </div>
 
-                    {/* Basculer entre Gemini et manuel */}
+                    {/* Toggle between Gemini and manual */}
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="useGemini"
                         checked={useGemini}
                         onCheckedChange={setUseGemini}
                       />
-                      <Label htmlFor="useGemini">Utiliser Gemini pour générer les questions</Label>
+                      <Label htmlFor="useGemini">Use Gemini to generate questions</Label>
                     </div>
 
-                    {/* Bouton pour générer ou ajouter des questions */}
+                    {/* Button to generate or add questions */}
                     {useGemini ? (
                       <Button
                         onClick={generateQuestionsWithGemini}
@@ -325,27 +325,27 @@ export default function CreateFormPage() {
                         {isGenerating ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Génération en cours...
+                            Generating...
                           </>
                         ) : (
-                          "Générer les Questions avec Gemini"
+                          "Generate Questions with Gemini"
                         )}
                       </Button>
                     ) : (
                       <div className="flex flex-col gap-2">
                         <Button onClick={() => addQuestionLocal("single-choice")} className="w-full" variant="outline">
-                          Ajouter une Question à Choix Unique
+                          Add Single Choice Question
                         </Button>
                         <Button onClick={() => addQuestionLocal("multiple-choice")} className="w-full" variant="outline">
-                          Ajouter une Question à Choix Multiple
+                          Add Multiple Choice Question
                         </Button>
                         <Button onClick={() => addQuestionLocal("open-ended")} className="w-full" variant="outline">
-                          Ajouter une Question Ouverte
+                          Add Open-Ended Question
                         </Button>
                       </div>
                     )}
 
-                    {/* Liste des questions */}
+                    {/* List of questions */}
                     <div className="space-y-4">
                       {questions.map((question, index) => (
                         <Card key={index}>
@@ -356,10 +356,10 @@ export default function CreateFormPage() {
                             <Input
                               value={question.text}
                               onChange={(e) => updateQuestion(index, "text", e.target.value)}
-                              placeholder="Entrez une question"
+                              placeholder="Enter a question"
                             />
 
-                            {/* Options pour les questions à choix */}
+                            {/* Options for choice questions */}
                             {question.type !== "open-ended" && (
                               <div className="mt-4 space-y-2">
                                 {question.type === "single-choice" ? (
@@ -412,20 +412,20 @@ export default function CreateFormPage() {
                                   </>
                                 )}
                                 <Button
-                                  onClick={() => addOption(index, "Nouvelle option")}
+                                  onClick={() => addOption(index, "New option")}
                                   className="w-full"
                                 >
-                                  + Ajouter une option
+                                  + Add option
                                 </Button>
                               </div>
                             )}
 
-                            {/* Champ de réponse pour les questions ouvertes */}
+                            {/* Answer field for open-ended questions */}
                             {question.type === "open-ended" && (
                               <Textarea
                                 value={question.answer as string}
                                 onChange={(e) => updateQuestion(index, "answer", e.target.value)}
-                                placeholder="Réponse libre"
+                                placeholder="Free response"
                                 className="mt-4"
                               />
                             )}
@@ -435,7 +435,7 @@ export default function CreateFormPage() {
                               onClick={() => deleteQuestion(index)}
                               variant="destructive"
                             >
-                              Supprimer
+                              Delete
                             </Button>
                           </CardFooter>
                         </Card>
@@ -448,10 +448,10 @@ export default function CreateFormPage() {
                     {isSaving ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enregistrement en cours...
+                        Saving...
                       </>
                     ) : (
-                      "Enregistrer le Formulaire"
+                      "Save Form"
                     )}
                   </Button>
                 </CardFooter>

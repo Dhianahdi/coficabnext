@@ -289,7 +289,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
                 const icon = statusIcons[status];
 
                 return (
-                    <Badge className="gap-1 whitespace-nowrap">
+                    <Badge variant="outline" className={`gap-1 whitespace-nowrap bg-muted text-foreground border-${statusColor}-200`}>
                         {icon}
                         {status}
                     </Badge>

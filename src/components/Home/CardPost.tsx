@@ -39,6 +39,7 @@ interface CardPostProps {
 }
 
 export default function CardPost({ user, post }: CardPostProps) {
+  console.log(post);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -116,7 +117,7 @@ export default function CardPost({ user, post }: CardPostProps) {
       <CardContent className="p-6 flex-1 flex flex-col justify-between">
         {/* Content Section */}
         <div className="flex-1 flex flex-col justify-between">
-          {post.location && (
+          {post.location && post.location !== "null" && post.location !== "undefined" && (
             <div className="flex items-center text-sm mb-4">
               <FaMapMarkerAlt className="mr-1" />
               <span>{post.location}</span>
@@ -126,7 +127,7 @@ export default function CardPost({ user, post }: CardPostProps) {
             <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0 truncate">
               {post.title}
             </h2>
-            {post.employmentType && (
+            {post.employmentType && post.employmentType !== "null" && post.employmentType !== "undefined" && (
               <>
                 <span className="mx-2">|</span>
                 <span className="text-sm text-muted-foreground truncate">
@@ -135,7 +136,7 @@ export default function CardPost({ user, post }: CardPostProps) {
               </>
             )}
           </div>
-          {post.requirements && (
+          {post.requirements && post.requirements !== "null" && post.requirements !== "undefined" && post.requirements !== "|| undefined" && (
             <div className="mb-4 flex items-start">
               <CheckCircle size={20} className="mr-4 self-start flex-shrink-0 mt-1" />
               <div className="flex-1">
@@ -148,7 +149,7 @@ export default function CardPost({ user, post }: CardPostProps) {
               </div>
             </div>
           )}
-          {post.interviewProcess && (
+          {post.interviewProcess && post.interviewProcess !== "null" && post.interviewProcess !== "undefined" && (
             <div className="mb-4 flex items-start">
               <Clock size={20} className="mr-4 self-start flex-shrink-0 mt-1" />
               <div className="flex-1">
@@ -163,13 +164,13 @@ export default function CardPost({ user, post }: CardPostProps) {
           )}
           {post.applicationDeadline && (
             <div className="flex items-center gap-2 text-sm mt-4 justify-end">
-              <CalendarDays size={16} className="text-red-500" /> {/* Added CalendarDays icon */}
+              <CalendarDays size={16} className="text-red-500" />
               <span className="font-bold">Deadline :</span> {formatDate(new Date(post.applicationDeadline).toISOString())}
             </div>
           )}
           <Separator className="my-4" />
           <div className="flex items-center">
-            {post.salaryRange && (
+            {post.salaryRange && post.salaryRange !== "null" && post.salaryRange !== "undefined" && (
               <div className="flex items-baseline">
                 <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0">
                   {post.salaryRange} DT

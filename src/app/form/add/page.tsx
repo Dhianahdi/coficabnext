@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -212,7 +212,7 @@ export default function CreateFormPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2"
+                        className="absolute top-2 right-2 hover:bg-red-100 hover:text-red-500"
                         onClick={() => deleteQuestion(index)}
                       >
                         <X className="h-4 w-4" />
@@ -228,6 +228,7 @@ export default function CreateFormPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => deleteOption(index, optionIndex)}
+                                className="hover:bg-red-100 hover:text-red-500"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -433,9 +434,11 @@ export default function CreateFormPage() {
                           <CardFooter className="flex justify-end">
                             <Button
                               onClick={() => deleteQuestion(index)}
-                              variant="destructive"
+                              variant="outline"
+                              size="icon"
+                              className="hover:bg-red-100 hover:text-red-500 hover:border-red-200"
                             >
-                              Delete
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </CardFooter>
                         </Card>

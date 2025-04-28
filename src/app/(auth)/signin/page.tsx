@@ -39,15 +39,21 @@ export default function AuthenticationPage() {
 
             {/* Main Content */}
             <div className="container relative flex flex-1 flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-                <Link
-                    href="/signup"
-                    className={cn(
-                        buttonVariants({ variant: "secondary" }),
-                        "my-6 md:my-0 md:absolute md:right-8 md:top-8 flex justify-center"
-                    )}
-                >
-                    Sign Up
-                </Link>
+            <Link
+                        href="/signup"
+                        className={cn(
+                            buttonVariants({ variant: "outline" }),
+                            "my-6 md:my-0 md:absolute md:right-8 md:top-8 flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105"
+                        )}
+                    >
+                        <span>Create Account</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <line x1="20" y1="8" x2="20" y2="14"></line>
+                            <line x1="23" y1="11" x2="17" y2="11"></line>
+                        </svg>
+                    </Link>
 
                 {/* Left Panel */}
                 <div className="relative hidden h-full flex-col items-center justify-center p-10 lg:flex dark:border-r">

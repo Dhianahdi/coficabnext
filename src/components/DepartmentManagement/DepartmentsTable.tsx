@@ -21,32 +21,17 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DataTableColumnHeader } from "./datatable/DataTableColumnHeader";
 import { getCommonPinningStyles } from "@/lib/data-table"
 import { Checkbox } from "../ui/checkbox";
 import { StaticTasksTableFloatingBar } from "./components/StaticTasksTableFloatingBar";
 import { TableViewOptions } from "./datatable/DataTableViewOptions";
 import { ExportButton } from "../ui/ExportButton";
-import { Bell, CheckCircle, Circle, CircleCheck, CircleCheckBig, CircleX, Clock, Ellipsis, FileText, Heart, Home, Loader, Settings, Star, Lock, Unlock, User, XCircle, EditIcon, Tags, TrashIcon } from "lucide-react";
-import { DataTableFacetedFilter } from "./datatable/DataTableFacetedFilter";
+import { XCircle } from "lucide-react";
 import { format } from "date-fns";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { Badge } from "../ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import Image from "next/image";
-import rogue from "../../../public/img/rogue.png";
-import pilot from "../../../public/img/pilot.png";
-import kiddo from "../../../public/img/kiddo.png";
-import astro from "../../../public/img/astro.png";
 import DateRangePicker from "./components/DateRangePicker";
 import { DataTablePagination } from "./datatable/DataTablePagination";
-import DeleteStoryDialog from "./CRUD/DeleteStoryDialog";
-import { Id } from "../../../convex/_generated/dataModel";
-import BulkDeleteDialog from "./CRUD/BulkDeleteDialog";
 import { EmptyState } from "./components/ReusableEmptyState";
-import DeleteRoleDialog from "./CRUD/DeleteStoryDialog";
-import { UpdateRole } from "./CRUD/UpdateRole";
 import { AddDepartment } from "./CRUD/AddDepartment";
 
 export type Department = {

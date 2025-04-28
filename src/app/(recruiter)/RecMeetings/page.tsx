@@ -254,22 +254,53 @@ export default function AdminMeetingsPage() {
 
   return (
     <AdminPanelLayout>
-      <ContentLayout title="My Meetings">
+      <ContentLayout title="Mes Réunions">
         <div className="p-6 space-y-6 bg-background text-foreground">
-          {/* Titre de la page */}
+          {/* En-tête de la page avec statistiques */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card className="border-border bg-card shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total des Réunions</CardTitle>
+                <Calendar className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{meetings.length}</div>
+              </CardContent>
+            </Card>
+            <Card className="border-border bg-card shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Réunions Planifiées</CardTitle>
+                <Clock className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {meetings.filter(m => m.status === "scheduled").length}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border bg-card shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Réunions Terminées</CardTitle>
+                <Video className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {meetings.filter(m => m.status === "completed").length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Calendrier amélioré */}
           <Card className="border-border bg-card shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl font-bold">My Meetings</CardTitle>
+              <CardTitle className="text-2xl font-bold">Calendrier des Réunions</CardTitle>
               <CardDescription className="text-muted-foreground">
-                View and manage all scheduled meetings.
+                Gérez vos réunions programmées et suivez leur statut
               </CardDescription>
             </CardHeader>
-          </Card>
-
-          {/* Calendrier des réunions */}
-          <Card className="border-border bg-card">
             <CardContent className="p-4">
-              <FullCalendar  
+              <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 events={events}
@@ -284,186 +315,261 @@ export default function AdminMeetingsPage() {
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
-                eventClassNames="dark:bg-opacity-20" 
+                buttonText={{
+                  today: "Aujourd'hui",
+                  month: "Mois",
+                  week: "Semaine",
+                  day: "Jour"
+                }}
+                locale="fr"
+                eventClassNames="rounded-md shadow-sm transition-all hover:scale-105"
                 eventContent={(eventInfo) => (
-                  <div className="flex flex-col items-start p-1">
-                    <span className="font-semibold text-foreground">
-                      {eventInfo.event.title}
-                    </span>
+                  <div className="flex flex-col items-start p-2 space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <User size={14} className="text-primary" />
+                      <span className="font-semibold text-foreground">
+                        {eventInfo.event.title}
+                      </span>
+                    </div>
                     <Badge
-      className={`${
-        eventInfo.event.extendedProps.status === "canceled"
-          ? "bg-red-100 text-red-800"
-          : eventInfo.event.extendedProps.status === "completed"
-          ? "bg-green-100 text-green-800"
-          : "bg-blue-100 text-blue-800"
-      } text-xs mt-1`}
-    >
-      {eventInfo.event.extendedProps.status}
-    </Badge>
+                      className={`${
+                        eventInfo.event.extendedProps.status === "canceled"
+                          ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                          : eventInfo.event.extendedProps.status === "completed"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                          : "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                      } text-xs flex items-center gap-1`}
+                    >
+                      {eventInfo.event.extendedProps.status === "canceled" ? (
+                        <XCircle size={12} />
+                      ) : eventInfo.event.extendedProps.status === "completed" ? (
+                        <Video size={12} />
+                      ) : (
+                        <Clock size={12} />
+                      )}
+                      {eventInfo.event.extendedProps.status}
+                    </Badge>
                   </div>
                 )}
               />
             </CardContent>
           </Card>
 
-          {/* Dialog pour afficher les détails de la réunion */}
+          {/* Dialog existant avec style amélioré */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent className="sm:max-w-[600px] bg-card border-border">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold">
-                  {selectedEvent?.title}
-                </DialogTitle>
-                <DialogDescription>
-                  <Badge className={`
-                    ${selectedEvent?.extendedProps?.status === "canceled" 
-                      ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" 
-                        : selectedEvent?.extendedProps.status === "completed" 
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
-                      : "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"}
-                    flex items-center gap-1
-                  `}>
-                    {selectedEvent?.extendedProps?.status === "canceled" ? 
-                      <XCircle size={16} /> : <Clock size={16} />}
-                    {selectedEvent?.extendedProps?.status}
-                  </Badge>
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-6 p-4 text-foreground">
-                {isEditMode ? (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={updatedDate}
-                        onChange={(e) => setUpdatedDate(e.target.value)}
-                        className="border-border focus:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Time</Label>
-                      <Input
-                        type="time"
-                        value={updatedTime}
-                        onChange={(e) => setUpdatedTime(e.target.value)}
-                        className="border-border focus:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Meeting Link</Label>
-                      <Input
-                        type="url"
-                        value={updatedLink}
-                        onChange={(e) => setUpdatedLink(e.target.value)}
-                        className="border-border focus:ring-primary"
-                        placeholder="https://"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <p className="flex items-center gap-2">
-                        <User size={16} className="text-primary" />
-                        <strong>Organizer:</strong> {selectedEvent?.extendedProps?.organizerName}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <User size={16} className="text-primary" />
-                        <strong>Participant:</strong> {selectedEvent?.extendedProps?.participantmail}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Calendar size={16} className="text-primary" />
-                        <strong>Start:</strong>{" "}
-                        {new Date(selectedEvent?.start).toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Calendar size={16} className="text-primary" />
-                        <strong>End:</strong>{" "}
-                        {new Date(selectedEvent?.end).toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Link size={16} className="text-primary" />
-                        <strong>Link:</strong> {selectedEvent?.extendedProps?.meetingLink || "N/A"}
-                      </p>
-                    </div>
-                  </>
-                )}
+            <DialogHeader className="border-b border-border pb-4">
+      <div className="flex items-start justify-between space-x-4">
+        <div className="space-y-2 flex-1">
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <User className="h-6 w-6 text-primary" />
+            {selectedEvent?.title}
+          </DialogTitle>
+          <div className="flex items-center gap-2">
+            <Badge 
+              className={`
+                ${selectedEvent?.extendedProps?.status === "canceled" 
+                  ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" 
+                  : selectedEvent?.extendedProps?.status === "completed" 
+                  ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
+                  : "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"}
+                flex items-center gap-1 px-3 py-1
+              `}
+            >
+              {selectedEvent?.extendedProps?.status === "canceled" ? 
+                <XCircle size={16} /> : selectedEvent?.extendedProps?.status === "completed" ?
+                <Video size={16} /> : <Clock size={16} />}
+              {selectedEvent?.extendedProps?.status}
+            </Badge>
+            <Badge variant="outline" className="text-primary border-primary">
+              {selectedEvent?.extendedProps?.type}
+            </Badge>
+          </div>
+        </div>
+      </div>
+    </DialogHeader>
+    <div className="p-6 space-y-6">
+      {isEditMode ? (
+        <div className="space-y-4 bg-muted/30 p-4 rounded-lg border border-border/50">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Calendar size={14} className="text-primary" />
+              Date de la réunion
+            </Label>
+            <Input
+              type="date"
+              value={updatedDate}
+              onChange={(e) => setUpdatedDate(e.target.value)}
+              className="border-border focus:ring-primary"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Clock size={14} className="text-primary" />
+              Heure de la réunion
+            </Label>
+            <Input
+              type="time"
+              value={updatedTime}
+              onChange={(e) => setUpdatedTime(e.target.value)}
+              className="border-border focus:ring-primary"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Link size={14} className="text-primary" />
+              Lien de la réunion
+            </Label>
+            <Input
+              type="url"
+              value={updatedLink}
+              onChange={(e) => setUpdatedLink(e.target.value)}
+              className="border-border focus:ring-primary"
+              placeholder="https://"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4 bg-muted/10 p-4 rounded-lg">
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                <User size={14} className="text-primary" />
+                Organisateur
+              </Label>
+              <p className="font-medium pl-6">
+                {selectedEvent?.extendedProps?.organizerName}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                <User size={14} className="text-primary" />
+                Participant
+              </Label>
+              <p className="font-medium pl-6">
+                {selectedEvent?.extendedProps?.participantmail}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-4 bg-muted/10 p-4 rounded-lg">
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                <Calendar size={14} className="text-primary" />
+                Début
+              </Label>
+              <p className="font-medium pl-6">
+                {new Date(selectedEvent?.start).toLocaleString("fr-FR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                <Calendar size={14} className="text-primary" />
+                Fin
+              </Label>
+              <p className="font-medium pl-6">
+                {new Date(selectedEvent?.end).toLocaleString("fr-FR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+            {selectedEvent?.extendedProps?.meetingLink && (
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Link size={14} className="text-primary" />
+                  Lien de réunion
+                </Label>
+                <a 
+                  href={selectedEvent.extendedProps.meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary hover:underline font-medium pl-6"
+                >
+                  Rejoindre la réunion
+                </a>
               </div>
-              <DialogFooter className="flex flex-col gap-4 p-4">
-                {isEditMode ? (
-                  <Button
-                    variant="default"
-                    onClick={async () => {
-                      setIsUpdating(true);
-                      try {
-                        await handleUpdateMeeting(
-                          selectedEvent?.extendedProps.participantId,
-                          selectedEvent?.extendedProps.participantmail
-                        );
-                      } catch (error) {
-                        console.error("Error updating meeting:", error);
-                        toast.error("Failed to update meeting.");
-                      } finally {
-                        setIsUpdating(false);
-                      }
-                    }}
-                    className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Save Changes"
-                    )}
-                  </Button>
-                ) : (
-                  <>
-                    {selectedEvent?.extendedProps?.status === "scheduled" && (
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        {selectedEvent?.extendedProps?.type === "online" && (
-                          <Button
-                            variant="secondary"
-                            onClick={handleJoinMeeting}
-                            className="w-full sm:w-auto"
-                          >
-                            <Video size={16} className="mr-2" />
-                            Join Meeting
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsEditMode(true)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Edit size={16} className="mr-2" />
-                          Edit Meeting
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleCancelMeeting(selectedEvent?.extendedProps.participantId, selectedEvent.id)}
-                          className="w-full sm:w-auto"
-                        >
-                          <XCircle size={16} className="mr-2" />
-                          Cancel Meeting
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </DialogFooter>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+    <DialogFooter className="flex flex-col sm:flex-row justify-end gap-3 p-6 bg-muted/5 rounded-b-lg border-t border-border">
+  {isEditMode ? (
+    <Button
+      variant="default"
+      onClick={async () => {
+        setIsUpdating(true);
+        try {
+          await handleUpdateMeeting(
+            selectedEvent?.extendedProps.participantId,
+            selectedEvent?.extendedProps.participantmail
+          );
+        } catch (error) {
+          console.error("Error updating meeting:", error);
+          toast.error("Échec de la mise à jour de la réunion");
+        } finally {
+          setIsUpdating(false);
+        }
+      }}
+      className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg transition-all duration-200"
+      disabled={isUpdating}
+    >
+      {isUpdating ? (
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Mise à jour...</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Edit className="h-4 w-4" />
+          <span>Enregistrer</span>
+        </div>
+      )}
+    </Button>
+  ) : (
+    <>
+      {selectedEvent?.extendedProps?.status === "scheduled" && (
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:justify-end">
+          {selectedEvent?.extendedProps?.type === "online" && (
+            <Button
+              variant="secondary"
+              onClick={handleJoinMeeting}
+              className="w-full sm:w-auto bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-md transition-all duration-200 hover:shadow-lg"
+            >
+              <Video className="h-4 w-4 mr-2" />
+              Rejoindre
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => setIsEditMode(true)}
+            className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10 shadow-md transition-all duration-200"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Modifier
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => handleCancelMeeting(selectedEvent?.extendedProps.participantId, selectedEvent.id)}
+            className="w-full sm:w-auto bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 shadow-md transition-all duration-200 hover:shadow-lg dark:bg-rose-950 dark:hover:bg-rose-900 dark:text-rose-400 dark:border-rose-800"
+          >
+            <XCircle className="h-4 w-4 mr-2" />
+            Annuler
+          </Button>
+        </div>
+      )}
+    </>
+  )}
+</DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

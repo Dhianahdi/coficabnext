@@ -109,11 +109,11 @@ export function UserNav() {
     const days = Math.floor(diff / 86400000);
 
     if (minutes < 60) {
-      return `Il y a ${minutes} minute${minutes > 1 ? "s" : ""}`;
+      return ` ${minutes} minute${minutes > 1 ? "s" : ""}`;
     } else if (hours < 24) {
-      return `Il y a ${hours} heure${hours > 1 ? "s" : ""}`;
+      return ` ${hours} heure${hours > 1 ? "s" : ""}`;
     } else {
-      return `Il y a ${days} jour${days > 1 ? "s" : ""}`;
+      return ` ${days} jour${days > 1 ? "s" : ""}`;
     }
   };
 
@@ -229,7 +229,7 @@ export function UserNav() {
                       {formatTimeAgo(notification.createdAt)}
                     </p>
                     {!notification.isRead && (
-                      <span className="text-xs text-primary">Non lu</span>
+                      <span className="text-xs text-primary">Unread </span>
                     )}
                   </DropdownMenuItem>
                 );

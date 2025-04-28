@@ -60,7 +60,7 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.5.1",
     "emblor": "^1.4.7",
-    "framer-motion": "^12.4.10",
+    "framer-motion": "^12.9.2",
     "html-pdf": "^3.0.1",
     "immer": "^10.1.1",
     "input-otp": "^1.4.1",

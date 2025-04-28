@@ -46,7 +46,6 @@ export default function MyProfilePage() {
         name,
         phone,
         image,
-        notificationPreferences: isNotificationEnabled ? "enabled" : "disabled",
       });
       toast.success("Profile updated successfully!");
       setIsEditing(false);

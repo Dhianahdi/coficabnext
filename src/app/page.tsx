@@ -3,7 +3,10 @@
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Button } from "@/components/ui/button";
-import { Rocket, Briefcase, Users, FileText, MessageSquare, Bell, Search, Settings, UserCheck } from "lucide-react";
+import { Rocket, Briefcase, Users, FileText, MessageSquare, Bell, Search, Settings, UserCheck, BarChart, Calendar, Award, ArrowRight, CheckCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -75,6 +78,79 @@ export default function Home() {
           </div>
         </div>
   
+        {/* How It Works Section */}
+        <div className="bg-background p-8 rounded-lg shadow-sm mb-8">
+          <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight mb-6 text-center">
+            How CoRecSpace Works
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-primary/10 rounded-full p-4 mb-4">
+                <FileText className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">1. Post Jobs</h3>
+              <p className="text-muted-foreground">
+                Create detailed job listings with custom requirements and qualifications.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-primary/10 rounded-full p-4 mb-4">
+                <Users className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">2. Match Candidates</h3>
+              <p className="text-muted-foreground">
+                Our AI algorithm finds and ranks the most suitable candidates for your positions.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-primary/10 rounded-full p-4 mb-4">
+                <CheckCircle className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">3. Hire the Best</h3>
+              <p className="text-muted-foreground">
+                Streamline interviews, evaluations, and make data-driven hiring decisions.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Section */}
+        <div className="bg-primary/5 p-8 rounded-lg shadow-sm mb-8">
+          <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight mb-6 text-center">
+            Recruitment Made Efficient
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="bg-background border-none shadow-sm">
+              <CardContent className="p-6 text-center">
+                <BarChart className="h-10 w-10 text-primary mx-auto mb-4" />
+                <h3 className="text-3xl font-bold mb-2">85%</h3>
+                <p className="text-muted-foreground">Faster Hiring Process</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-background border-none shadow-sm">
+              <CardContent className="p-6 text-center">
+                <Users className="h-10 w-10 text-primary mx-auto mb-4" />
+                <h3 className="text-3xl font-bold mb-2">10K+</h3>
+                <p className="text-muted-foreground">Active Users</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-background border-none shadow-sm">
+              <CardContent className="p-6 text-center">
+                <Briefcase className="h-10 w-10 text-primary mx-auto mb-4" />
+                <h3 className="text-3xl font-bold mb-2">50K+</h3>
+                <p className="text-muted-foreground">Jobs Posted</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-background border-none shadow-sm">
+              <CardContent className="p-6 text-center">
+                <Award className="h-10 w-10 text-primary mx-auto mb-4" />
+                <h3 className="text-3xl font-bold mb-2">95%</h3>
+                <p className="text-muted-foreground">Satisfaction Rate</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+  
         {/* Testimonials Section */}
         <div className="bg-primary text-primary-foreground p-8 rounded-lg shadow-sm mb-8">
           <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight mb-6">
@@ -93,6 +169,47 @@ export default function Home() {
               </p>
               <p className="font-semibold mt-4">— Jane Smith, Recruiter</p>
             </div>
+          </div>
+        </div>
+
+        {/* Latest Features Section */}
+        <div className="bg-background p-8 rounded-lg shadow-sm mb-8">
+          <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight mb-6 text-center">
+            Latest Features
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card className="border border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <div className="relative h-48 w-full bg-muted">
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+                  <Calendar className="h-16 w-16 text-primary/50" />
+                </div>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Smart Scheduling</h3>
+                <p className="text-muted-foreground mb-4">
+                  Our new AI-powered scheduling system automatically finds the best times for interviews based on everyone's availability.
+                </p>
+                <Link href="/features" className="text-primary hover:underline inline-flex items-center">
+                  Learn more <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <div className="relative h-48 w-full bg-muted">
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+                  <BarChart className="h-16 w-16 text-primary/50" />
+                </div>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Advanced Analytics</h3>
+                <p className="text-muted-foreground mb-4">
+                  Gain deeper insights into your recruitment process with our new analytics dashboard and custom reports.
+                </p>
+                <Link href="/features" className="text-primary hover:underline inline-flex items-center">
+                  Learn more <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </div>
   

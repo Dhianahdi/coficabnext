@@ -1,10 +1,10 @@
 import { Metadata } from "next";
+
+import { UserRegisterForm } from "@/components/auth-screens/Signup/user-register-form";
 import Image from "next/image";
 import Link from "next/link";
-
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { UserRegisterForm } from "@/components/auth-screens/Signup/user-register-form";
 
 export const metadata: Metadata = {
     title: "Register",
@@ -38,15 +38,18 @@ export default function RegisterPage() {
 
             {/* Main Content */}
             <div className="container relative flex flex-1 flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-                <Link
-                    href="/signin"
-                    className={cn(
-                        buttonVariants({ variant: "secondary" }),
-                        "my-6 md:my-0 md:absolute md:right-8 md:top-8 flex justify-center"
-                    )}
-                >
-                    Signin
-                </Link>
+            <Link
+                        href="/signin"
+                        className={cn(
+                            buttonVariants({ variant: "outline" }),
+                            "my-6 md:my-0 md:absolute md:right-8 md:top-8 flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105"
+                        )}
+                    >
+                        <span>Sign In</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/>
+                        </svg>
+                    </Link>
 
                 {/* Left Panel */}
                 <div className="relative hidden h-full flex-col items-center justify-center p-10 lg:flex dark:border-r">
@@ -83,7 +86,7 @@ export default function RegisterPage() {
                                 Create an account
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                Enter your informations below to create your account
+                                Enter your information below to create your account
                             </p>
                         </div>
                         <UserRegisterForm />

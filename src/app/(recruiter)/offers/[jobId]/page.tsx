@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Download, Clock, CheckCircle, XCircle, Loader2, Edit } from "lucide-react";
+import { Download, Clock, CheckCircle, XCircle, Loader2, Edit, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PDFViewer } from "@/components/PDFViewer/PDFViewer";
 import { toast } from "sonner";
@@ -48,7 +48,7 @@ export default function JobOffersPage() {
   const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingDescription, setMeetingDescription] = useState("");
-  const [meetingType, setMeetingType] = useState<"online" | "in-person">("online");
+  const [meetingType, setMeetingType] = useState<"online" | "in-person">("in-person");
   const [meetingLink, setMeetingLink] = useState("");
   const [meetingDate, setMeetingDate] = useState<number>(Date.now());
   const [meetingStartTime, setMeetingStartTime] = useState<number>(Date.now());
@@ -67,6 +67,15 @@ export default function JobOffersPage() {
     }
   }, [Me, router]);
 
+// Fonction pour générer un nom de room aléatoire
+const generateRandomRoomName = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let roomName = '';
+  for (let i = 0; i < 10; i++) {
+    roomName += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return roomName;
+};
 
 
   const getStatusBadge = (status: string) => {
@@ -368,36 +377,43 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
   }
   return (
     <AdminPanelLayout>
-      <ContentLayout title="Dashboard">
-        <div className="p-6 space-y-6">
-          {/* En-tête de la page */}
-          <Card className="border border-border bg-background text-foreground shadow-lg">
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-gradient-to-r from-blue-200 to-blue-500 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-white"
-                  >
-                    <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34" />
-                    <polygon points="18 2 22 6 12 16 8 16 8 12 18 2" />
-                  </svg>
+      <ContentLayout title="Candidate Management">
+        <div className="p-6 space-y-8">
+          {/* Page header */}
+          <Card className="border border-border bg-gradient-to-r from-background to-muted/30 text-foreground shadow-md overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/40 to-primary"></div>
+            <CardHeader className="pb-2">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34" />
+                      <polygon points="18 2 22 6 12 16 8 16 8 12 18 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold text-foreground">{job?.title}</CardTitle>
+                    <CardDescription className="text-base text-muted-foreground">{job?.departmentName}</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold text-foreground">{job?.title}</CardTitle>
-                  <CardDescription className="text-lg text-muted-foreground">{job?.departmentName}</CardDescription>
-                </div>
+                <Link href={`/filled-forms/${jobId}`} passHref>
+                  <Button className="bg-primary/90 text-primary-foreground hover:bg-primary shadow-sm transition-all">
+                    View Filled Forms
+                  </Button>
+                </Link>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-4">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -409,36 +425,35 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-muted-foreground"
                 >
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                   <line x1="16" y1="2" x2="16" y2="6" />
                   <line x1="8" y1="2" x2="8" y2="6" />
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
-                <span>Created At: {new Date(job?._creationTime).toLocaleDateString()}</span>
+                <span>Created: {new Date(job?._creationTime).toLocaleDateString()}</span>
+                <span className="px-2">•</span>
+                <span>{offers?.length || 0} applications</span>
               </div>
             </CardContent>
-            <CardFooter>
-              <Link href={`/filled-forms/${jobId}`} passHref>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  View Filled Forms
-                </Button>
-              </Link>
-            </CardFooter>
           </Card>
   
-          {/* Barre de recherche et filtre de tri */}
-          <div className="flex gap-4 bg-background p-4 rounded-lg shadow-sm border border-border">
-            <Input
-              placeholder="Rechercher un candidat..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 border-border bg-background text-foreground"
-            />
+          {/* Search and filter bar */}
+          <div className="flex flex-col sm:flex-row gap-4 bg-card rounded-lg shadow-sm border border-border p-4">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <Input
+                placeholder="Search candidates by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 border-border bg-background text-foreground"
+              />
+            </div>
             <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
               <SelectTrigger className="w-[180px] border-border bg-background text-foreground">
-                <SelectValue placeholder="Trier par score" />
+                <SelectValue placeholder="Sort by score" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="desc">Highest score first</SelectItem>
@@ -447,60 +462,81 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
             </Select>
           </div>
   
-          {/* Liste des offres sous forme de cartes */}
+          {/* Candidate cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {offers?.map((offer) => {
               const statusBadge = getStatusBadge(offer.status);
-  
+              const scoreValue = offer.score || 0;
+              const scoreColor = getScoreColor(scoreValue);
+              
               return (
                 <Card
                   key={offer._id}
-                  className="hover:shadow-lg transition-shadow duration-300 relative overflow-hidden bg-background text-foreground"
+                  className="hover:shadow-lg transition-all duration-300 relative overflow-hidden bg-card text-card-foreground border-border"
                 >
-                  {/* Image de profil */}
-                  <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-200 to-blue-500" />
-                  <div className="relative p-6">
+                  {/* Top gradient bar - color based on score */}
+                  <div className={`absolute top-0 left-0 w-full h-1 ${
+                    scoreValue >= 70 ? "bg-green-500/80" : 
+                    scoreValue > 50 ? "bg-yellow-500/80" : 
+                    "bg-red-500/80"
+                  }`} />
+                  
+                  {/* Profile header */}
+                  <div className="bg-muted/30 dark:bg-muted/10 p-6 pb-16 relative">
+                    <div className="absolute top-3 right-3">
+                      <Badge className={`${statusBadge.color} flex items-center gap-1 shadow-sm`}>
+                        {statusBadge.icon}
+                        {offer.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {/* Profile info */}
+                  <div className="relative px-6 -mt-12">
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 rounded-full bg-background flex items-center justify-center border-4 border-background shadow-lg">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center border-4 border-background shadow-md">
                         <span className="text-2xl font-bold text-primary">
                           {offer.candidateName[0]}
                         </span>
                       </div>
                       <div>
-                        <CardTitle className="text-xl font-bold text-foreground">
+                        <CardTitle className="text-xl font-bold text-foreground line-clamp-1">
                           {offer.candidateName}
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground">
+                        <CardDescription className="text-muted-foreground line-clamp-1">
                           {offer.candidateEmail}
                         </CardDescription>
                       </div>
                     </div>
                   </div>
   
-                  {/* Informations du candidat */}
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Applied At:</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {new Date(offer.appliedAt).toLocaleDateString()}
-                      </span>
+                  {/* Candidate details */}
+                  <CardContent className="space-y-4 pt-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-muted-foreground">Applied</span>
+                        <p className="text-sm font-medium">
+                          {new Date(offer.appliedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-muted-foreground">Score</span>
+                        <p className={`text-sm font-bold ${scoreColor}`}>
+                          {scoreValue ? `${scoreValue}%` : "N/A"}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Score:</span>
-                      <span className={`text-sm font-medium ${getScoreColor(offer.score || 0)}`}>
-                        {offer.score || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Current Status:</span>
-                      <div className="flex items-center gap-2 mt-2">
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Status:</span>
                         <Select
                           value={offer.status}
                           onValueChange={(value: "Pending" | "Interview" | "Accepted" | "Rejected") =>
                             handleUpdateStatus(offer.candidateId, offer._id, value)
                           }
                         >
-                          <SelectTrigger className="w-[120px] border-border bg-background text-foreground">
+                          <SelectTrigger className="w-[130px] h-8 text-xs border-border bg-background text-foreground">
                             <SelectValue placeholder="Change Status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -511,50 +547,61 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">CV:</span>
-                      {offer.resume ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenPdf(`/uploads/${offer.resume}`)}
-                          className="border-border bg-background text-foreground"
-                        >
-                          <Download size={16} className="mr-2" />
-                          View CV
-                        </Button>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">No CV available</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Report:</span>
-                      {offer.reportPdf ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenPdf(`/uploads/rapports/${offer.reportPdf}`)}
-                          className="border-border bg-background text-foreground"
-                        >
-                          <Download size={16} className="mr-2" />
-                          View Report
-                        </Button>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">No report available</span>
-                      )}
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">CV:</span>
+                        {offer.resume ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPdf(`/uploads/${offer.resume}`)}
+                            className="h-8 border-border bg-background text-foreground hover:bg-muted/50"
+                          >
+                            <Download size={14} className="mr-1" />
+                            View CV
+                          </Button>
+                        ) : (
+                          <span className="text-xs italic text-muted-foreground">Not available</span>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Report:</span>
+                        {offer.reportPdf ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPdf(`/uploads/rapports/${offer.reportPdf}`)}
+                            className="h-8 border-border bg-background text-foreground hover:bg-muted/50"
+                          >
+                            <Download size={14} className="mr-1" />
+                            View Report
+                          </Button>
+                        ) : (
+                          <span className="text-xs italic text-muted-foreground">Not available</span>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
   
-                  {/* Section des actions */}
-                  <CardFooter className="flex flex-col gap-2">
-                    <div className="flex gap-2">
+                  {/* Actions footer */}
+                  <CardFooter className="flex flex-col gap-3 pt-2 pb-4 border-t border-border">
+                    <div className="flex gap-2 w-full">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenNotesDialog(offer._id, offer.recruiterNotes || "")}
+                        className="flex-1 border-border bg-background text-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20"
+                      >
+                        <Edit size={14} className="mr-1" />
+                        Notes
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleAssignForms(offer._id, offer.candidateId, offer.candidateEmail)}
                         disabled={isAssigning}
-                        className="border-border bg-background text-foreground"
+                        className="flex-1 border-border bg-background text-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20"
                       >
                         {isAssigning ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -562,34 +609,17 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                           "Assign Forms"
                         )}
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenNotesDialog(offer._id, offer.recruiterNotes || "")}
-                        className="border-border bg-background text-foreground"
-                      >
-                        <Edit size={16} className="mr-2" />
-                        Notes
-                      </Button>
                     </div>
   
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={() => handleOpenMeetingDialog(offer._id, offer.candidateId)}
-                      className="border-border bg-background text-foreground"
+                      className="w-full bg-primary/90 hover:bg-primary text-primary-foreground"
                     >
                       Schedule Meeting
                     </Button>
                   </CardFooter>
-  
-                  {/* Badge de statut */}
-                  <div className="absolute top-4 right-4">
-                    <Badge className={`${statusBadge.color} flex items-center gap-1`}>
-                      {statusBadge.icon}
-                      {offer.status}
-                    </Badge>
-                  </div>
                 </Card>
               );
             })}
@@ -648,10 +678,19 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                   onChange={(e) => setMeetingDescription(e.target.value)}
                   className="bg-background text-foreground border-border"
                 />
-                <Select
-                  value={meetingType}
-                  onValueChange={(value: "online" | "in-person") => setMeetingType(value)}
-                >
+             <Select
+  value={meetingType}
+  onValueChange={(value: "online" | "in-person") => {
+    setMeetingType(value);
+    if (value === "online") {
+      const randomRoom = generateRandomRoomName();
+      setMeetingLink(`https://meet.jit.si/${randomRoom}`);
+    } else {
+      setMeetingLink(""); // Si c'est en présentiel, on vide le lien
+    }
+  }}
+>
+
                   <SelectTrigger className="bg-background text-foreground border-border">
                     <SelectValue placeholder="Select meeting type" />
                   </SelectTrigger>

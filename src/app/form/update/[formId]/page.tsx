@@ -144,42 +144,61 @@ export default function UpdateFormPage({ params }: { params: { formId: string } 
   return (
     <AdminPanelLayout>
       <ContentLayout title="Update Form">
-        <div className="p-6 space-y-6">
+        <div className="max-w-7xl mx-auto p-6 space-y-8">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+            Update Form
+          </h1>
+          
           {/* Main form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Update Form</CardTitle>
-              <CardDescription>Update the form details.</CardDescription>
+          <Card className="shadow-md border border-muted/60">
+            <CardHeader className="bg-muted/30 border-b">
+              <div className="flex items-center gap-2">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Save className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Form Details</CardTitle>
+                  <CardDescription>Update the basic information about your form</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
+            <CardContent className="space-y-6 pt-8">
+              <div className="space-y-3">
+                <Label htmlFor="form-title" className="text-base font-medium">Form Title</Label>
                 <Input
+                  id="form-title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Form title"
+                  placeholder="Enter a descriptive title for your form"
+                  className="max-w-3xl text-base py-6 px-4 border-muted-foreground/20 focus-visible:ring-primary/50"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
+              <div className="space-y-3">
+                <Label htmlFor="form-description" className="text-base font-medium">Form Description</Label>
                 <Textarea
+                  id="form-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Form description"
+                  placeholder="Provide details about the purpose of this form and how it will be used"
+                  className="max-w-3xl min-h-32 text-base py-3 px-4 border-muted-foreground/20 focus-visible:ring-primary/50 resize-y"
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button onClick={handleUpdateForm} disabled={isSaving}>
+            <CardFooter className="flex justify-end border-t py-4 px-6 bg-muted/10">
+              <Button 
+                onClick={handleUpdateForm} 
+                disabled={isSaving} 
+                className="px-8 py-6 text-base font-medium shadow-sm hover:shadow-md transition-all"
+              >
                 {isSaving ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Saving Changes...
                   </>
                 ) : (
                   <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
+                    <Save className="mr-2 h-5 w-5" />
+                    Save Form
                   </>
                 )}
               </Button>
@@ -187,124 +206,159 @@ export default function UpdateFormPage({ params }: { params: { formId: string } 
           </Card>
 
           {/* Questions list */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Questions</CardTitle>
-              <CardDescription>Edit or delete questions.</CardDescription>
+          <Card className="shadow-md">
+            <CardHeader className="bg-muted/50">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Questions</CardTitle>
+                  <CardDescription>Edit or delete questions in your form</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => handleAddQuestion("single-choice")} variant="outline" size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Single Choice
+                  </Button>
+                  <Button onClick={() => handleAddQuestion("multiple-choice")} variant="outline" size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Multiple Choice
+                  </Button>
+                  <Button onClick={() => handleAddQuestion("open-ended")} variant="outline" size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Open-Ended
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {questions.map((question) => (
-                <Card key={question._id}>
-                  <CardHeader>
-                    <CardTitle>
+            <CardContent className="space-y-6 pt-6">
+              {questions.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>No questions yet. Add your first question using the buttons above.</p>
+                </div>
+              ) : (
+                questions.map((question, questionIndex) => (
+                  <Card key={question._id} className="shadow-sm border-muted">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-medium">
+                            {questionIndex + 1}
+                          </span>
+                          <Badge variant="outline" className="ml-2">
+                            {question.type === "single-choice" 
+                              ? "Single Choice" 
+                              : question.type === "multiple-choice" 
+                                ? "Multiple Choice" 
+                                : "Open-Ended"}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleDeleteQuestion(question._id)}
+                          className="hover:bg-red-100 hover:text-red-500 hover:border-red-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-4">
                       <Input
                         value={question.text}
                         onChange={(e) => handleUpdateQuestion(question._id, "text", e.target.value)}
                         placeholder="Enter a question"
+                        className="font-medium text-lg"
                       />
-                    </CardTitle>
-                    <Badge variant="outline">{question.type}</Badge>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {question.type === "single-choice" && (
-                      <RadioGroup>
-                        {question.options?.map((option, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <RadioGroupItem value={option} />
-                            <Input
-                              value={option}
-                              onChange={(e) => {
-                                const updatedOptions = [...question.options!];
-                                updatedOptions[index] = e.target.value;
-                                handleUpdateQuestion(question._id, "options", updatedOptions);
-                              }}
-                              placeholder="Option"
-                            />
+                      
+                      <div className="pl-4 mt-4">
+                        {question.type === "single-choice" && (
+                          <RadioGroup className="space-y-3">
+                            {question.options?.map((option, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <RadioGroupItem value={option} id={`option-${question._id}-${index}`} />
+                                <Input
+                                  value={option}
+                                  onChange={(e) => {
+                                    const updatedOptions = [...question.options!];
+                                    updatedOptions[index] = e.target.value;
+                                    handleUpdateQuestion(question._id, "options", updatedOptions);
+                                  }}
+                                  placeholder="Option"
+                                  className="flex-1"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteOption(question._id, index)}
+                                  className="hover:bg-red-100 hover:text-red-500"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteOption(question._id, index)}
+                              onClick={() => handleAddOption(question._id, "New option")}
+                              variant="outline"
+                              size="sm"
+                              className="mt-2"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Option
                             </Button>
-                          </div>
-                        ))}
-                        <Button
-                          onClick={() => handleAddOption(question._id, "New option")}
-                          className="w-full"
-                        >
-                          + Add option
-                        </Button>
-                      </RadioGroup>
-                    )}
+                          </RadioGroup>
+                        )}
 
-                    {question.type === "multiple-choice" && (
-                      <div className="space-y-2">
-                        {question.options?.map((option, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Checkbox />
-                            <Input
-                              value={option}
-                              onChange={(e) => {
-                                const updatedOptions = [...question.options!];
-                                updatedOptions[index] = e.target.value;
-                                handleUpdateQuestion(question._id, "options", updatedOptions);
-                              }}
-                              placeholder="Option"
-                            />
+                        {question.type === "multiple-choice" && (
+                          <div className="space-y-3">
+                            {question.options?.map((option, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <Checkbox id={`option-${question._id}-${index}`} />
+                                <Input
+                                  value={option}
+                                  onChange={(e) => {
+                                    const updatedOptions = [...question.options!];
+                                    updatedOptions[index] = e.target.value;
+                                    handleUpdateQuestion(question._id, "options", updatedOptions);
+                                  }}
+                                  placeholder="Option"
+                                  className="flex-1"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteOption(question._id, index)}
+                                  className="hover:bg-red-100 hover:text-red-500"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteOption(question._id, index)}
+                              onClick={() => handleAddOption(question._id, "New option")}
+                              variant="outline"
+                              size="sm"
+                              className="mt-2"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Option
                             </Button>
                           </div>
-                        ))}
-                        <Button
-                          onClick={() => handleAddOption(question._id, "New option")}
-                          className="w-full"
-                        >
-                          + Add option
-                        </Button>
+                        )}
+
+                        {question.type === "open-ended" && (
+                          <Textarea
+                            value={question.answer as string}
+                            onChange={(e) => handleUpdateQuestion(question._id, "answer", e.target.value)}
+                            placeholder="This is where respondents will type their answer"
+                            className="h-24 bg-muted/50"
+                            disabled
+                          />
+                        )}
                       </div>
-                    )}
-
-                    {question.type === "open-ended" && (
-                      <Textarea
-                        value={question.answer as string}
-                        onChange={(e) => handleUpdateQuestion(question._id, "answer", e.target.value)}
-                        placeholder="Open-ended answer"
-                      />
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-end">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteQuestion(question._id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button onClick={() => handleAddQuestion("single-choice")} variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Add single-choice question
-              </Button>
-              <Button onClick={() => handleAddQuestion("multiple-choice")} variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Add multiple-choice question
-              </Button>
-              <Button onClick={() => handleAddQuestion("open-ended")} variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Add open-ended question
-              </Button>
-            </CardFooter>
           </Card>
         </div>
       </ContentLayout>

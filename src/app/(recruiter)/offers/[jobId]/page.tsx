@@ -554,7 +554,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenPdf(`/uploads/${offer.resume}`)}
+                            onClick={() => handleOpenPdf(`${offer.resume}`)}
                             className="h-8 border-border bg-background text-foreground hover:bg-muted/50"
                           >
                             <Download size={14} className="mr-1" />
@@ -571,7 +571,7 @@ const generateFormLinks = (formIds: Id<"forms">[]) => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenPdf(`/uploads/rapports/${offer.reportPdf}`)}
+                            onClick={() => handleOpenPdf(`${offer.reportPdf}`)}
                             className="h-8 border-border bg-background text-foreground hover:bg-muted/50"
                           >
                             <Download size={14} className="mr-1" />

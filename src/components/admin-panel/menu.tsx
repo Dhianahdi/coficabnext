@@ -31,7 +31,6 @@ export function Menu({ isOpen }: MenuProps) {
   const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname();
   const currentUser1 = useQuery(api.auth.getMe);
-console.log(currentUser1)
   // Retrieve the current user (including role)
   const { data: currentUser, isLoading } = useCurrentUser();
 

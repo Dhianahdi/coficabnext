@@ -33,6 +33,8 @@ import DateRangePicker from "./components/DateRangePicker";
 import { DataTablePagination } from "./datatable/DataTablePagination";
 import { EmptyState } from "./components/ReusableEmptyState";
 import { AddDepartment } from "./CRUD/AddDepartment";
+import DeleteDepartmentDialog from "./CRUD/DeleteDepartmentDialog";
+import { Id } from "../../../convex/_generated/dataModel";
 
 export type Department = {
     _id: string;
@@ -135,6 +137,25 @@ export function DepartmentsTable({ departments }: DepartmentsTableProps) {
             header: ({ column }) => <DataTableColumnHeader column={column} title="Created On" />,
             cell: ({ row }) => format(new Date(row.original.createdAt), "MMM dd, yyyy, h:mm a"),
         },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const department = row.original;
+                return (
+                    <div className="flex justify-end">
+                        <DeleteDepartmentDialog
+           triggerText="Delete"
+title="Confirm Deletion"
+description={`Are you sure you want to delete the department "${department.name}"? This action cannot be undone.`}
+                            departmentId={department._id as Id<"departments">}
+                            departmentName={department.name}
+                            cancelText="Annuler"
+                            confirmText="Supprimer"
+                        />
+                    </div>
+                );
+            },
+        },
     ];
 
     const table = useReactTable({
@@ -179,13 +200,7 @@ export function DepartmentsTable({ departments }: DepartmentsTableProps) {
                 {/* Export and View Buttons */}
                 <div className="flex items-center space-x-2">
                     {/* Date Range Picker */}
-                    <DateRangePicker
-                        dateRange={dateRange}
-                        placeholder="Select Date Range"
-                        triggerVariant="outline"
-                        triggerSize="sm"
-                        onDateRangeChange={setDateRange} // Update the date range
-                    />
+                
 
                     <ExportButton
                         table={table}

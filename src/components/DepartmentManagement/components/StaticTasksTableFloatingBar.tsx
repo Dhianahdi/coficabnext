@@ -1,17 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { ArrowUp, CheckCircle2, Download, Loader, Trash2, X } from "lucide-react";
+import { CheckCircle2, Loader, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Portal } from "../../ui/portal";
-import BulkDeleteDialog from "../CRUD/BulkDeleteDialog";
 import { Id } from "../../../../convex/_generated/dataModel";
+import BulkDeleteDepartmentsDialog from "../CRUD/BulkDeleteDepartmentsDialog";
 
 type StaticTasksTableFloatingBarProps = {
-    table: any; // The React Table instance
-    setSelectedRows: React.Dispatch<React.SetStateAction<Set<string>>>; // Prop for managing selected rows
+    table: any; // L'instance de React Table
+    setSelectedRows: React.Dispatch<React.SetStateAction<Set<string>>>; // Prop pour gérer les lignes sélectionnées
 };
 
 export function StaticTasksTableFloatingBar({
@@ -21,16 +21,13 @@ export function StaticTasksTableFloatingBar({
     const [isPending, setIsPending] = React.useState(false);
 
     const selectedRows = table.getSelectedRowModel().rows;
-    console.log("Selected rows:", selectedRows);
-
-    // Extract IDs
+    
+    // Extraire les IDs
     const selectedRowIds = selectedRows
         .map((row: any) => row.original?._id)
-        .filter(Boolean); // Remove invalid IDs
+        .filter(Boolean); // Supprimer les IDs invalides
 
-    console.log("Selected row IDs:", selectedRowIds);
-
-    // Clear selected rows
+    // Effacer les lignes sélectionnées
     const handleClearSelection = () => {
         setSelectedRows(new Set());
         table.getRowModel().rows.forEach((row: any) => row.toggleSelected(false));
@@ -44,7 +41,7 @@ export function StaticTasksTableFloatingBar({
                         <div className="mx-auto flex w-fit items-center gap-2 rounded-md border bg-background p-2 text-foreground shadow">
                             <div className="flex h-7 items-center rounded-md border border-dashed pl-2.5 pr-1">
                                 <span className="whitespace-nowrap text-xs">
-                                    {selectedRows.length} selected
+                                    {selectedRows.length} sélectionnés
                                 </span>
                                 <Separator orientation="vertical" className="ml-2 mr-1" />
                                 <Tooltip>
@@ -59,13 +56,13 @@ export function StaticTasksTableFloatingBar({
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>Clear selection</p>
+                                        <p>Effacer la sélection</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
                             <Separator orientation="vertical" className="hidden h-5 sm:block" />
                             <div className="flex items-center gap-1.5">
-                                {/* Action Buttons */}
+                                {/* Boutons d'action */}
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
@@ -82,25 +79,25 @@ export function StaticTasksTableFloatingBar({
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>Update status</p>
+                                        <p>Mettre à jour le statut</p>
                                     </TooltipContent>
                                 </Tooltip>
-                                {/* BulkDeleteDialog */}
-                                <BulkDeleteDialog
+                                {/* BulkDeleteDepartmentsDialog */}
+                                <BulkDeleteDepartmentsDialog
                                     triggerText={
                                         <Button
                                             variant="secondary"
                                             size="icon"
                                             className="size-7 border"
-                                            disabled={selectedRows.length === 0} // Ensure this condition works as intended
+                                            disabled={selectedRows.length === 0}
                                         >
                                             <Trash2 className="size-3.5" aria-hidden="true" />
                                         </Button>
                                     }
-                                    title="Delete Selected Roles"
-                                    description="Are you sure you want to delete the selected roles? This action cannot be undone."
-                                    selectedRoleIds={selectedRowIds as Id<"roles">[]}
-                                    confirmText="Confirm Delete"
+                                    title="Supprimer les départements sélectionnés"
+                                    description="Êtes-vous sûr de vouloir supprimer les départements sélectionnés ? Cette action ne peut pas être annulée."
+                                    selectedDepartmentIds={selectedRowIds as Id<"departments">[]}
+                                    confirmText="Confirmer la suppression"
                                     onSuccess={handleClearSelection}
                                 />
                             </div>

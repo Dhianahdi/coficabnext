@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -29,9 +29,13 @@ type Question = {
   answer?: string | string[];
 };
 
-export default function UpdateFormPage({ params }: { params: { formId: string } }) {
+export default  function UpdateFormPage() {
+const params = useParams();
+  const formId = params.formId as Id<"forms">;
+
   const router = useRouter();
-  const form = useQuery(api.mutations.form.getFormWithQuestions, { formId: params.formId as Id<"forms"> });
+  const form = useQuery(api.queries.offres.getFormWithQuestions, { formId: formId as Id<"forms"> });
+  console.log(form)
   const updateForm = useMutation(api.mutations.form.updateForm);
   const updateQuestion = useMutation(api.mutations.form.updateQuestion);
   const deleteQuestion = useMutation(api.mutations.form.deleteQuestion);

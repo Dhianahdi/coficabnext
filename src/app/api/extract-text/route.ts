@@ -1,37 +1,38 @@
 import { NextResponse } from "next/server";
 import PDFParser from "pdf2json";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as Blob;
 
-    if (!file) {
-      return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
+    if (!file || file.type !== "application/pdf") {
+      return NextResponse.json({ error: "Fichier PDF invalide ou non fourni" }, { status: 400 });
     }
 
-    // Convertir le Blob en Buffer
     const buffer = Buffer.from(await file.arrayBuffer());
-
-    // Créer un parser PDF
     const pdfParser = new PDFParser();
 
-    return new Promise((resolve) => {
+    const extractedText = await new Promise<string>((resolve, reject) => {
       pdfParser.on("pdfParser_dataError", (errData) => {
         console.error("Erreur PDF:", errData.parserError);
-        resolve(NextResponse.json({ error: "Erreur lors de l'extraction du PDF" }, { status: 500 }));
+        reject("Erreur lors de l'extraction du PDF");
       });
 
       pdfParser.on("pdfParser_dataReady", (pdfData) => {
-        let extractedText = pdfData.Pages.map((page) =>
+        const text = pdfData.Pages.map((page) =>
           page.Texts.map((text) => decodeURIComponent(text.R[0].T)).join(" ")
-        ).join("\n");
+        ).join("\n").replace(/\s{2,}/g, " ").trim();
 
-        resolve(NextResponse.json({ text: extractedText }));
+        resolve(text);
       });
 
       pdfParser.parseBuffer(buffer);
     });
+
+    return NextResponse.json({ text: extractedText });
   } catch (error) {
     console.error("Erreur :", error);
     return NextResponse.json({ error: "Erreur lors de la lecture du PDF" }, { status: 500 });

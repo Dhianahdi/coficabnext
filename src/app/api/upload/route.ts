@@ -1,12 +1,15 @@
-// pages/api/upload/route.ts
+// /pages/api/upload/route.ts
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import FormData from "form-data";
 import { v4 as uuidv4 } from "uuid";
+import fetch from "node-fetch"; // si tu es en Node.js, sinon global fetch est OK
+
+const PINATA_JWT = process.env.PINATA_JWT!; // ajoute ce token dans .env.local
 
 export async function POST(request: Request) {
   try {
-    // Lire les données du fichier
+    console.error("Pinata ON:");
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
@@ -14,27 +17,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Générer un ID unique pour le fichier
     const uniqueId = uuidv4();
-    const fileName = `${uniqueId}-${file.name}`;
+    let fileName = `${uniqueId}-${file.name}`;
 
-    // Chemin de sauvegarde du fichier
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    const filePath = path.join(uploadDir, fileName);
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Créer le dossier s'il n'existe pas
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    const data = new FormData();
+    data.append("file", buffer, fileName);
+
+    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${PINATA_JWT}`,
+      },
+      body: data as any,
+    });
+
+    const pinataRes:any = await res.json();
+
+    if (!res.ok) {
+      console.error("Pinata error:", pinataRes);
+      return NextResponse.json({ error: "Upload to Pinata failed" }, { status: 500 });
     }
 
-    // Convertir le fichier en buffer et l'écrire sur le disque
-    const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    const ipfsHash = pinataRes.IpfsHash;
+     fileName = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+     console.log("Upload Pinata réussi :", fileName);
 
-    // Retourner le nom du fichier
     return NextResponse.json({ fileName }, { status: 200 });
+
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error("Erreur upload Pinata:", error);
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }

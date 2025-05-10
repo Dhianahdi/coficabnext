@@ -1,9 +1,9 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { useParams } from "next/navigation";
+import { useQuery } from "convex/react";
 import { format } from "date-fns";
-import { CalendarDays, CheckCircle, Clock, FileUser, Save, SendHorizontal, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle, Clock, FileUser, SendHorizontal, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -14,23 +14,19 @@ import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { Label } from "@/components/ui/label";
 import BlockEditor from "@/components/BlockEditor";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function JobDetailsPage() {
   const params = useParams();
   const jobId = params.id as Id<"jobs">;
   const job = useQuery(api.queries.jobs.getJobById, { id: jobId });
   const Me = useQuery(api.auth.getMe);
-  const createOffer = useMutation(api.mutations.offers.createOffer);
-  const router = useRouter();
-  const createNotification = useMutation(api.mutations.notifications.sendNotificationToRHDepartment);
 
 
   const isLoading = job === undefined;
@@ -39,7 +35,6 @@ export default function JobDetailsPage() {
   const [coverLetter, setCoverLetter] = useState("");
   const [resume, setResume] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [extractedText, setExtractedText] = useState("");
 
@@ -48,260 +43,10 @@ export default function JobDetailsPage() {
     jobId: jobId,
   });
 
-  const getReportFromGemini = async (cvText: string, jobTitle: string, jobDetails: string): Promise<{ score: number; reportHtml: string }> => {
-    try {
-      // Template HTML avec des placeholders
-      const templateHtml = `
-     <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV Report</title>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <style>
-        /* Global Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-        body {
-            background: #f9f9f9;
-            display: flex;
-            justify-content: center;
-            padding: 40px;
-        }
-        .report {
-            width: 21cm;
-            min-height: 29.7cm;
-            background: #fff;
-            padding: 40px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        .header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #000;
-        }
-        .header h1 {
-            font-size: 24px;
-            color: #000;
-        }
-        .score {
-            background: #ff0000;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            display: inline-block;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .section {
-            margin-top: 20px;
-            padding: 15px;
-            border-left: 4px solid #000;
-            background: #f1f1f1;
-            border-radius: 5px;
-        }
-        .section h2 {
-            font-size: 18px;
-            color: #000;
-            margin-bottom: 10px;
-        }
-        .section p {
-            font-size: 14px;
-            color: #333;
-            display: flex;
-            align-items: center;
-        }
-        .section p i {
-            margin-right: 10px;
-        }
-        .check { color: #4caf50; }
-        .cross { color: #ff3b3b; }
-        /* Skill Bar */
-        .skill-bar {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
-        .skill-name {
-            width: 160px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        .bar {
-            flex: 1;
-            height: 10px;
-            background: #eee;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .bar span {
-            display: block;
-            height: 100%;
-            border-radius: 5px;
-        }
-        .full { background: #4caf50; width: 100%; }
-        .almost { background: #4caf50; width: 75%; }
-        .mid { background: #4caf50; width: 50%; }
-        .bad { background: #4caf50; width: 25%; }
-        .no { background: #4caf50; width: 0%; }
 
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #777;
-        }
-    </style>
-</head>
-<body>
-    <div class="report">
-        <div class="header">
-            <h1>CV Report for Job: {{jobTitle}}</h1>
-            <div class="score">Score: {{score}}/100</div>
-        </div>
-        <div class="section">
-            <h2>Analysis</h2>
-            <p>{{analysis}}</p>
-        </div>
-        <div class="section">
-            <h2>Insights</h2>
-            <p><i class="fas fa-check-circle check"></i> {{insight1}}</p>
-            <p><i class="fas fa-check-circle check"></i> {{insight2}}</p>
-            <p><i class="fas fa-check-circle check"></i> {{insight3}}</p>
-
-        </div>
-        <div class="section">
-            <h2>Weaknesses</h2>
-            <p><i class="fas fa-times-circle cross"></i> {{weakness1}}</p>
-            <p><i class="fas fa-times-circle cross"></i> {{weakness2}}</p>
-            <p><i class="fas fa-times-circle cross"></i> {{weakness3}}</p>
-
-        </div>
-        <div class="section">
-            <h2>Skills</h2>
-            <div class="skill-bar">
-                <span class="skill-name">{{Skills}}</span>
-                <div class="bar"><span class="full"></span></div>
-            </div>
-            <div class="skill-bar">
-                <span class="skill-name">{{Skills}}</span>
-                <div class="bar"><span class="full"></span></div>
-            </div>
-            <div class="skill-bar">
-                <span class="skill-name">{{Skills}}</span>
-                <div class="bar"><span class="almost"></span></div>
-            </div>
-        </div>
-        <div class="footer">
-            <p>Generated by AI Assistant</p>
-        </div>
-    </div>
-</body>
-</html>
-
-      `;
-      const prompt = `
-      Generate a detailed HTML report for the CV below applied to the job title "${jobTitle}". Use the following template and fill in the placeholders with relevant data. Ensure the report is professional, modern, and easy to read.
-      
-      ### Instructions:
-      1. Replace placeholders like {{jobTitle}}, {{score}}, {{analysis}}, {{insight1}}, {{weakness1}}, etc., with actual data.
-      2. Provide a clear and concise analysis of the candidate's strengths and weaknesses.
-      3. Include specific insights and recommendations based on the CV and job requirements.
-      4. Ensure the skills section reflects the candidate's proficiency levels accurately.
-      
-      ### Template:
-      ${templateHtml}
-      
-      ### CV:
-      ${cvText}
-      
-      ### Job Details:
-      ${jobDetails}
-      
-      ### Additional Notes:
-      - Use a professional tone.
-      - Highlight key skills and experiences that match the job requirements.
-      - Provide actionable recommendations for improvement.
-      `;
-      // Envoyer la requête à l'API Gemini
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`,      
-              
-          {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-          }),
-        }
-      );
-  
-      if (!response.ok) {
-        throw new Error("Failed to fetch report from Gemini API.");
-      }
-  
-      const data = await response.json();
-      const reportHtml = data.candidates[0].content.parts[0].text;
-  
-      // Extraire le score du rapport HTML
-      const scoreMatch = reportHtml.match(/Score: (\d+)/);
-      const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
-  
-      return { score, reportHtml };
-    } catch (error) {
-      console.error("Error fetching report from Gemini:", error);
-      throw new Error("Failed to fetch report from Gemini.");
-    }
-  };
 
   /**
-   * Convertit le rapport HTML en PDF et le sauvegarde dans le dossier `upload`.
-   */
-  const saveHtmlAsPdf = async (html: string, fileName: string): Promise<string> => {
-    try {
-      const response = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, fileName }), // Envoyer `fileName` dans la requête
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to generate PDF.");
-      }
-  
-      // Convertir la réponse en Blob
-      const pdfBlob = await response.blob();
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-  
-      // Télécharger le PDF
-      const link = document.createElement("a");
-      link.href = pdfUrl;
-      link.download = `${fileName}.pdf`;
-  
-      return pdfUrl;
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      throw error;
-    }
-  };
-
-  /**
-   * Gère la soumission du formulaire de candidature.
+   * Handles the submission of the application form.
    */
   const handleSubmit = async () => {
     if (existingApplication) {
@@ -327,96 +72,95 @@ export default function JobDetailsPage() {
     try {
       setIsSubmitting(true);
 
-      // Étape 1 : Téléverser le CV
+      // Step 1: Upload the resume
       const formData = new FormData();
       formData.append("file", resume);
-
+      
+      // File upload
       const uploadResponse = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
-
+      
       if (!uploadResponse.ok) {
-        throw new Error("Failed to upload the file.");
+        throw new Error("Failed to upload resume");
       }
-
-      const uploadData = await uploadResponse.json();
-      const fileName = uploadData.fileName;
-
-      // Étape 2 : Extraire le texte du CV
+      
+      const { fileName } = await uploadResponse.json();
+      
+      // Step 2: Extract text from the resume
+      const extractFormData = new FormData();
+      extractFormData.append("file", resume);
+      
       const extractResponse = await fetch("/api/extract-text", {
         method: "POST",
-        body: formData,
+        body: extractFormData,
       });
-
+      
       if (!extractResponse.ok) {
-        throw new Error("Failed to extract text from the CV.");
+        throw new Error("Failed to extract text from resume");
       }
-
-      const extractData = await extractResponse.json();
-      const cvText = extractData.text;
+      
+      const { text: cvText } = await extractResponse.json();
       setExtractedText(cvText);
-
-      // Étape 3 : Générer le rapport HTML avec Gemini
-      const jobDetails = `
-        Title: ${job.title}
-        Department: ${job.departmentName}
-        Requirements: ${job.requirements}
-        Salary Range: ${job.salaryRange}
-        Location: ${job.location}
-        Employment Type: ${job.employmentType}
-        Experience Level: ${job.experienceLevel}
-      `;
-
-      const { score, reportHtml } = await getReportFromGemini(cvText, job.title, jobDetails);
-      console.log({ score, reportHtml } )
-
-      const pdfFileName = `report_${Date.now()}`;
-      const pdfFilePath = await saveHtmlAsPdf(reportHtml, pdfFileName);
-
-      await createOffer({
-        jobId: jobId as Id<"jobs">,
-        candidateId: Me._id as Id<"users">,
-        coverLetter: coverLetter,
-        resume: fileName,
-        status: "Pending",
-        appliedAt: Date.now(),
-        score: score,
-        reportPdf: pdfFileName+".pdf", // Ajouter le chemin du PDF
-      });
-      const notificationTitle = "Application";
-         const notificationMessage = `New applicatin from ${Me.name}.`;
-         const notificationLink = ``; // Lien vers la réunion
-     
-         await createNotification({
-           title: notificationTitle,
-           message: notificationMessage,
-           link: notificationLink,
-           type: "success",
-         });
-      // Afficher un message de succès
-      toast({
-        title: "Application submitted successfully",
-        description: "Your application has been recorded.",
-      });
-
-      // Fermer le dialogue
+      
+   
+      toast.info("Your resume is being processed...");
+      // Close the dialog immediately
       setIsDialogOpen(false);
-
-      // Réinitialiser le formulaire
+      
+      // Reset form states
       setCoverLetter("");
       setResume(null);
       setError("");
-    } catch (error) {
-      console.error("Error submitting the application:", error);
-      setError("An error occurred while submitting the application.");
       
-      // Afficher un message d'erreur
-      toast({
-        title: "Application failed",
-        description: "There was a problem submitting your application. Please try again.",
-        variant: "destructive",
+      // Step 3: Submit the application
+      const applicationFormData = new FormData();
+      applicationFormData.append("file", resume);
+      applicationFormData.append("jobId", jobId);
+      applicationFormData.append("candidateId", Me._id);
+      applicationFormData.append("coverLetter", coverLetter);
+      applicationFormData.append("candidateName", Me.name || "Candidate");
+      applicationFormData.append("cvText", cvText);
+      applicationFormData.append("fileName", fileName);
+      
+      // Add job details
+      applicationFormData.append("jobTitle", job.title);
+      applicationFormData.append("jobDepartment", job.departmentName || "");
+      applicationFormData.append("jobRequirements", job.requirements || "");
+      applicationFormData.append("jobSalaryRange", job.salaryRange || "");
+      applicationFormData.append("jobLocation", job.location || "");
+      applicationFormData.append("jobEmploymentType", job.employmentType || "");
+      applicationFormData.append("jobExperienceLevel", job.experienceLevel || "");
+      
+      // Call the submit-application API
+      const submitResponse = await fetch("/api/submit-application", {
+        method: "POST",
+        body: applicationFormData,
       });
+      
+      if (!submitResponse.ok) {
+        const errorData = await submitResponse.json();
+        throw new Error(errorData.error || "Failed to submit application");
+      }
+      
+      const result = await submitResponse.json();
+      
+      // Display a success toast after submission
+    
+      toast.success("Your application has been submitted successfully.");
+      
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      setError(error instanceof Error ? error.message : "An error occurred while submitting your application.");
+      
+      // Display an error toast
+     
+
+      toast.error("Application failed")
+      
+      // Reopen the dialog if there was an error
+      setIsDialogOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -436,7 +180,6 @@ export default function JobDetailsPage() {
     Closed: <XCircle size={12} className="text-red-500 -ms-0.5" strokeWidth={2} aria-hidden="true" />,
   };
 
-  const icon = statusIcons[job.status];
 
   return (
     <AdminPanelLayout>
@@ -446,84 +189,158 @@ export default function JobDetailsPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center justify-center w-[160px] h-[40px] gap-2">
+              <Button className="flex items-center justify-center w-[160px] h-[40px] gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary">
                 <SendHorizontal size={18} />
                 <span>Apply Now</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Apply for {job.title}</DialogTitle>
-              </DialogHeader>
-              {isSubmitting ? (
-                <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                  <Spinner variant="ring" size={40} className="text-primary" />
-                  <p className="text-center text-muted-foreground">
-                    Please wait while we process your application...
-                    <br />
-                    <span className="text-sm">This may take a few moments as we analyze your resume.</span>
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-4">
-                    {existingApplication && (
-                      <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
-                        <XCircle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <p className="text-red-700 font-medium">You have already applied to this job.</p>
-                      </div>
-                    )}
-                    {error && (
-                      <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
-                        <XCircle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <p className="text-red-700 font-medium">{error}</p>
-                      </div>
-                    )}
-                    <Label>Cover Letter</Label>
-                    <Textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Write your cover letter..." />
-                    <Label>Upload Resume</Label>
-                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors">
-                      {resume ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <FileUser size={18} className="text-primary" />
-                          <span className="font-medium">{resume.name}</span>
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            {(resume.size / 1024).toFixed(0)} KB
-                          </Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="ml-auto h-8 px-2" 
-                            onClick={() => setResume(null)}
-                          >
-                            <XCircle size={16} />
-                          </Button>
+            <DialogContent className="max-w-2xl p-0 overflow-hidden">
+              <div className="flex flex-col h-full">
+                {/* Application form */}
+                <div className="w-full p-6">
+                  <DialogHeader className="mb-4">
+                    <DialogTitle className="text-xl">Apply for {job.title}</DialogTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Complete the form below to submit your application
+                    </p>
+                  </DialogHeader>
+
+                  {isSubmitting ? (
+                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                      <div className="relative">
+                        <Spinner variant="ring" size={50} className="text-primary" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <FileUser size={20} className="text-primary/70" />
                         </div>
-                      ) : (
-                        <>
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                            <FileUser size={24} className="text-primary" />
-                          </div>
-                          <p className="text-sm font-medium">Drag and drop your resume here or click to browse</p>
-                          <p className="text-xs text-muted-foreground">Supports PDF files up to 5MB</p>
-                        </>
-                      )}
-                      <Input 
-                        type="file" 
-                        accept="application/pdf" 
-                        onChange={(e) => setResume(e.target.files?.[0] || null)} 
-                        className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${resume ? 'pointer-events-none' : ''}`}
-                      />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">Processing your application</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Please wait while we analyze your resume...
+                        </p>
+                        <div className="w-full max-w-xs mx-auto mt-4 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-primary animate-pulse rounded-full"></div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSubmit} disabled={!!existingApplication}>
-                      Submit Application
-                    </Button>
-                  </DialogFooter>
-                </>
-              )}
+                  ) : (
+                    <>
+                      {/* Error and warning messages */}
+                      {existingApplication && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start mb-4">
+                          <Clock className="h-5 w-5 text-amber-500 mr-3 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-amber-800 font-medium">You have already applied to this job</p>
+                            <p className="text-amber-700 text-sm mt-1">Your application is under review.</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-start mb-4">
+                          <XCircle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+                          <p className="text-red-700 font-medium">{error}</p>
+                        </div>
+                      )}
+
+                      {/* Application steps */}
+                      <div className="flex justify-between mb-5 relative">
+                        <div className="absolute top-3 left-0 w-full h-0.5 bg-muted"></div>
+                        {['Resume', 'Cover Letter', 'Review'].map((step, i) => (
+                          <div key={i} className="relative flex flex-col items-center z-10">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${i === 0 ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                              {i + 1}
+                            </div>
+                            <span className="text-xs mt-1">{step}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="space-y-4">
+                        {/* Resume Section */}
+                        <div>
+                          <Label className="text-base font-medium">Resume / CV</Label>
+                          <p className="text-sm text-muted-foreground mb-2">Upload your resume in PDF format (max 5MB)</p>
+                          
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors bg-muted/10">
+                            {resume ? (
+                              <div className="w-full">
+                                <div className="flex items-center gap-2 text-sm bg-white/50 p-2 rounded-md">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <FileUser size={16} className="text-primary" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <span className="font-medium block">{resume.name}</span>
+                                    <span className="text-xs text-muted-foreground">{(resume.size / 1024).toFixed(0)} KB · PDF</span>
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 px-2 text-muted-foreground hover:text-destructive" 
+                                    onClick={() => setResume(null)}
+                                  >
+                                    <XCircle size={14} />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                                  <FileUser size={20} className="text-primary" />
+                                </div>
+                                <p className="text-sm font-medium">Drag and drop your resume here or click to browse</p>
+                                <p className="text-xs text-muted-foreground">PDF format only, max size 5MB</p>
+                              </>
+                            )}
+                            <Input 
+                              type="file" 
+                              accept="application/pdf" 
+                              onChange={(e) => setResume(e.target.files?.[0] || null)} 
+                              className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${resume ? 'pointer-events-none' : ''}`}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Cover Letter Section */}
+                        <div>
+                          <Label className="text-base font-medium">Cover Letter</Label>
+                          <p className="text-sm text-muted-foreground mb-2">Explain why you're the ideal candidate for this position</p>
+                          <Textarea 
+                            value={coverLetter} 
+                            onChange={(e) => setCoverLetter(e.target.value)} 
+                            placeholder="Describe your motivations and relevant skills..." 
+                            className="min-h-[100px] resize-y"
+                          />
+                        </div>
+
+                        {/* GDPR Consent */}
+                        <div className="bg-muted/20 p-3 rounded-md">
+                          <div className="flex items-start space-x-2">
+                            <input type="checkbox" id="consent" className="mt-1" />
+                            <label htmlFor="consent" className="text-xs text-muted-foreground">
+                              By submitting my application, I agree that my personal data will be processed in accordance with the privacy policy for the recruitment process.
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <DialogFooter className="mt-5 gap-2">
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSubmit} 
+                          disabled={!!existingApplication || isSubmitting}
+                          className="gap-2"
+                        >
+                          <SendHorizontal size={16} />
+                          Submit Application
+                        </Button>
+                      </DialogFooter>
+                    </>
+                  )}
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

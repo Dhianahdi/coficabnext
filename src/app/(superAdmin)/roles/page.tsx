@@ -69,10 +69,7 @@ export default function Test() {
       <ContentLayout title="Dashboard">
         {/* Users Section */}
         <div className="mt-6">
-          <h1 className="text-2xl font-semibold text-foreground">User Management</h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            Manage user accounts, roles, and permissions.
-          </p>
+     
           <UsersTable />
        
         </div>

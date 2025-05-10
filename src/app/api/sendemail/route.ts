@@ -17,30 +17,61 @@ export async function POST(req: Request) {
                 pass: "otaz swng dwug aitd",
             },
         });
+        
+        // Template d'email amélioré
         const emailTemplate = `
-        <div style="font-family: 'Arial', sans-serif; background-color: #ffffff; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #f0f4f8; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-                <div style="background-color: #003366; color: #fff; padding: 20px; border-top-left-radius: 8px; border-top-right-radius: 8px; text-align: center;">
-                    <h1 style="margin: 0; font-size: 24px;">Verification Code</h1>
-                </div>
-                <div style="padding: 20px;">
-                    <p style="font-size: 16px; color: #333;">Hi there,</p>
-                    <p style="font-size: 16px; color: #333;">Your verification code is:</p>
-                    <h2 style="font-size: 32px; font-weight: bold; color: #003366;">${verificationCode}</h2>
-                    <p style="font-size: 16px; color: #333;">Please use this code to complete your registration.</p>
-                </div>
-                <div style="background-color: #003366; color: #fff; padding: 20px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; text-align: center;">
-                    <p style="margin: 0; font-size: 14px;">Thank you for using our service.</p>
-                </div>
-            </div>
-        </div>
-    `;
+   <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>COFICAB Verification Code</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f7f7; color: #333333;">
+            <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="padding: 30px 0; background: linear-gradient(135deg, #000000, #333333); border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                        <img src="https://coficab.com/wp-content/uploads/2023/01/logo-coficab-white.png" alt="COFICAB" width="180" style="display: block; margin: 0 auto;">
+                    </td>
+                </tr>
+                
+                <!-- Main Content -->
+                <tr>
+                    <td style="padding: 40px 30px;">
+                        <h1 style="margin: 0 0 20px; font-size: 24px; font-weight: 600; color: #000000; text-align: center;">Account Verification</h1>
+                        
+                        <p style="margin: 0 0 15px; font-size: 16px; line-height: 1.5;">Hello,</p>
+                        
+                        <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.5;">Thank you for registering on the COFICAB portal. To complete your registration, please use the verification code below:</p>
+                        
+                        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center; border-left: 4px solid #000000;">
+                            <h2 style="margin: 0; font-size: 36px; letter-spacing: 5px; color: #000000; font-weight: 700;">${verificationCode}</h2>
+                        </div>
+                        
+                        <p style="margin: 0 0 15px; font-size: 16px; line-height: 1.5;">This code is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
+                        
+                        <p style="margin: 30px 0 0; font-size: 16px; line-height: 1.5;">Best regards,<br>The COFICAB Team</p>
+                    </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                    <td style="padding: 20px 30px; background-color: #f8f9fa; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; text-align: center; border-top: 1px solid #eeeeee;">
+                        <p style="margin: 0 0 10px; font-size: 14px; color: #666666;">© 2023 COFICAB. All rights reserved.</p>
+                        <p style="margin: 0; font-size: 13px; color: #999999;">This is an automated email, please do not reply.</p>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        `;
 
         await transporter.sendMail({
-            from: process.env.EMAIL_USER,
+            from: process.env.EMAIL_USER || "mongi.nahdi@gmail.com",
             to: email,
-            subject: "Code de vérification",
-            html:emailTemplate,
+            subject: "Code de vérification COFICAB",
+            html: emailTemplate,
         });
 
         return NextResponse.json({ message: "Email envoyé", code: verificationCode });
@@ -48,4 +79,4 @@ export async function POST(req: Request) {
         console.error("Erreur :", error);
         return NextResponse.json({ error: "Échec de l'envoi" }, { status: 500 });
     }
-}      
+}

@@ -1,36 +1,65 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { html, fileName } = await request.json(); // Récupérer `fileName` de la requête
+    // Récupérer le HTML et le nom du fichier depuis la requête
+    const { html, fileName } = await req.json();
 
-    // Lancer Puppeteer et générer le PDF
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setContent(html);
-    const pdfBuffer = await page.pdf({ format: "A4" });
-    await browser.close();
-
-    // Chemin du dossier de destination
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "rapports");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true }); // Créer le dossier s'il n'existe pas
+    if (!html) {
+      return NextResponse.json(
+        { error: "HTML content is required" },
+        { status: 400 }
+      );
     }
 
-    // Nom du fichier PDF
-    const pdfFileName = fileName+".pdf";
-    const pdfFilePath = path.join(uploadDir, pdfFileName);
+    // Créer le dossier 'uploads' s'il n'existe pas
+    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
 
-    // Enregistrer le PDF dans le dossier
-    fs.writeFileSync(pdfFilePath, pdfBuffer);
+    // Générer un nom de fichier unique si non fourni
+    const outputFileName = fileName || `report_${Date.now()}.pdf`;
+    const outputPath = path.join(uploadsDir, `${outputFileName}.pdf`);
 
-    // Retourner le chemin du fichier en réponse
-    return NextResponse.json({ pdfUrl: `${pdfFileName}` });
+    // Lancer Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+    });
+    const page = await browser.newPage();
+
+    // Définir le contenu HTML
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    // Générer le PDF
+    await page.pdf({
+      path: outputPath,
+      format: "A4",
+      printBackground: true,
+      margin: {
+        top: "20px",
+        right: "20px",
+        bottom: "20px",
+        left: "20px",
+      },
+    });
+
+    // Fermer le navigateur
+    await browser.close();
+
+    // Retourner le chemin du fichier PDF
+    return NextResponse.json({
+      success: true,
+      filePath: `/uploads/${outputFileName}.pdf`,
+    });
   } catch (error) {
     console.error("Error generating PDF:", error);
-    return NextResponse.json({ message: "Failed to generate PDF" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate PDF" },
+      { status: 500 }
+    );
   }
 }

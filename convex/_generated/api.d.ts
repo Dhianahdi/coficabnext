@@ -32,6 +32,7 @@ import type * as mutations_roles from "../mutations/roles.js";
 import type * as mutations_stats from "../mutations/stats.js";
 import type * as mutations_user from "../mutations/user.js";
 import type * as queries_departments from "../queries/departments.js";
+import type * as queries_form from "../queries/form.js";
 import type * as queries_jobs from "../queries/jobs.js";
 import type * as queries_offres from "../queries/offres.js";
 import type * as queries_permissions from "../queries/permissions.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/stats": typeof mutations_stats;
   "mutations/user": typeof mutations_user;
   "queries/departments": typeof queries_departments;
+  "queries/form": typeof queries_form;
   "queries/jobs": typeof queries_jobs;
   "queries/offres": typeof queries_offres;
   "queries/permissions": typeof queries_permissions;

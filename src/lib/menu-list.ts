@@ -224,7 +224,6 @@ export function getMenuList(
       ],
     });
   }
-  console.log(userRole)
 
   if (userRole === "RH") {
     return groups;

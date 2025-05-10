@@ -1,21 +1,37 @@
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 /**
- * Formats a date string into a human-readable "time ago" string.
- * @param dateString - The date string (e.g., "2023-10-01T12:34:56Z").
+ * Formats a date string or timestamp into a human-readable "time ago" string.
+ * @param dateString - The date string (e.g., "2023-10-01T12:34:56Z") or timestamp (e.g., 1738860984648.6711).
  * @returns A formatted "time ago" string (e.g., "2 hours ago").
  */
-export function formatTimeAgo(dateString: string | undefined): string {
-  if (!dateString) {
+
+export function formatTimeAgo(dateInput: string | number | undefined): string {
+  if (!dateInput) {
     return "Just now"; // Fallback for missing or undefined date
   }
 
   try {
-    const date = parseISO(dateString);
+    let date: Date;
+
+    // Handle numeric timestamps (like Convex's _creationTime)
+    if (typeof dateInput === "number") {
+      date = new Date(dateInput);
+    }
+    // Handle ISO date strings
+    else {
+      date = new Date(dateInput);
+    }
+
+    // Ensure the date is valid
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date");
+    }
+
     return formatDistanceToNow(date, { addSuffix: true });
   } catch (error) {
-    console.error("Invalid date string:", dateString);
-    return "Just now"; // Fallback for invalid date strings
+    console.error("Invalid date input:", dateInput);
+    return "Just now"; // Fallback for invalid date inputs
   }
 }
 

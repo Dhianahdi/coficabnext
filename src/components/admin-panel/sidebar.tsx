@@ -1,4 +1,5 @@
 "use client";
+
 import { Menu } from "@/components/admin-panel/menu";
 import { SidebarToggle } from "@/components/admin-panel/sidebar-toggle";
 import { Button } from "@/components/ui/button";
@@ -7,11 +8,19 @@ import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 import { PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { useTheme } from "next-themes"; // Pour détecter le thème actuel
 
 export function Sidebar() {
   const sidebar = useStore(useSidebar, (x) => x);
+  const { theme } = useTheme(); // Détecter le thème actuel (light/dark)
+
   if (!sidebar) return null;
   const { isOpen, toggleOpen, getOpenState, setIsHover, settings } = sidebar;
+
+  // Déterminer le logo en fonction du thème
+  const logo = theme === "dark" ? "/img/Logo-COFICAB-white.png" : "/img/Logo-COFICAB-black.png";
+
   return (
     <aside
       className={cn(
@@ -35,7 +44,20 @@ export function Sidebar() {
           asChild
         >
           <Link href="/dashboard" className="flex items-center gap-2">
-            <PanelsTopLeft className="w-6 h-6 mr-1" />
+            {/* Afficher le logo */}
+            <Image
+              src={logo}
+              alt="COFICAB Logo"
+              width={100} // Augmenter la largeur du logo
+              height={100} // Augmenter la hauteur du logo
+              className={cn(
+                "transition-[transform,opacity,display] ease-in-out duration-300",
+                !getOpenState()
+                  ? "-translate-x-96 opacity-0 hidden"
+                  : "translate-x-0 opacity-100"
+              )}
+            />
+            {/* Masquer le texte "Tale Web" */}
             <h1
               className={cn(
                 "font-bold text-lg whitespace-nowrap transition-[transform,opacity,display] ease-in-out duration-300",
@@ -44,7 +66,7 @@ export function Sidebar() {
                   : "translate-x-0 opacity-100"
               )}
             >
-              Tale Web
+              {/* Tale Web */}
             </h1>
           </Link>
         </Button>

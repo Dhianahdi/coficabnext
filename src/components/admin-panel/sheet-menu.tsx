@@ -1,5 +1,8 @@
+"use client"; // Marquer ce composant comme un composant client
+
 import Link from "next/link";
 import { MenuIcon, PanelsTopLeft } from "lucide-react";
+import { useTheme } from "next-themes"; // Importer useTheme
 
 import { Button } from "@/components/ui/button";
 import { Menu } from "@/components/admin-panel/menu";
@@ -8,10 +11,15 @@ import {
   SheetHeader,
   SheetContent,
   SheetTrigger,
-  SheetTitle
+  SheetTitle,
 } from "@/components/ui/sheet";
 
 export function SheetMenu() {
+  const { theme } = useTheme(); // Détecter le thème actuel (light/dark)
+
+  // Déterminer le logo en fonction du thème
+  const logo = theme === "dark" ? "/img/Logo-COFICAB-white.png" : "/img/Logo-COFICAB-black.png";
+
   return (
     <Sheet>
       <SheetTrigger className="lg:hidden" asChild>
@@ -27,8 +35,15 @@ export function SheetMenu() {
             asChild
           >
             <Link href="/dashboard" className="flex items-center gap-2">
-              <PanelsTopLeft className="w-6 h-6 mr-1" />
-              <SheetTitle className="font-bold text-lg">Brand</SheetTitle>
+              {/* Afficher le logo */}
+              <img
+                src={logo}
+                alt="COFICAB Logo"
+                width={80} // Ajustez la largeur selon vos besoins
+                height={80} // Ajustez la hauteur selon vos besoins
+              />
+              {/* Masquer le texte "Brand" */}
+              <SheetTitle className="font-bold text-lg sr-only">Brand</SheetTitle>
             </Link>
           </Button>
         </SheetHeader>

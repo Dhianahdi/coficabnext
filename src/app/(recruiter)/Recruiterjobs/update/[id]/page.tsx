@@ -1,0 +1,637 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Check, Loader2, Plus, Save } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tag } from "emblor";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter, useParams } from "next/navigation";
+import InputWithCancel from "@/components/JobManagement/components/InputWithCancel";
+import { GenreInput } from "@/components/JobManagement/components/GenreInput";
+import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
+import TextareaWithLimit from "@/components/JobManagement/components/TextareaWithLimit";
+import BlockEditor from "@/components/BlockEditor";
+import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
+import { Separator } from "@/components/ui/separator";
+import ReusableSelect from "@/components/ReusableSelect";
+import { Spinner } from "@/components/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PartialBlock, PartialInlineContent } from "@blocknote/core";
+
+interface Option {
+    value: string;
+    label: string;
+}
+
+export default function UpdateJobPage() {
+     const Me = useQuery(api.auth.getMe);
+      const router = useRouter();
+    
+      useEffect(() => {
+        if (Me && Me.department?.name !== "RH") {
+          router.push("/access-denied");
+        }
+      }, [Me, router]);
+    const params = useParams();
+    const jobId = params.id as Id<"jobs">;
+
+    const job = useQuery(api.queries.jobs.getJobById, { id: jobId });
+    const updateJob = useMutation(api.mutations.jobs.updateJob);
+    const departments = useQuery(api.queries.departments.getDepartments) || [];
+    const forms = useQuery(api.queries.jobs.getForms) || [];
+    const formIds = useQuery(api.mutations.form.getFormsByJobId, { jobId });
+
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [departmentId, setDepartmentId] = useState<Id<"departments"> | "">("");
+    const [requirements, setRequirements] = useState("");
+    const [salaryRange, setSalaryRange] = useState("");
+    const [employmentType, setEmploymentType] = useState("");
+    const [experienceLevel, setExperienceLevel] = useState("");
+    const [employmentTypeOptions, setEmploymentTypeOptions] = useState<Option[]>([]);
+    const [experienceLevelOptions, setExperienceLevelOptions] = useState<Option[]>([]);
+    const [location, setLocation] = useState("");
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [applicationDeadline, setApplicationDeadline] = useState<Date | undefined>(undefined);
+    const [interviewProcess, setInterviewProcess] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    // Ajoutez ces états au début du composant
+const [keywords, setKeywords] = useState(""); // Mots-clés pour générer la description
+const [isGeneratingDescription, setIsGeneratingDescription] = useState(false); // État de chargement
+
+const generateDescription = async () => {
+    setIsGeneratingDescription(true);
+  
+    try {
+      // Construire le prompt pour Gemini en utilisant les données du formulaire
+      const prompt = `Generate a detailed job description based on the following information:
+  - Title: ${title}
+  - Department: ${departments.find((dept) => dept._id === departmentId)?.name || "Not specified"}
+  - Requirements: ${requirements}
+  - Salary Range: ${salaryRange}
+  - Employment Type: ${employmentType}
+  - Location: ${location}
+  - Experience Level: ${experienceLevel}
+  - Tags: ${tags.map((tag) => tag.text).join(", ")}
+  - Application Deadline: ${applicationDeadline ? format(applicationDeadline, "PPP") : "Not specified"}
+  - Interview Process: ${interviewProcess}`;
+  
+      // Envoyer la requête à l'API Gemini
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`,    
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
+  
+      const data = await response.json();
+      if (response.ok) {
+        const generatedDescription = data.candidates[0].content.parts[0].text;
+  
+        // Transformer la réponse de Gemini en blocs compatibles avec BlockEditor
+        const blocks = transformGeminiResponseToBlocks(generatedDescription);
+  
+        // Convertir les blocs en JSON
+        const descriptionJSON = JSON.stringify(blocks);
+        // Mettre à jour la description dans l'éditeur
+        setDescription(descriptionJSON);
+        toast.success("Description generated successfully!");
+      } else {
+        console.error("API Error:", data);
+        toast.error("Failed to generate description.");
+      }
+    } catch (error) {
+      console.error("Request Error:", error);
+      toast.error("An error occurred while generating the description.");
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
+  const transformGeminiResponseToBlocks = (text: string): PartialBlock[] => {
+    const blocks: PartialBlock[] = [];
+    const lines = text.split("\n");
+
+    let currentBlock: PartialBlock | null = null;
+
+    lines.forEach((line) => {
+        // Détecter les lignes contenant **mot** et les transformer en blocs de niveau 3
+        if (line.includes("**")) {
+            if (currentBlock) {
+                blocks.push(currentBlock);
+            }
+            // Remplacer **mot** par <strong>mot</strong> pour le texte en gras
+            const formattedLine = line.replace(/\*\*(.*?)\*\*/g, "$1");
+            currentBlock = {
+                type: "heading",
+                content: formattedLine,
+                props: {
+                    level: 3, // Niveau de titre (h3)
+                },
+            };
+        }
+        // Détecter les titres (## Titre)
+        else if (line.startsWith("## ")) {
+            if (currentBlock) {
+                blocks.push(currentBlock);
+            }
+            currentBlock = {
+                type: "heading",
+                content: line.replace("## ", ""),
+                props: {
+                    level: 2, // Niveau de titre (h2)
+                },
+            };
+        }
+        // Détecter les listes (* Item)
+        else if (line.startsWith("* ")) {
+            if (!currentBlock || currentBlock.type !== "bulletListItem") {
+                if (currentBlock) {
+                    blocks.push(currentBlock);
+                }
+                currentBlock = {
+                    type: "bulletListItem",
+                    content: line.replace("* ", ""),
+                };
+            } else {
+                // Si le bloc actuel est déjà une liste, ajouter un nouvel élément
+                currentBlock.content += "\n" + line.replace("* ", "");
+            }
+        }
+        // Détecter les paragraphes normaux
+        else {
+            if (currentBlock && currentBlock.type === "paragraph") {
+                currentBlock.content += "\n" + line;
+            } else {
+                if (currentBlock) {
+                    blocks.push(currentBlock);
+                }
+                currentBlock = {
+                    type: "paragraph",
+                    content: line,
+                };
+            }
+        }
+    });
+
+    if (currentBlock) {
+        blocks.push(currentBlock);
+    }
+
+    return blocks;
+};
+
+    // Fetch experience level options
+    const fetchedExperienceLevelOptions = useQuery(api.queries.jobs.getExperienceLevelOptions);
+    useEffect(() => {
+        if (fetchedExperienceLevelOptions) {
+            setExperienceLevelOptions(
+                fetchedExperienceLevelOptions.map((option: any) => ({
+                    value: option.value,
+                    label: option.label,
+                }))
+            );
+        }
+    }, [fetchedExperienceLevelOptions]);
+
+    // Fetch employment type options
+    const fetchedEmploymentTypeOptions = useQuery(api.queries.jobs.getEmploymentTypeOptions);
+    useEffect(() => {
+        if (fetchedEmploymentTypeOptions) {
+            setEmploymentTypeOptions(
+                fetchedEmploymentTypeOptions.map((option: any) => ({
+                    value: option.value,
+                    label: option.label,
+                }))
+            );
+        }
+    }, [fetchedEmploymentTypeOptions]);
+
+    // Handle employment type change
+    const handleEmploymentTypeChange = (newOption: string) => {
+        setEmploymentType(newOption);
+    };
+
+    // Handle adding new employment type option
+    const addEmploymentTypeOption = useMutation(api.mutations.jobs.addEmploymentTypeOption);
+    const handleAddNewEmploymentTypeOption = async (newOption: string) => {
+        await addEmploymentTypeOption({
+            value: newOption.toLowerCase(),
+            label: newOption,
+        });
+
+        // Refetch employment type options
+        if (fetchedEmploymentTypeOptions) {
+            setEmploymentTypeOptions(
+                fetchedEmploymentTypeOptions.map((option: any) => ({
+                    value: option.value,
+                    label: option.label,
+                }))
+            );
+        }
+    };
+
+    // Handle experience level change
+    const handleExperienceLevelChange = (newOption: string) => {
+        setExperienceLevel(newOption);
+    };
+
+
+    const [selectedFormIds, setSelectedFormIds] = useState<Id<"forms">[]>([]);
+
+// Gérer la sélection des formulaires
+const handleFormSelection = (formId: Id<"forms">) => {
+    if (selectedFormIds.includes(formId)) {
+        setSelectedFormIds(selectedFormIds.filter((id) => id !== formId));
+    } else {
+        setSelectedFormIds([...selectedFormIds, formId]);
+    }
+};
+    // Handle adding new experience level option
+    const addExperienceLevelOption = useMutation(api.mutations.jobs.addExperienceLevelOption);
+    const handleAddNewExperienceLevelOption = async (newOption: string) => {
+        await addExperienceLevelOption({
+            value: newOption.toLowerCase(),
+            label: newOption,
+        });
+
+        // Refetch experience level options
+        if (fetchedExperienceLevelOptions) {
+            setExperienceLevelOptions(
+                fetchedExperienceLevelOptions.map((option: any) => ({
+                    value: option.value,
+                    label: option.label,
+                }))
+            );
+        }
+    };
+
+    // Prefill form with job data
+    useEffect(() => {
+        if (job) {
+            setTitle(job.title);
+            setDescription(job.description);
+            setDepartmentId(job.departmentId || "");
+            setRequirements(job.requirements || "");
+            setSalaryRange(job.salaryRange || "");
+            setEmploymentType(job.employmentType || "");
+            setLocation(job.location || "");
+            setExperienceLevel(job.experienceLevel || "");
+            setTags(job.tags?.map((tag) => ({ id: tag, text: tag })) || []); // Ensure tags are mapped correctly
+            setApplicationDeadline(job.applicationDeadline ? new Date(job.applicationDeadline) : undefined);
+            setInterviewProcess(job.interviewProcess || "");
+            setSelectedFormIds(formIds || []); // Pré-remplir les formulaires sélectionnés
+
+        }
+    }, [job]);
+
+
+    const handleUpdate = async () => {
+        if (!title.trim() || !description.trim()) {
+            toast.error("Title and description are required.");
+            return;
+        }
+    
+        try {
+            setIsSaving(true);
+            await updateJob({
+                jobId,
+                title: title.trim(),
+                description: description.trim(),
+                departmentId: departmentId || undefined,
+                requirements: requirements || undefined,
+                salaryRange: salaryRange || undefined,
+                employmentType: employmentType || undefined,
+                location: location || undefined,
+                experienceLevel: experienceLevel || undefined,
+                tags: tags.map((tag) => tag.text),
+                applicationDeadline: applicationDeadline ? applicationDeadline.getTime() : undefined,
+                interviewProcess: interviewProcess || undefined,
+                formIds: selectedFormIds, // Ajouter les formulaires sélectionnés
+            });
+            toast.success("Job updated successfully!");
+            router.push("/Recruiterjobs");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update job. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    const isLoading =
+        !departments || !fetchedExperienceLevelOptions || !fetchedEmploymentTypeOptions;
+
+    return (
+        <AdminPanelLayout>
+            <ContentLayout title="Dashboard">
+
+
+                <div className="flex items-center justify-between mb-4">
+                    {isLoading ? (
+                        <Skeleton className="w-[490px] h-[48px] rounded-md" /> // Matches title size
+                    ) : (
+                        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+                            Update Job Posting
+                        </h1>
+                    )}
+
+                    {isLoading ? (
+                        <Skeleton className="w-[160px] h-[40px] rounded-md" /> // Matches button size
+                    ) : (
+                        <Button
+                            onClick={handleUpdate}
+                            className="flex items-center justify-center w-[160px] h-[40px] gap-2"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (
+                                <Spinner variant="ring" size={24} />
+                            ) : (
+                                <>
+                                    <Save size={18} />
+                                    <span>Save Changes</span>
+                                </>
+                            )}
+                        </Button>
+                    )}
+                </div>
+
+                {isLoading ? (
+                    <Skeleton className="w-[820px] h-[20px] rounded-md" />
+                ) : (
+                    <p className="leading-7 [&:not(:first-child)]:mb-6">
+                        Modify and manage existing job postings seamlessly. Update the details to keep job listings accurate and up to date.
+                    </p>
+                )}
+
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-[300px] w-full">
+                        <Spinner variant="ring" size={40} className="text-primary" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Left Panel */}
+                        <div className="space-y-6">
+                            {/* Description Section */}
+                            <Card className="p-6 h-full flex flex-col">
+                                    <div className="flex-1 flex flex-col">
+                                        <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Description</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Provide a detailed description of the job, including responsibilities, qualifications, and any other relevant information.
+                                        </p>
+                                        <div className="mt-4">
+                                            <Button
+                                                onClick={generateDescription}
+                                                disabled={isGeneratingDescription}
+                                                className="flex items-center gap-2"
+                                            >
+                                                {isGeneratingDescription ? (
+                                                    <Loader2 className="animate-spin" size={18} />
+                                                ) : (
+                                                    <Plus size={18} />
+                                                )}
+                                                <span>Generate Description</span>
+                                            </Button>
+                                        </div>
+                                         <div className="flex-1 overflow-y-auto">
+                                            <BlockEditor
+                                              key={description} 
+                                              initialContent={description}
+                                              onChange={setDescription}
+                                                editable={true}
+                                            />
+                                        </div>
+                                    </div>
+                                </Card>
+                        </div>
+
+                        {/* Right Panel */}
+                        <div className="space-y-6">
+                            {/* Job Details Section */}
+                            <div className=" flex-1 flex flex-col">
+
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Job Details</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Update essential information about the job.
+                                </p>
+                            </div>
+                            <div className="space-y-4">
+
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="title" className="min-w-24 whitespace-nowrap font-bold">Title</Label>
+                                    <InputWithCancel inputValue={title} setInputValue={setTitle} inputId="title" placeholder="Enter job title" className="flex-1" />
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="department" className="min-w-24 whitespace-nowrap font-bold">Department</Label>
+                                    <Select value={departmentId} onValueChange={(value) => setDepartmentId(value as Id<"departments">)}>
+                                        <SelectTrigger className="flex-1">
+                                            <SelectValue placeholder="Select a department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {departments.map((dept) => (
+                                                <SelectItem key={dept._id} value={dept._id}>
+                                                    {dept.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="requirements" className="min-w-24 whitespace-nowrap font-bold">Requirements</Label>
+                                    <TextareaWithLimit
+                                        id="requirements"
+                                        maxLength={150}
+                                        value={requirements}
+                                        onChange={setRequirements}
+                                        placeholder="Enter job requirements"
+                                        className="flex-1"
+                                        height="150px"
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator className="my-4" />
+                            {/* Compensation & Location Section */}
+                            <div className=" flex-1 flex flex-col">
+
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Compensation & Location</h3>
+                                <p className="text-sm text-muted-foreground">Update salary range and location.</p>
+                            </div>
+                            <div className="space-y-4">
+                                {/* Salary Range Field */}
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-4">
+                                        <Label htmlFor="salaryRange" className="min-w-24 whitespace-nowrap font-bold">
+                                            Salary Range
+                                        </Label>
+                                        <div className="flex-1">
+                                            <InputWithCancel
+                                                inputValue={salaryRange}
+                                                setInputValue={setSalaryRange}
+                                                inputId="salaryRange"
+                                                placeholder="Enter salary range"
+                                                className="w-full"
+                                            />
+                                            <p className="mt-2 text-xs text-muted-foreground" role="region" aria-live="polite">
+                                                Please enter the expected salary range per month. This helps candidates understand the compensation offered.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Location Field */}
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="location" className="min-w-24 whitespace-nowrap font-bold">
+                                        Location
+                                    </Label>
+                                    <InputWithCancel
+                                        inputValue={location}
+                                        setInputValue={setLocation}
+                                        inputId="location"
+                                        placeholder="Enter location"
+                                        className="flex-1"
+                                    />
+                                </div>
+                            </div>
+
+
+                            <Separator className="my-4" />
+                            {/* Employment Details Section */}
+                            <div className=" flex-1 flex flex-col">
+
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Employment Details</h3>
+                                <p className="text-sm text-muted-foreground">Update employment type, experience level, and tags.</p>
+                            </div>
+                            <div className="space-y-4">
+
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="employmentType" className="min-w-24 whitespace-nowrap font-bold">
+                                        Employment Type
+                                    </Label>
+                                    <ReusableSelect
+                                        options={employmentTypeOptions}
+                                        value={employmentType}
+                                        onChange={handleEmploymentTypeChange}
+                                        onAddNewOption={handleAddNewEmploymentTypeOption}
+                                        className="flex-1"
+                                    />
+                                </div>
+
+                                {/* Experience Level */}
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="experienceLevel" className="min-w-24 whitespace-nowrap font-bold">
+                                        Experience Level
+                                    </Label>
+                                    <ReusableSelect
+                                        options={experienceLevelOptions}
+                                        value={experienceLevel}
+                                        onChange={handleExperienceLevelChange}
+                                        onAddNewOption={handleAddNewExperienceLevelOption}
+                                        className="flex-1"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="tags" className="min-w-28 whitespace-nowrap font-bold">Tags</Label>
+                                    <GenreInput
+                                        id="tags"
+                                        initialTags={tags}
+                                        onTagsChange={(newTags) => setTags(newTags)}
+                                        placeholder="Add a tag"
+                                        className="flex-1"
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator className="my-4" />
+                            {/* Application & Interview Section */}
+                            <div className=" flex-1 flex flex-col">
+
+                                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Application & Interview</h3>
+                                <p className="text-sm text-muted-foreground">Update application deadline and interview process.</p>
+                            </div>
+                            <div className="space-y-4">
+
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="applicationDeadline" className="min-w-24 whitespace-nowrap font-bold">Application Deadline</Label>
+                                    <div className="flex-1">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                    {applicationDeadline ? format(applicationDeadline, "PPP") : "Select a date"}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar mode="single" selected={applicationDeadline} onSelect={setApplicationDeadline} initialFocus />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label htmlFor="interviewProcess" className="min-w-24 whitespace-nowrap font-bold">Interview Process</Label>
+                                    <TextareaWithLimit
+                                        id="interviewProcess"
+                                        maxLength={150}
+                                        value={interviewProcess}
+                                        onChange={setInterviewProcess}
+                                        placeholder="Describe the interview process"
+                                        className="flex-1"
+                                        height="150px"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex-1 flex flex-col">
+    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">Associated Forms</h3>
+    <p className="text-sm text-muted-foreground">Select forms to associate with this job posting.</p>
+</div>
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {forms.map((form) => (
+        <Card
+            key={form._id}
+            className={`p-4 cursor-pointer transition-all duration-200 ${
+                selectedFormIds.includes(form._id)
+                    ? "border-2 border-primary shadow-lg"
+                    : "border border-gray-200 hover:shadow-md"
+            }`}
+            onClick={() => handleFormSelection(form._id)}
+        >
+            <CardHeader className="p-0">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    {form.title}
+                    {selectedFormIds.includes(form._id) && (
+                        <Check className="h-4 w-4 text-primary" />
+                    )}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 mt-2">
+                <p className="text-sm text-muted-foreground">{form.description}</p>
+            </CardContent>
+        </Card>
+    ))}
+</div>
+                        </div>
+                    </div>
+                )}
+            </ContentLayout>
+        </AdminPanelLayout>
+    );
+}

@@ -1,0 +1,97 @@
+"use client";
+
+import { useEffect } from "react";
+import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { RolesTable } from "@/components/RoleManagement/RolesTable";
+import { AddRole } from "@/components/RoleManagement/CRUD/AddRole";
+import { AddPermission } from "@/components/PermissionsManagement/CRUD/AddPermission";
+import { PermissionsTable } from "@/components/PermissionsManagement/PermissionsTable";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { DepartmentsTable } from "@/components/DepartmentManagement/DepartmentsTable";
+import { AddDepartment } from "@/components/DepartmentManagement/CRUD/AddDepartment";
+import * as React from "react";
+
+export default function Test() {
+  // Fetch raw roles, permissions, and departments data
+  const rawRoles = useQuery(api.queries.roles.getRoles);
+  const rawPermissions = useQuery(api.queries.permissions.fetchAllPermissions);
+  const rawDepartments = useQuery(api.queries.departments.getDepartments);
+
+  // Transform _creationTime into createdAt for roles
+  const roles =
+    rawRoles?.map((role) => {
+      const createdAt = new Date(role._creationTime).toISOString();
+      return {
+        ...role,
+        createdAt,
+      };
+    }) || [];
+
+  // Transform _creationTime into createdAt for permissions
+  const permissions =
+    rawPermissions?.map((permission) => {
+      const createdAt = new Date(permission._creationTime).toISOString();
+      return {
+        ...permission,
+        createdAt,
+        assignedRoles: permission.assignedRoles || [], // Ensure assignedRoles is included
+      };
+    }) || [];
+
+  // Transform _creationTime into createdAt for departments
+  const departments =
+    rawDepartments?.map((department) => {
+      const createdAt = new Date(department._creationTime).toISOString();
+      return {
+        ...department,
+        createdAt,
+      };
+    }) || [];
+
+  // Loading state
+  const isLoading = !rawRoles || !rawPermissions || !rawDepartments;
+
+  // Log roles, permissions, and departments to the console once they're fetched/updated
+  useEffect(() => {
+    console.log("Roles:", roles);
+    console.log("Permissions:", permissions);
+    console.log("Departments:", departments);
+  }, [roles, permissions, departments]);
+
+  return (
+    <AdminPanelLayout>
+      <ContentLayout title="Dashboard">
+      
+
+        {/* Departments Section */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+              Department Management
+            </h1>
+            <AddDepartment />
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Manage the different departments within your organization.
+          </p>
+          {isLoading ? (
+            <Skeleton className="h-[300px] w-full" />
+          ) : (
+            <DepartmentsTable departments={departments} />
+          )}
+        </div>
+
+        {/* Loading Spinner */}
+        {isLoading && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <Spinner size="sm" className="bg-black dark:bg-white" />
+          </div>
+        )}
+      </ContentLayout>
+    </AdminPanelLayout>
+  );
+}

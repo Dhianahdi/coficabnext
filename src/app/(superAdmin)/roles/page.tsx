@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { useQuery } from "convex/react";
@@ -12,11 +12,18 @@ import { PermissionsTable } from "@/components/PermissionsManagement/Permissions
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { UsersTable } from "@/components/Usersmanagment/UsersTable";
+import { Pagination } from "@/components/ui/pagination"; // Assurez-vous d'avoir un composant Pagination
 
 export default function Test() {
   // Fetch raw roles and permissions data
   const rawRoles = useQuery(api.queries.roles.getRoles);
   const rawPermissions = useQuery(api.queries.permissions.fetchAllPermissions);
+
+  // Pagination state
+  const [rolesPage, setRolesPage] = useState(1);
+  const [permissionsPage, setPermissionsPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const itemsPerPage = 5; // Nombre d'éléments par page
 
   // Transform _creationTime into createdAt for roles
   const roles =
@@ -42,6 +49,15 @@ export default function Test() {
   // Loading state
   const isLoading = !rawRoles || !rawPermissions;
 
+  // Pagination logic
+  const paginate = (array: any[], page: number, itemsPerPage: number) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return array.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  const paginatedRoles = paginate(roles, rolesPage, itemsPerPage);
+  const paginatedPermissions = paginate(permissions, permissionsPage, itemsPerPage);
+
   // Log roles and permissions to the console once they're fetched/updated
   useEffect(() => {
     console.log("Roles:", roles);
@@ -51,51 +67,50 @@ export default function Test() {
   return (
     <AdminPanelLayout>
       <ContentLayout title="Dashboard">
-    {/* Users Section */}
-<div className="mt-6">
-  <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-    User Management
-  </h1>
-  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-    Manage user accounts, roles, and permissions.
-  </p>
-  <UsersTable />
-</div>
+        {/* Users Section */}
+        <div className="mt-6">
+     
+          <UsersTable />
+       
+        </div>
+
         {/* Roles Section */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-              Role Management
-            </h1>
+            <h1 className="text-2xl font-semibold text-foreground">Role Management</h1>
             <AddRole />
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             Manage and oversee user roles within the system. Roles define access
             levels and permissions for different users.
           </p>
           {isLoading ? (
             <Skeleton className="h-[300px] w-full" />
           ) : (
-            <RolesTable roles={roles} />
+            <>
+              <RolesTable roles={paginatedRoles} />
+              
+            </>
           )}
         </div>
 
         {/* Permissions Section */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-              Permission Management
-            </h1>
+            <h1 className="text-2xl font-semibold text-foreground">Permission Management</h1>
             <AddPermission />
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             Define and manage permissions that can be assigned to roles.
             Permissions control access to specific features and resources.
           </p>
           {isLoading ? (
             <Skeleton className="h-[300px] w-full" />
           ) : (
-            <PermissionsTable permissions={[]}  />
+            <>
+              <PermissionsTable permissions={paginatedPermissions} />
+             
+            </>
           )}
         </div>
 

@@ -23,7 +23,7 @@ export default function PreviewForm() {
         <div className="max-w-2xl mx-auto p-6">
             <h1 className="text-xl font-bold mb-4">📋 Preview Form</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
-                {formFields.map((field) => (
+                {formFields.map((field:any) => (
                     <div key={field.id}>
                         <label className="block text-sm font-medium">{field.label}</label>
                         <Input {...register(field.label)} type={field.type} placeholder={field.placeholder} />

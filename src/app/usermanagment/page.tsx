@@ -55,13 +55,11 @@ export default function UserManagment() {
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-              Users Management
             </h1>
             <AddRole />
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Manage and oversee user roles within the system. Roles define access
-            levels and permissions for different users.
+          
           </p>
           {isLoading ? (
             <Skeleton className="h-[300px] w-full" />

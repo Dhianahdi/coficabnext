@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { Loader2, Eye, EyeOff, Mail, User, LogIn, TriangleAlert } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,11 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [pending, setPending] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
     const [loadingProvider, setLoadingProvider] = useState<"github" | "google" | null>(null);
 
     const router = useRouter();
-
-    /*     const [state, setState] = useState<SignInFlow>("signIn");
-     */
 
     const onPasswordSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -40,8 +38,6 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
         }
     };
 
-
-
     const handleProviderSignIn = (provider: "github" | "google") => {
         setLoadingProvider(provider);
         signIn(provider)
@@ -49,6 +45,7 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                 setLoadingProvider(null);
             });
     };
+
     return (
         <div
             className={cn(
@@ -59,21 +56,21 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
         >
             <Card>
                 <CardHeader>
-                    <CardTitle>Log In with Email</CardTitle>
+                    <CardTitle>Sign In with Email</CardTitle>
                     <CardDescription>
-                        Securely log in using your email address. Make sure to provide a valid and accessible email.
+                        Enter your credentials to access your account and continue your work.
                     </CardDescription>
                 </CardHeader>
 
                 <form
                     onSubmit={onPasswordSignIn}
                     className="grid gap-1"
-                    noValidate // Disable native validation
+                    noValidate
                 >
                     <CardContent className="space-y-3">
                         <div className="space-y-4 w-full">
-                            <Label htmlFor="email" className="sr-only">
-                                Email
+                            <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <Mail className="h-4 w-4" /> Email
                             </Label>
                             <div className="relative">
                                 <Input
@@ -81,35 +78,50 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     id="email"
-                                    placeholder="Please enter your email address."
+                                    placeholder="Enter your email address"
                                     type="email"
                                     autoComplete="email"
                                     required
+                                    className="rounded-lg border border-gray-300 dark:border-gray-700 focus:border-primary focus:ring-primary pl-10 transition-all duration-200 hover:border-gray-400"
                                 />
-                                <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground/80 peer-disabled:opacity-50">
-                                    <Mail size={16} strokeWidth={2} aria-hidden="true" />
-                                </div>
+                                <Mail className="h-4 w-4 absolute left-3 top-3 text-gray-500" />
                             </div>
                         </div>
-                        <div className="relative">
-                            <Label htmlFor="password" className="sr-only">
-                                Password
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <Lock className="h-4 w-4" /> Mot de passe
                             </Label>
-                            <Input
-                                disabled={pending || loadingProvider !== null}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                id="password"
-                                placeholder="Please enter your password."
-                                autoComplete="current-password"
-                                type="password"
-                                required
-                            />
+                            <div className="relative">
+                                <Input
+                                    disabled={pending || loadingProvider !== null}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    id="password"
+                                    placeholder="Enter your password"
+                                    autoComplete="current-password"
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    className="rounded-lg border border-gray-300 dark:border-gray-700 focus:border-primary focus:ring-primary pl-10 pr-10 transition-all duration-200 hover:border-gray-400"
+                                />
+                                <Lock className="h-4 w-4 absolute left-3 top-3 text-gray-500" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff size={16} strokeWidth={2} className="text-muted-foreground/80" />
+                                    ) : (
+                                        <Eye size={16} strokeWidth={2} className="text-muted-foreground/80" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter>
                         <Button
-                            disabled={pending || loadingProvider !== null} // Disable during pending or loadingProvider
+                            disabled={pending || loadingProvider !== null}
                             className="w-full"
                             type="submit"
                         >
@@ -120,7 +132,6 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                             )}
                         </Button>
                     </CardFooter>
-
                 </form>
             </Card>
 
@@ -136,7 +147,7 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
             </div>
           
             <Button
-                disabled={pending || loadingProvider !== null} // Disable if pending or loadingProvider is set
+                disabled={pending || loadingProvider !== null}
                 onClick={() => handleProviderSignIn("google")}
                 variant="outline"
                 type="button"
@@ -148,10 +159,6 @@ export function UserAuthForm({ className, ...props }: React.HTMLAttributes<HTMLD
                     "Continue with Google"
                 )}
             </Button>
-
-
-
         </div>
-
     );
 }

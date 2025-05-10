@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Card } from "../ui/card";
-import { Textarea } from "../ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
+
 type QuestionType = "multiple-choice" | "single-choice" | "open-ended";
 
 type Question = {
   question: string;
-  type: "multiple-choice" | "single-choice" | "open-ended";
+  type: QuestionType;
   options?: string[];
   answer?: string;
 };
 
-export default function TechnicalTestGenerator() {
+export default function FormBuilder() {
   const [keywords, setKeywords] = useState("");
   const [numberOfQuestions, setNumberOfQuestions] = useState(5);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -23,39 +28,40 @@ export default function TechnicalTestGenerator() {
   const [manualQuestion, setManualQuestion] = useState("");
   const [manualOptions, setManualOptions] = useState<string[]>([]);
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
-    // Ajouter une nouvelle question
-    const addQuestion = (type: QuestionType) => {
-      const newQuestion: Question = {
-        type,
-        question: `Nouvelle question ${type === "multiple-choice" ? "à choix multiple" : type === "single-choice" ? "à choix unique" : "ouverte"}`,
-        options: type !== "open-ended" ? [] : undefined,
-        answer: type === "open-ended" ? "" : undefined,
-      };
-      setQuestions([...questions, newQuestion]);
+
+  // Ajouter une nouvelle question
+  const addQuestion = (type: QuestionType) => {
+    const newQuestion: Question = {
+      type,
+      question: `Nouvelle question ${type === "multiple-choice" ? "à choix multiple" : type === "single-choice" ? "à choix unique" : "ouverte"}`,
+      options: type !== "open-ended" ? [] : undefined,
+      answer: type === "open-ended" ? "" : undefined,
     };
-  
-    // Mettre à jour une question
-    const updateQuestion = (index: number, field: keyof Question, value: string | string[]) => {
-      const updatedQuestions = [...questions];
-      if (field === "options" && Array.isArray(value)) {
-        updatedQuestions[index].options = value;
-      } else if (field === "answer" && typeof value === "string") {
-        updatedQuestions[index].answer = value;
-      } else if (field === "question" && typeof value === "string") {
-        updatedQuestions[index].question = value;
-      }
-      setQuestions(updatedQuestions);
-    };
-  
-    // Ajouter une option à une question à choix multiple ou unique
-    const addOption = (index: number, option: string) => {
-      const updatedQuestions = [...questions];
-      if (updatedQuestions[index].options) {
-        updatedQuestions[index].options!.push(option);
-      }
-      setQuestions(updatedQuestions);
-    };
-  
+    setQuestions([...questions, newQuestion]);
+  };
+
+  // Mettre à jour une question
+  const updateQuestion = (index: number, field: keyof Question, value: string | string[]) => {
+    const updatedQuestions = [...questions];
+    if (field === "options" && Array.isArray(value)) {
+      updatedQuestions[index].options = value;
+    } else if (field === "answer" && typeof value === "string") {
+      updatedQuestions[index].answer = value;
+    } else if (field === "question" && typeof value === "string") {
+      updatedQuestions[index].question = value;
+    }
+    setQuestions(updatedQuestions);
+  };
+
+  // Ajouter une option à une question à choix multiple ou unique
+  const addOption = (index: number, option: string) => {
+    const updatedQuestions = [...questions];
+    if (updatedQuestions[index].options) {
+      updatedQuestions[index].options!.push(option);
+    }
+    setQuestions(updatedQuestions);
+  };
+
   // Fonction pour ajouter une question manuelle
   const addManualQuestion = () => {
     if (manualQuestion.trim()) {
@@ -77,7 +83,7 @@ export default function TechnicalTestGenerator() {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBX_Yq9iRL7hqCEwpZeUP4zepSaEk33yag",
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`,    
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -92,8 +98,8 @@ export default function TechnicalTestGenerator() {
                       { "question": "Question 1", "type": "multiple-choice", "options": ["Option 1", "Option 2", "Option 3"] },
                       { "question": "Question 2", "type": "single-choice", "options": ["Option 1", "Option 2"] },
                       { "question": "Question 3", "type": "open-ended" }
-                    ]`
-                  }
+                    ]`,
+                  },
                 ],
               },
             ],
@@ -111,203 +117,141 @@ export default function TechnicalTestGenerator() {
 
         const generatedQuestions = JSON.parse(jsonMatch[0]);
         setQuestions(generatedQuestions);
+        toast.success("Test technique généré avec succès !");
       } else {
         console.error("Erreur API :", data);
-        alert("Erreur lors de la génération du test technique.");
+        toast.error("Erreur lors de la génération du test technique.");
       }
     } catch (error) {
       console.error("Erreur lors de la requête :", error);
-      alert("Impossible de générer le test technique.");
+      toast.error("Impossible de générer le test technique.");
     }
     setLoading(false);
   };
 
   return (
-    <div className="p-6 border rounded-lg shadow-lg bg-white">
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">Générateur de Test Technique</h2>
-
-      {/* Formulaire pour saisir les mots-clés et le nombre de questions */}
-      <div className="space-y-4">
-        <Label htmlFor="keywords" className="text-gray-700">
-          Mots-clés :
-        </Label>
-        <Input
-          id="keywords"
-          type="text"
-          value={keywords}
-          onChange={(e:any) => setKeywords(e.target.value)}
-          placeholder="Ex: React, Node.js, JavaScript"
-        />
-
-        <Label htmlFor="numberOfQuestions" className="text-gray-700">
-          Nombre de questions :
-        </Label>
-        <Input
-          id="numberOfQuestions"
-          type="number"
-          value={numberOfQuestions}
-          onChange={(e:any) => setNumberOfQuestions(parseInt(e.target.value))}
-          min="1"
-          max="20"
-        />
-
-        <Button
-          onClick={generateTechnicalTest}
-          disabled={loading}
-          className={`w-full ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
-        >
-          {loading ? "Génération en cours..." : "Générer le Test Technique"}
-        </Button>
-      </div>
-
-      {/* Ajout manuel de questions */}
-      <div className="p-6 border rounded-lg shadow-lg bg-white">
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">Constructeur de Questionnaire</h2>
-
-      {/* Boutons pour ajouter des questions */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => addQuestion("multiple-choice")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md"
-        >
-          Ajouter une question à choix multiple
-        </button>
-        <button
-          onClick={() => addQuestion("single-choice")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md"
-        >
-          Ajouter une question à choix unique
-        </button>
-        <button
-          onClick={() => addQuestion("open-ended")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md"
-        >
-          Ajouter une question ouverte
-        </button>
-      </div>
-
-      {/* Liste des questions */}
-      <div className="space-y-4">
-        {questions.map((question, index) => (
-          <div
-            key={index}
-            className={`p-4 border rounded-md ${
-              selectedQuestionIndex === index ? "border-blue-600" : "border-gray-300"
-            }`}
-            onClick={() => setSelectedQuestionIndex(index)}
-          >
-            {/* Champ pour modifier la question */}
-            <input
-              type="text"
-              value={question.question}
-              onChange={(e) => updateQuestion(index, "question", e.target.value)}
-              className="w-full p-2 border rounded-md mb-2"
-              placeholder="Entrez votre question"
-            />
-
-            {/* Affichage des options pour les questions à choix multiple ou unique */}
-            {question.type !== "open-ended" && (
-              <div className="space-y-2">
-                {question.options?.map((option, optionIndex) => (
-                  <div key={optionIndex} className="flex items-center">
-                    <input
-                      type={question.type === "multiple-choice" ? "checkbox" : "radio"}
-                      name={`question-${index}`}
-                      value={option}
-                      className="mr-2"
-                    />
-                    <input
-                      type="text"
-                      value={option}
-                      onChange={(e) => {
-                        const updatedOptions = [...question.options!];
-                        updatedOptions[optionIndex] = e.target.value;
-                        updateQuestion(index, "options", updatedOptions);
-                      }}
-                      className="w-full p-1 border rounded-md"
-                      placeholder="Option"
-                    />
-                  </div>
-                ))}
-                <button
-                  onClick={() => addOption(index, "Nouvelle option")}
-                  className="px-2 py-1 bg-gray-200 text-gray-800 rounded-md"
-                >
-                  + Ajouter une option
-                </button>
-              </div>
-            )}
-
-            {/* Champ de réponse pour les questions ouvertes */}
-            {question.type === "open-ended" && (
-              <textarea
-                value={question.answer}
-                onChange={(e) => updateQuestion(index, "answer", e.target.value)}
-                className="w-full p-2 border rounded-md"
-                placeholder="Réponse libre"
+    <div className="p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Générateur de Test Technique</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Formulaire pour saisir les mots-clés et le nombre de questions */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="keywords">Mots-clés :</Label>
+              <Input
+                id="keywords"
+                type="text"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                placeholder="Ex: React, Node.js, JavaScript"
               />
-            )}
+            </div>
+
+            <div>
+              <Label htmlFor="numberOfQuestions">Nombre de questions :</Label>
+              <Input
+                id="numberOfQuestions"
+                type="number"
+                value={numberOfQuestions}
+                onChange={(e) => setNumberOfQuestions(parseInt(e.target.value))}
+                min="1"
+                max="20"
+              />
+            </div>
+
+            <Button
+              onClick={generateTechnicalTest}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? "Génération en cours..." : "Générer le Test Technique"}
+            </Button>
           </div>
-        ))}
-      </div>
-    </div>
 
-      {/* Affichage du formulaire généré */}
-      {questions.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <h3 className="text-xl font-bold text-blue-700">Test Technique Généré :</h3>
-          {questions.map((question, index) => (
-            <Card key={index} className="p-4 border rounded-md bg-gray-100">
-              <p className="font-semibold text-gray-800">{question.question}</p>
-              {/* Options for multiple-choice or single-choice questions */}
-              {question.type === "multiple-choice" && (
-                <div className="space-y-2 mt-2">
-                  {question.options?.map((option, optionIndex) => (
-                    <div key={optionIndex} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name={`question-${index}`}
-                        className="mr-2"
-                      />
-                      <span>{option}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {question.type === "single-choice" && (
-                <div className="space-y-2 mt-2">
-                  {question.options?.map((option, optionIndex) => (
-                    <div key={optionIndex} className="flex items-center">
-                      <input
-                        type="radio"
-                        name={`question-${index}`}
-                        className="mr-2"
-                      />
-                      <span>{option}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* Ajout manuel de questions */}
+          <div className="mt-6">
+            <h2 className="text-xl font-bold mb-4">Ajouter une question manuelle</h2>
+            <div className="space-y-4">
+              <Textarea
+                value={manualQuestion}
+                onChange={(e) => setManualQuestion(e.target.value)}
+                placeholder="Entrez votre question"
+              />
+              <Button onClick={addManualQuestion} className="w-full">
+                Ajouter la question
+              </Button>
+            </div>
+          </div>
 
-              {question.type === "open-ended" && (
-                <Textarea
-                  className="w-full mt-2"
-                  placeholder="Votre réponse..."
-                />
-              )}
-              {/* Boutons pour supprimer et modifier */}
-              <div className="mt-2 flex justify-between">
-                <Button
-                  onClick={() => deleteQuestion(index)}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Supprimer
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+          {/* Liste des questions */}
+          <div className="mt-6 space-y-4">
+            {questions.map((question, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle>Question {index + 1}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Input
+                    value={question.question}
+                    onChange={(e) => updateQuestion(index, "question", e.target.value)}
+                    placeholder="Entrez votre question"
+                  />
+
+                  {/* Options pour les questions à choix multiple ou unique */}
+                  {question.type !== "open-ended" && (
+                    <div className="mt-4 space-y-2">
+                      {question.options?.map((option, optionIndex) => (
+                        <div key={optionIndex} className="flex items-center gap-2">
+                          {question.type === "multiple-choice" ? (
+                            <Checkbox />
+                          ) : (
+                            <RadioGroupItem value={option} />
+                          )}
+                          <Input
+                            value={option}
+                            onChange={(e) => {
+                              const updatedOptions = [...question.options!];
+                              updatedOptions[optionIndex] = e.target.value;
+                              updateQuestion(index, "options", updatedOptions);
+                            }}
+                            placeholder="Option"
+                          />
+                        </div>
+                      ))}
+                      <Button
+                        onClick={() => addOption(index, "Nouvelle option")}
+                        className="w-full"
+                      >
+                        + Ajouter une option
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Champ de réponse pour les questions ouvertes */}
+                  {question.type === "open-ended" && (
+                    <Textarea
+                      value={question.answer}
+                      onChange={(e) => updateQuestion(index, "answer", e.target.value)}
+                      placeholder="Réponse libre"
+                      className="mt-4"
+                    />
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                  <Button
+                    onClick={() => deleteQuestion(index)}
+                    variant="destructive"
+                  >
+                    Supprimer
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

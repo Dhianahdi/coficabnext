@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig = {
   output: "standalone", // Nécessaire si tu veux utiliser `fs`
   experimental: {
-    serverActions: true, // Active les API server-side modernes
+    serverActions: {} // <- mettre un objet vide au lieu de true
   },
   images: {
     domains: [

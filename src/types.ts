@@ -48,3 +48,12 @@ export type EnrichedChapter = {
   wordCount?: number; // Optional
   isDraft?: boolean;  // Optional
 };
+
+// types.ts
+declare interface JitsiMeetExternalAPI {
+  new (domain: string, options: any): any;
+}
+
+interface Window {
+  JitsiMeetExternalAPI: JitsiMeetExternalAPI;
+}

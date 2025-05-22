@@ -313,7 +313,7 @@ export default function CreateFormPage() {
                         checked={useGemini}
                         onCheckedChange={setUseGemini}
                       />
-                      <Label htmlFor="useGemini">Use Gemini to generate questions</Label>
+                      <Label htmlFor="useGemini">Use AI to generate questions</Label>
                     </div>
 
                     {/* Button to generate or add questions */}
